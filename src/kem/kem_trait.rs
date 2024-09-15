@@ -1,4 +1,4 @@
-use crate::kem::ec_kem_type::EcKemType;
+use crate::kem::kem_type::KemType;
 
 use std::error;
 
@@ -13,7 +13,7 @@ pub trait Kem {
     ///
     /// * `kem_type` - The type of KEM to create
     /// * `seed` - A 32-byte seed
-    fn new(kem_type: EcKemType, seed: Option<[u8; 32]>) -> Self;
+    fn new(kem_type: KemType, seed: Option<[u8; 32]>) -> Self;
 
     /// Generate a keypair
     ///
