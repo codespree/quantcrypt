@@ -13,14 +13,14 @@ pub trait Kem {
     ///
     /// * `kem_type` - The type of KEM to create
     /// * `seed` - A 32-byte seed
-    fn new(kem_type: KemType, seed: Option<[u8; 32]>) -> Self;
+    fn new(kem_type: KemType) -> Self;
 
     /// Generate a keypair
     ///
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self) -> (Vec<u8>, Vec<u8>);
+    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> (Vec<u8>, Vec<u8>);
 
     /// Encapsulate a public key
     ///

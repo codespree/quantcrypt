@@ -1,4 +1,4 @@
-use crate::kem::macros::{decapsulate, encapsulate, key_gen};
+use crate::kem::macros::{decapsulate_ecc, encapsulate_ecc, key_gen_ecc};
 
 // use the macros to generate the encapsulate function
 
@@ -22,12 +22,8 @@ pub struct DhKemManager {
 }
 
 impl Kem for DhKemManager {
-    fn new(kem_type: KemType, seed: Option<[u8; 32]>) -> Self {
-        let rng = if let Some(seed) = seed {
-            ChaCha20Rng::from_seed(seed)
-        } else {
-            ChaCha20Rng::from_entropy()
-        };
+    fn new(kem_type: KemType) -> Self {
+        let rng = ChaCha20Rng::from_entropy();
         Self { kem_type, rng }
     }
 
@@ -36,16 +32,23 @@ impl Kem for DhKemManager {
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self) -> (Vec<u8>, Vec<u8>) {
+    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> (Vec<u8>, Vec<u8>) {
+        // If seed is provided, use it to generate the keypair
+        let mut rng = if let Some(seed) = seed {
+            ChaCha20Rng::from_seed(*seed)
+        } else {
+            self.rng.clone()
+        };
+
         match self.kem_type {
             KemType::P256 => {
-                key_gen!(self, p256)
+                key_gen_ecc!(rng, p256)
             }
             KemType::P384 => {
-                key_gen!(self, p384)
+                key_gen_ecc!(rng, p384)
             }
             KemType::X25519 => {
-                let sk = StaticSecret::random_from_rng(&mut self.rng);
+                let sk = StaticSecret::random_from_rng(&mut rng);
                 let pk = x25519_dalek::PublicKey::from(&sk);
                 (pk.as_bytes().to_vec(), sk.to_bytes().to_vec())
             }
@@ -72,8 +75,8 @@ impl Kem for DhKemManager {
     /// A tuple containing the ciphertext and shared secret (ct, ss)
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_type {
-            KemType::P256 => encapsulate!(p256, NistP256, pk, &mut self.rng),
-            KemType::P384 => encapsulate!(p384, NistP384, pk, &mut self.rng),
+            KemType::P256 => encapsulate_ecc!(p256, NistP256, pk, &mut self.rng),
+            KemType::P384 => encapsulate_ecc!(p384, NistP384, pk, &mut self.rng),
             KemType::X25519 => {
                 // Cast public key to 32 bytes
                 let pk: [u8; 32] = pk.try_into()?;
@@ -101,10 +104,10 @@ impl Kem for DhKemManager {
     fn decapsulate(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         match self.kem_type {
             KemType::P256 => {
-                decapsulate!(p256, NistP256, sk, ct)
+                decapsulate_ecc!(p256, NistP256, sk, ct)
             }
             KemType::P384 => {
-                decapsulate!(p384, NistP384, sk, ct)
+                decapsulate_ecc!(p384, NistP384, sk, ct)
             }
             KemType::X25519 => {
                 let sk: [u8; 32] = sk.try_into()?;
@@ -132,31 +135,23 @@ mod tests {
     use super::*;
     use crate::kem::kem_trait::Kem;
     use crate::kem::kem_type::KemType;
+    use crate::kem::macros::test_kem;
 
     #[test]
     fn test_ec_kem_p256() {
-        let mut kem = DhKemManager::new(KemType::P256, None);
-        let (pk, sk) = kem.key_gen();
-        let (ct, ss) = kem.encaps(&pk).unwrap();
-        let ss2 = kem.decapsulate(&sk, &ct).unwrap();
-        assert_eq!(ss, ss2);
+        let mut kem = DhKemManager::new(KemType::P256);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_p384() {
-        let mut kem = DhKemManager::new(KemType::P384, None);
-        let (pk, sk) = kem.key_gen();
-        let (ct, ss) = kem.encaps(&pk).unwrap();
-        let ss2 = kem.decapsulate(&sk, &ct).unwrap();
-        assert_eq!(ss, ss2);
+        let mut kem = DhKemManager::new(KemType::P384);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_x25519() {
-        let mut kem = DhKemManager::new(KemType::X25519, None);
-        let (pk, sk) = kem.key_gen();
-        let (ct, ss) = kem.encaps(&pk).unwrap();
-        let ss2 = kem.decapsulate(&sk, &ct).unwrap();
-        assert_eq!(ss, ss2);
+        let mut kem = DhKemManager::new(KemType::X25519);
+        test_kem!(kem);
     }
 }

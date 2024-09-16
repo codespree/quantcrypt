@@ -1,1 +1,1 @@
-mod kem;
+pub mod kem;
