@@ -20,7 +20,7 @@ macro_rules! test_kem {
     ($kem:expr) => {{
         let (pk, sk) = $kem.key_gen(None);
         let (ct, ss) = $kem.encaps(&pk).unwrap();
-        let ss2 = $kem.decap(&sk, &ct).unwrap();
+        let ss2 = $kem.decaps(&sk, &ct).unwrap();
         assert_eq!(ss, ss2);
 
         // Should generate different keys

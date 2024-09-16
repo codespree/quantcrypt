@@ -137,7 +137,7 @@ impl Kem for MlKemManager {
     /// # Returns
     ///
     /// The shared secret
-    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         match self.kem_type {
             KemType::MlKem512 => decapsulate::<MlKem512>(sk, ct),
             KemType::MlKem768 => decapsulate::<MlKem768>(sk, ct),

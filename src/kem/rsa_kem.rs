@@ -76,7 +76,7 @@ impl Kem for RsaKemManager {
         Ok((ct, ss))
     }
 
-    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Create a private key from the DER-encoded bytes
         let priv_key = RsaPrivateKey::from_pkcs1_der(sk)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();

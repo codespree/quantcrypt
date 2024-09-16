@@ -1,14 +1,12 @@
 // use the macros to generate the encapsulate functio
 use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
-use crate::kem::openssl_deterministic::{
-    get_key_pair_ossl, encaps_ossl,
-    decaps_ossl, };
-use std::error;
+use crate::kem::openssl_deterministic::{decaps_ossl, encaps_ossl, get_key_pair_ossl};
 use openssl::ec::EcGroup;
 use openssl::nid::Nid;
 use rand_chacha::ChaCha20Rng;
 use rand_core::SeedableRng;
+use std::error;
 use x25519_dalek::StaticSecret;
 
 // Change the alias to use `Box<dyn error::Error>`.
@@ -21,9 +19,9 @@ pub struct DhKemManager {
 
 impl Kem for DhKemManager {
     /// Create a new KEM instance
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `kem_type` - The type of KEM to create
     fn new(kem_type: KemType) -> Self {
         Self { kem_type }
@@ -70,11 +68,11 @@ impl Kem for DhKemManager {
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1).unwrap();
                 get_key_pair_ossl(seed, &group)
-            },
+            }
             KemType::BrainpoolP384r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1).unwrap();
                 get_key_pair_ossl(seed, &group)
-            },
+            }
             _ => {
                 panic!("Not implemented");
             }
@@ -110,11 +108,11 @@ impl Kem for DhKemManager {
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1).unwrap();
                 encaps_ossl(pk, &group)
-            },
+            }
             KemType::BrainpoolP384r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1).unwrap();
                 encaps_ossl(pk, &group)
-            },
+            }
             _ => {
                 panic!("Not implemented");
             }
@@ -122,23 +120,19 @@ impl Kem for DhKemManager {
     }
 
     /// Decapsulate a ciphertext
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `sk` - The secret key to decapsulate with
     /// * `ct` - The ciphertext to decapsulate
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The shared secret (ss)
-    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         match self.kem_type {
-            KemType::P256 => {
-                decaps_ossl(sk, ct)
-            }
-            KemType::P384 => {
-                decaps_ossl(sk, ct)
-            }
+            KemType::P256 => decaps_ossl(sk, ct),
+            KemType::P384 => decaps_ossl(sk, ct),
             KemType::X25519 => {
                 let sk: [u8; 32] = sk.try_into()?;
                 let sk = StaticSecret::from(sk);
@@ -147,12 +141,8 @@ impl Kem for DhKemManager {
                 let shared_secret = sk.diffie_hellman(&pk);
                 Ok(shared_secret.as_bytes().to_vec())
             }
-            KemType::BrainpoolP256r1 => {
-                decaps_ossl(sk, ct)
-            },
-            KemType::BrainpoolP384r1 => {
-                decaps_ossl(sk, ct)
-            },
+            KemType::BrainpoolP256r1 => decaps_ossl(sk, ct),
+            KemType::BrainpoolP384r1 => decaps_ossl(sk, ct),
             _ => {
                 panic!("Not implemented");
             }
