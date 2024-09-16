@@ -11,8 +11,8 @@ KEM for Elliptic Curve and Post-Quantum Hybrid Key Exchange.
 | P256              |      ✅     |
 | P384              |      ✅     |
 | X25519            |      ✅     |
-| brainpoolP256r1   |      ❌     |
-| brainpoolP384r1   |      ❌     |
+| brainpoolP256r1   |      ✅     |
+| brainpoolP384r1   |      ✅     |
 | x448              |      ❌     |
 
 ## RSA-OAEP Key Encapsulation Mechanisms (KEM)
@@ -27,6 +27,5 @@ KEM for Elliptic Curve and Post-Quantum Hybrid Key Exchange.
 | ML-KEM-512        |      ✅     |
 | ML-KEM-768        |      ✅     |
 | ML-KEM-1024       |      ✅     |
-
 
 

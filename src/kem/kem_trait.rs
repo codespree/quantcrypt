@@ -43,5 +43,5 @@ pub trait Kem {
     /// # Returns
     ///
     /// The shared secret
-    fn decapsulate(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>>;
+    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>>;
 }

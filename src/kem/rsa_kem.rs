@@ -1,7 +1,7 @@
-use k256::sha2::Sha256;
 use rand::RngCore;
 use rand_chacha::ChaCha20Rng;
 use rand_core::SeedableRng;
+use sha2::Sha256;
 use std::error;
 
 use crate::kem::kem_trait::Kem;
@@ -76,7 +76,7 @@ impl Kem for RsaKemManager {
         Ok((ct, ss))
     }
 
-    fn decapsulate(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Create a private key from the DER-encoded bytes
         let priv_key = RsaPrivateKey::from_pkcs1_der(sk)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();

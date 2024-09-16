@@ -15,4 +15,8 @@ pub enum KemType {
     RsaOAEP2048,
     /// RSA 3072 key encapsulation mechanism
     RsaOAEP3072,
+    /// BrainpoolP256r1 key encapsulation mechanism
+    BrainpoolP256r1,
+    /// BrainpoolP384r1 key encapsulation mechanism
+    BrainpoolP384r1,
 }
