@@ -52,13 +52,7 @@ impl Kem for DhKemManager {
                 let pk = x25519_dalek::PublicKey::from(&sk);
                 (pk.as_bytes().to_vec(), sk.to_bytes().to_vec())
             }
-            KemType::MlKem768 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem1024 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem512 => {
+            _ => {
                 panic!("Not implemented");
             }
         }
@@ -89,13 +83,7 @@ impl Kem for DhKemManager {
                 let ct = x25519_dalek::PublicKey::from(&sk).as_bytes().to_vec();
                 Ok((ct, shared_secret.as_bytes().to_vec()))
             }
-            KemType::MlKem768 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem1024 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem512 => {
+            _ => {
                 panic!("Not implemented");
             }
         }
@@ -117,13 +105,7 @@ impl Kem for DhKemManager {
                 let shared_secret = sk.diffie_hellman(&pk);
                 Ok(shared_secret.as_bytes().to_vec())
             }
-            KemType::MlKem768 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem1024 => {
-                panic!("Not implemented");
-            }
-            KemType::MlKem512 => {
+            _ => {
                 panic!("Not implemented");
             }
         }

@@ -11,4 +11,8 @@ pub enum KemType {
     MlKem768,
     /// MlKem1024 key encapsulation mechanism
     MlKem1024,
+    /// RSA 2048 key encapsulation mechanism
+    RsaOAEP2048,
+    /// RSA 3072 key encapsulation mechanism
+    RsaOAEP3072,
 }
