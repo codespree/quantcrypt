@@ -27,7 +27,7 @@ impl Kem for RsaKemManager {
         Self { kem_type, rng }
     }
 
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> (Vec<u8>, Vec<u8>) {
+    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut rng = if let Some(seed) = seed {
             ChaCha20Rng::from_seed(*seed)
         } else {
@@ -45,10 +45,10 @@ impl Kem for RsaKemManager {
         let priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
         let pub_key = RsaPublicKey::from(&priv_key);
 
-        (
+        Ok((
             pub_key.to_pkcs1_der().unwrap().into_vec(),
             priv_key.to_pkcs1_der().unwrap().as_bytes().to_vec(),
-        )
+        ))
     }
 
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {

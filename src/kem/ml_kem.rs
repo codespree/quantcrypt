@@ -77,7 +77,7 @@ impl Kem for MlKemManager {
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> (Vec<u8>, Vec<u8>) {
+    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         // If seed is provided, use it to generate the keypair
         let mut rng = if let Some(seed) = seed {
             ChaCha20Rng::from_seed(*seed)
@@ -86,15 +86,9 @@ impl Kem for MlKemManager {
         };
 
         match self.kem_type {
-            KemType::MlKem512 => {
-                key_gen_ml!(rng, MlKem512)
-            }
-            KemType::MlKem768 => {
-                key_gen_ml!(rng, MlKem768)
-            }
-            KemType::MlKem1024 => {
-                key_gen_ml!(rng, MlKem1024)
-            }
+            KemType::MlKem512 => Ok(key_gen_ml!(rng, MlKem512)),
+            KemType::MlKem768 => Ok(key_gen_ml!(rng, MlKem768)),
+            KemType::MlKem1024 => Ok(key_gen_ml!(rng, MlKem1024)),
             _ => {
                 panic!("Not implemented");
             }

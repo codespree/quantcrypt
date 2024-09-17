@@ -46,54 +46,48 @@ pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
     Ok(ss)
 }
 
-pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> (Vec<u8>, Vec<u8>) {
+pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut rng = if let Some(seed) = seed {
         ChaCha20Rng::from_seed(*seed)
     } else {
         ChaCha20Rng::from_entropy()
     };
 
-    // Generate 32 random bytes representing a big number
-    let mut private_key_bytes = [0u8; 32];
-    rng.fill_bytes(&mut private_key_bytes);
-
-    // Convert the random bytes to a BigNum
-    let private_key_bn = BigNum::from_slice(&private_key_bytes).unwrap();
-
     // Get the order (n) of the group
     let mut ctx = BigNumContext::new().unwrap();
     let mut order = BigNum::new().unwrap();
     group.order(&mut order, &mut ctx).unwrap();
 
-    // Compute n - 1
-    let mut n_minus_1 = BigNum::new().unwrap();
-    n_minus_1
-        .checked_sub(&order, &BigNum::from_u32(1).unwrap())
-        .unwrap();
+    // Get the bit length and byte length of the order
+    let bit_len = order.num_bits();
+    let byte_len = ((bit_len + 7) / 8) as usize;
 
-    // Ensure private_key_bn is in the range [1, n-1]
-    // private_key_bn = (private_key_bn % (n - 1)) + 1
-    let mut temp_bn = BigNum::new().unwrap();
-    temp_bn
-        .nnmod(&private_key_bn, &n_minus_1, &mut ctx)
-        .unwrap();
+    let private_key_bn = loop {
+        // Generate 32 random bytes
+        let mut private_key_bytes = vec![0u8; byte_len];
+        rng.fill_bytes(&mut private_key_bytes);
 
-    // Add 1 to the result
-    let mut private_number = BigNum::new().unwrap();
-    private_number
-        .checked_add(&temp_bn, &BigNum::from_u32(1).unwrap())
-        .unwrap();
+        // Convert private key bytes to BigNum
+        let d_candidate = BigNum::from_slice(&private_key_bytes)?;
+
+        // If d_candidate >= 1 && d_candidate < n, accept it
+        if d_candidate >= BigNum::from_u32(1)? && d_candidate < order {
+            break d_candidate;
+        }
+
+        // Otherwise, discard and try again
+    };
 
     // Create the public key point by multiplying the generator by the private number
-    let pk_point = compute_public_key(&ctx, group, &private_number).unwrap();
+    let pk_point = compute_public_key(&ctx, group, &private_key_bn).unwrap();
 
     // Create the EC_KEY
-    let sk = EcKey::from_private_components(group, &private_number, &pk_point).unwrap();
+    let sk = EcKey::from_private_components(group, &private_key_bn, &pk_point).unwrap();
 
     let pk = sk.public_key_to_der().unwrap().to_vec();
     let sk = sk.private_key_to_der().unwrap().to_vec();
 
-    (pk, sk)
+    Ok((pk, sk))
 }
 
 fn compute_public_key(

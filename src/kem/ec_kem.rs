@@ -32,7 +32,7 @@ impl Kem for DhKemManager {
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> (Vec<u8>, Vec<u8>) {
+    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         //TODO: Ensure that serialization is correct
         // If seed is provided, use it to generate the keypair
         let rng = if let Some(seed) = seed {
@@ -44,11 +44,11 @@ impl Kem for DhKemManager {
         match self.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-                get_key_pair_ossl(seed, &group)
+                Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::P384 => {
                 let group = EcGroup::from_curve_name(Nid::SECP384R1).unwrap();
-                get_key_pair_ossl(seed, &group)
+                Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::X25519 => {
                 //TODO: Check clamping
@@ -63,15 +63,15 @@ impl Kem for DhKemManager {
                 */
                 let sk = StaticSecret::random_from_rng(rng);
                 let pk = x25519_dalek::PublicKey::from(&sk);
-                (pk.as_bytes().to_vec(), sk.to_bytes().to_vec())
+                Ok((pk.as_bytes().to_vec(), sk.to_bytes().to_vec()))
             }
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1).unwrap();
-                get_key_pair_ossl(seed, &group)
+                Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::BrainpoolP384r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1).unwrap();
-                get_key_pair_ossl(seed, &group)
+                Ok(get_key_pair_ossl(seed, &group)?)
             }
             _ => {
                 panic!("Not implemented");
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn test_ec_kem_x25519() {
         let mut kem = DhKemManager::new(KemType::X25519);
-        let (pk, sk) = kem.key_gen(None);
+        let (pk, sk) = kem.key_gen(None).unwrap();
         // Assert the expected length
         assert_eq!(pk.len(), 32);
         assert_eq!(sk.len(), 32);
