@@ -22,6 +22,8 @@ macro_rules! test_kem {
         let (ct, ss) = $kem.encaps(&pk).unwrap();
         let ss2 = $kem.decaps(&sk, &ct).unwrap();
         assert_eq!(ss, ss2);
+        let byte_len = $kem.get_ss_byte_len();
+        assert_eq!(ss.len(), byte_len);
 
         // Should generate different keys
         let (pk2, sk2) = $kem.key_gen(None).unwrap();
@@ -35,6 +37,9 @@ macro_rules! test_kem {
 
         assert_eq!(pk3, pk4);
         assert_eq!(sk3, sk4);
+
+        // Length of shared secrets should be according to the curve
+        assert_eq!(ss.len(), byte_len);
     }};
 }
 

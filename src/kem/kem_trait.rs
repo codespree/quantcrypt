@@ -44,4 +44,11 @@ pub trait Kem {
     ///
     /// The shared secret
     fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>>;
+
+    /// Get the length of the shared secret in bytes
+    /// 
+    /// # Returns
+    /// 
+    /// The length of the shared secret in bytes
+    fn get_ss_byte_len(&self) -> usize;
 }

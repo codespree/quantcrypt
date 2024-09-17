@@ -11,17 +11,17 @@ use std::error;
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
-    let key = EcKey::public_key_from_der(pk).unwrap();
-    let pk: PKey<openssl::pkey::Public> = PKey::from_ec_key(key).unwrap();
+    let key = EcKey::public_key_from_der(pk)?;
+    let pk: PKey<openssl::pkey::Public> = PKey::from_ec_key(key)?;
 
     let (ct, ss) = {
         // Create a new ephemeral key
-        let ephemeral_key = EcKey::generate(group).unwrap();
-        let es = PKey::from_ec_key(ephemeral_key.clone()).unwrap();
-        let mut deriver = Deriver::new(&es).unwrap();
-        deriver.set_peer(&pk).unwrap();
-        let ss = deriver.derive_to_vec().unwrap();
-        let ct = es.public_key_to_der().unwrap();
+        let ephemeral_key = EcKey::generate(group)?;
+        let es = PKey::from_ec_key(ephemeral_key.clone())?;
+        let mut deriver = Deriver::new(&es)?;
+        deriver.set_peer(&pk)?;
+        let ss = deriver.derive_to_vec()?;
+        let ct = es.public_key_to_der()?;
         if ss.len() != 32 {
             // Handle the error if the length is incorrect
             println!("Encapsulate: Unexpected shared secret length: {}", ss.len());
@@ -32,13 +32,13 @@ pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
 }
 
 pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-    let sk = EcKey::private_key_from_der(sk).unwrap();
-    let ct = EcKey::public_key_from_der(ct).unwrap();
-    let sk = PKey::from_ec_key(sk).unwrap();
-    let ct = PKey::from_ec_key(ct).unwrap();
-    let mut deriver = Deriver::new(&sk).unwrap();
-    deriver.set_peer(&ct).unwrap();
-    let ss = deriver.derive_to_vec().unwrap();
+    let sk = EcKey::private_key_from_der(sk)?;
+    let ct = EcKey::public_key_from_der(ct)?;
+    let sk = PKey::from_ec_key(sk)?;
+    let ct = PKey::from_ec_key(ct)?;
+    let mut deriver = Deriver::new(&sk)?;
+    deriver.set_peer(&ct)?;
+    let ss = deriver.derive_to_vec()?;
     if ss.len() != 32 {
         // Handle the error if the length is incorrect
         println!("Decapsulate: Unexpected shared secret length: {}", ss.len());
@@ -54,16 +54,17 @@ pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> Result<(Ve
     };
 
     // Get the order (n) of the group
-    let mut ctx = BigNumContext::new().unwrap();
-    let mut order = BigNum::new().unwrap();
-    group.order(&mut order, &mut ctx).unwrap();
+    let mut ctx = BigNumContext::new()?;
+    let mut order = BigNum::new()?;
+    group.order(&mut order, &mut ctx)?;
 
     // Get the bit length and byte length of the order
     let bit_len = order.num_bits();
     let byte_len = ((bit_len + 7) / 8) as usize;
 
     let private_key_bn = loop {
-        // Generate 32 random bytes
+        // Generate byte_len random bytes, the associated BigNum may
+        // be larger than the order, so we need to check that it is
         let mut private_key_bytes = vec![0u8; byte_len];
         rng.fill_bytes(&mut private_key_bytes);
 
@@ -79,13 +80,13 @@ pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> Result<(Ve
     };
 
     // Create the public key point by multiplying the generator by the private number
-    let pk_point = compute_public_key(&ctx, group, &private_key_bn).unwrap();
+    let pk_point = compute_public_key(&ctx, group, &private_key_bn)?;
 
     // Create the EC_KEY
-    let sk = EcKey::from_private_components(group, &private_key_bn, &pk_point).unwrap();
+    let sk = EcKey::from_private_components(group, &private_key_bn, &pk_point)?;
 
-    let pk = sk.public_key_to_der().unwrap().to_vec();
-    let sk = sk.private_key_to_der().unwrap().to_vec();
+    let pk = sk.public_key_to_der()?.to_vec();
+    let sk = sk.private_key_to_der()?.to_vec();
 
     Ok((pk, sk))
 }

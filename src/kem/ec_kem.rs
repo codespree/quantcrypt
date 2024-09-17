@@ -43,11 +43,11 @@ impl Kem for DhKemManager {
 
         match self.kem_type {
             KemType::P256 => {
-                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::P384 => {
-                let group = EcGroup::from_curve_name(Nid::SECP384R1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::X25519 => {
@@ -66,11 +66,11 @@ impl Kem for DhKemManager {
                 Ok((pk.as_bytes().to_vec(), sk.to_bytes().to_vec()))
             }
             KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
             KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
             _ => {
@@ -106,11 +106,11 @@ impl Kem for DhKemManager {
                 Ok((ct, shared_secret.as_bytes().to_vec()))
             }
             KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 encaps_ossl(pk, &group)
             }
             KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1).unwrap();
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
                 encaps_ossl(pk, &group)
             }
             _ => {
@@ -143,6 +143,24 @@ impl Kem for DhKemManager {
             }
             KemType::BrainpoolP256r1 => decaps_ossl(sk, ct),
             KemType::BrainpoolP384r1 => decaps_ossl(sk, ct),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
+    /// Get the length of the shared secret in bytes
+    /// 
+    /// # Returns
+    /// 
+    /// The length of the shared secret in bytes
+    fn get_ss_byte_len(&self) -> usize {
+        match self.kem_type {
+            KemType::P256 => 32,
+            KemType::P384 => 48,
+            KemType::X25519 => 32,
+            KemType::BrainpoolP256r1 => 32,
+            KemType::BrainpoolP384r1 => 48,
             _ => {
                 panic!("Not implemented");
             }

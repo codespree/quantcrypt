@@ -53,7 +53,7 @@ fn get_decapsulation_key_obj<K: KemCore>(sk: &[u8]) -> Result<K::DecapsulationKe
 ///
 /// The shared secret (ss)
 fn decapsulate<K: KemCore>(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-    let c = Ciphertext::<K>::try_from(ct).unwrap();
+    let c = Ciphertext::<K>::try_from(ct)?;
     let dk = get_decapsulation_key_obj::<K>(sk)?;
     let session_key = dk.decapsulate(&c).unwrap();
     Ok(session_key.as_slice().to_vec())
@@ -136,6 +136,17 @@ impl Kem for MlKemManager {
             KemType::MlKem512 => decapsulate::<MlKem512>(sk, ct),
             KemType::MlKem768 => decapsulate::<MlKem768>(sk, ct),
             KemType::MlKem1024 => decapsulate::<MlKem1024>(sk, ct),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
+    fn get_ss_byte_len(&self) -> usize {
+        match self.kem_type {
+            KemType::MlKem512 => 32,
+            KemType::MlKem768 => 32,
+            KemType::MlKem1024 => 32,
             _ => {
                 panic!("Not implemented");
             }

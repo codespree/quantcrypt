@@ -46,8 +46,8 @@ impl Kem for RsaKemManager {
         let pub_key = RsaPublicKey::from(&priv_key);
 
         Ok((
-            pub_key.to_pkcs1_der().unwrap().into_vec(),
-            priv_key.to_pkcs1_der().unwrap().as_bytes().to_vec(),
+            pub_key.to_pkcs1_der()?.into_vec(),
+            priv_key.to_pkcs1_der()?.as_bytes().to_vec(),
         ))
     }
 
@@ -72,7 +72,7 @@ impl Kem for RsaKemManager {
         let pub_key = RsaPublicKey::from_pkcs1_der(pk)?;
 
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
-        let ct = pub_key.encrypt(&mut self.rng, padding, &ss).unwrap();
+        let ct = pub_key.encrypt(&mut self.rng, padding, &ss)?;
         Ok((ct, ss))
     }
 
@@ -82,6 +82,15 @@ impl Kem for RsaKemManager {
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
         let ss = priv_key.decrypt(padding, ct)?;
         Ok(ss)
+    }
+
+    /// Get the length of the shared secret in bytes
+    /// 
+    /// # Returns
+    /// 
+    /// The length of the shared secret in bytes
+    fn get_ss_byte_len(&self) -> usize {
+        32
     }
 }
 
