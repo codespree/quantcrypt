@@ -1,3 +1,4 @@
+use openssl::pkey::PKey;
 use rand::RngCore;
 use rand_chacha::ChaCha20Rng;
 use rand_core::SeedableRng;
@@ -8,7 +9,7 @@ use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
 use rsa::{
     oaep::Oaep,
-    pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
+    pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey},
     RsaPrivateKey, RsaPublicKey,
 };
 
@@ -18,20 +19,27 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// A KEM manager for the RSA-KEM method
 pub struct RsaKemManager {
     kem_type: KemType,
-    rng: ChaCha20Rng,
 }
 
 impl Kem for RsaKemManager {
+    /// Create a new KEM instance
+    ///
+    /// # Arguments
+    ///
+    /// * `kem_type` - The type of KEM to create
+    ///
+    /// # Returns
+    ///
+    /// A new KEM instance
     fn new(kem_type: KemType) -> Self {
-        let rng = ChaCha20Rng::from_entropy();
-        Self { kem_type, rng }
+        Self { kem_type }
     }
 
     fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut rng = if let Some(seed) = seed {
             ChaCha20Rng::from_seed(*seed)
         } else {
-            self.rng.clone()
+            ChaCha20Rng::from_entropy()
         };
 
         let bits = match self.kem_type {
@@ -42,13 +50,21 @@ impl Kem for RsaKemManager {
             }
         };
 
-        let priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
-        let pub_key = RsaPublicKey::from(&priv_key);
+        // Use the RSA crate as we can specify the rng
+        let sk = RsaPrivateKey::new(&mut rng, bits)?;
+        let sd = sk.to_pkcs1_der()?;
 
-        Ok((
-            pub_key.to_pkcs1_der()?.into_vec(),
-            priv_key.to_pkcs1_der()?.as_bytes().to_vec(),
-        ))
+        // PKCS1 DER format is compatible with OpenSSL
+        let sk = sd.as_bytes();
+
+        // Ensure compatibility with OpenSSL by creating a PKey object
+        let sk = PKey::from_rsa(openssl::rsa::Rsa::private_key_from_der(sk)?)?;
+
+        // Return keys in the SPKI format of OpenSSL
+        let pk = sk.public_key_to_der()?;
+        let sk = sk.private_key_to_der()?;
+
+        Ok((pk, sk))
     }
 
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
@@ -67,12 +83,21 @@ impl Kem for RsaKemManager {
          */
         // Generate a shared secret (32 bits)
         let mut ss = vec![0u8; 32];
-        self.rng.fill_bytes(&mut ss);
+        let mut rng = ChaCha20Rng::from_entropy();
+        rng.fill_bytes(&mut ss);
 
-        let pub_key = RsaPublicKey::from_pkcs1_der(pk)?;
+        let pk_obj = PKey::from_rsa(openssl::rsa::Rsa::public_key_from_der(pk)?)?;
 
+        // Extract the RSA public key from the PKey<Public>
+        let rsa = pk_obj.rsa()?;
+
+        // Serialize the RSA public key to PKCS#1 DER format
+        // This converts it from SPKI to PKCS#1
+        let pkcs1_der = rsa.public_key_to_der_pkcs1()?;
+
+        let pub_key = RsaPublicKey::from_pkcs1_der(&pkcs1_der)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
-        let ct = pub_key.encrypt(&mut self.rng, padding, &ss)?;
+        let ct = pub_key.encrypt(&mut rng, padding, &ss)?;
         Ok((ct, ss))
     }
 
