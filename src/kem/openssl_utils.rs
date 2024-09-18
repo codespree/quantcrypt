@@ -118,6 +118,30 @@ pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
     Ok(ss)
 }
 
+/// Pad a BigNum to a desired length (with leading zeros)
+///
+/// # Arguments
+///
+/// * `bn` - The BigNum to pad
+/// * `desired_length` - The desired length of the padded BigNum
+///
+/// # Returns
+///
+/// The padded BigNum as a byte vector
+fn pad_bignum_to_length(bn: &BigNum, desired_length: usize) -> Vec<u8> {
+    let bn_bytes = bn.to_vec();
+    if bn_bytes.len() > desired_length {
+        panic!("BigNum is already larger than desired length");
+    }
+
+    let padding_needed = desired_length - bn_bytes.len();
+    let mut padded_bn_bytes = Vec::with_capacity(desired_length);
+    padded_bn_bytes.extend(std::iter::repeat(0u8).take(padding_needed));
+    padded_bn_bytes.extend_from_slice(&bn_bytes);
+
+    padded_bn_bytes
+}
+
 /// Get an EC key pair using the OpenSSL library
 ///
 /// # Arguments
@@ -176,23 +200,9 @@ pub fn get_key_pair_ec_based(
     )?;
 
     // Secret key should be field element as octet string
-    let sks = private_key_bn.to_vec();
+    let sks = pad_bignum_to_length(&private_key_bn, byte_len);
 
-    // Check if padding is needed
-    let padding_needed = if sks.len() < byte_len {
-        byte_len - sks.len()
-    } else {
-        0
-    };
-
-    // Pad the secret key with zeros if needed
-    if padding_needed > 0 {
-        let mut padded_sks = vec![0u8; byte_len];
-        padded_sks[padding_needed..].copy_from_slice(&sks);
-        Ok((pks, padded_sks))
-    } else {
-        Ok((pks, sks))
-    }
+    Ok((pks, sks))
 }
 
 /// Compute the public key from the private key for an EC curve
@@ -277,4 +287,15 @@ pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8
     let pk = sk_obj.raw_public_key()?;
 
     Ok((pk, sk))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_pad_bignum_to_length() {
+        let bn = BigNum::from_u32(0x1234).unwrap();
+        let padded_bn = pad_bignum_to_length(&bn, 4);
+        assert_eq!(padded_bn, vec![0, 0, 0x12, 0x34]);
+    }
 }
