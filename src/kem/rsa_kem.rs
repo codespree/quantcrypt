@@ -54,6 +54,7 @@ impl Kem for RsaKemManager {
         let bits = match self.kem_type {
             KemType::RsaOAEP2048 => 2048,
             KemType::RsaOAEP3072 => 3072,
+            KemType::RsaOAEP4096 => 4096,
             _ => {
                 panic!("Not implemented");
             }
@@ -85,7 +86,7 @@ impl Kem for RsaKemManager {
     /// # Returns
     ///
     /// A tuple containing the shared secret and ciphertext (ss, ct)
-    fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         /*
         +====================+===================================+
         | RSA-OAEP Parameter | Value                             |
@@ -119,7 +120,7 @@ impl Kem for RsaKemManager {
         Ok((ss, ct))
     }
 
-    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Create a private key from the DER-encoded bytes
         let priv_key = RsaPrivateKey::from_pkcs1_der(sk)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
@@ -155,6 +156,7 @@ impl Kem for RsaKemManager {
         match self.kem_type {
             KemType::RsaOAEP2048 => Some(256),
             KemType::RsaOAEP3072 => Some(384),
+            KemType::RsaOAEP4096 => Some(512),
             _ => {
                 panic!("Not implemented");
             }
@@ -195,6 +197,12 @@ mod tests {
     #[test]
     fn test_rsa_kem_3072() {
         let mut kem = RsaKemManager::new(KemType::RsaOAEP3072);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_rsa_kem_4096() {
+        let mut kem = RsaKemManager::new(KemType::RsaOAEP4096);
         test_kem!(kem);
     }
 }

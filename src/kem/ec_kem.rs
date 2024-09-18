@@ -69,7 +69,7 @@ impl Kem for DhKemManager {
     /// # Returns
     ///
     /// A tuple containing the shared secret and ciphertext (ss, ct)
-    fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_type {
             KemType::P256 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?),
             KemType::P384 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::SECP384R1)?),
@@ -99,7 +99,7 @@ impl Kem for DhKemManager {
     /// # Returns
     ///
     /// The shared secret (ss)
-    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         match self.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;

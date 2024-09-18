@@ -159,7 +159,6 @@ pub fn get_key_pair_ec_based(
         if d_candidate >= BigNum::from_u32(1)? && d_candidate < order {
             break d_candidate;
         }
-
         // Otherwise, discard and try again
     };
 
@@ -179,7 +178,21 @@ pub fn get_key_pair_ec_based(
     // Secret key should be field element as octet string
     let sks = private_key_bn.to_vec();
 
-    Ok((pks, sks))
+    // Check if padding is needed
+    let padding_needed = if sks.len() < byte_len {
+        byte_len - sks.len()
+    } else {
+        0
+    };
+
+    // Pad the secret key with zeros if needed
+    if padding_needed > 0 {
+        let mut padded_sks = vec![0u8; byte_len];
+        padded_sks[padding_needed..].copy_from_slice(&sks);
+        Ok((pks, padded_sks))
+    } else {
+        Ok((pks, sks))
+    }
 }
 
 /// Compute the public key from the private key for an EC curve

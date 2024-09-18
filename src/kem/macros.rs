@@ -30,7 +30,7 @@ macro_rules! test_kem {
             assert_eq!(sk.len(), expected_sk_len);
         }
 
-        let (ss, ct) = $kem.encaps(&pk).unwrap();
+        let (ss, ct) = $kem.encap(&pk).unwrap();
         let expected_ct_len = $kem.get_ct_byte_len();
         if let Some(expected_ct_len) = expected_ct_len {
             assert_eq!(ct.len(), expected_ct_len);
@@ -39,7 +39,7 @@ macro_rules! test_kem {
         let expected_ss_len = $kem.get_ss_byte_len();
         assert_eq!(ss.len(), expected_ss_len);
 
-        let ss2 = $kem.decaps(&sk, &ct).unwrap();
+        let ss2 = $kem.decap(&sk, &ct).unwrap();
         assert_eq!(ss, ss2);
 
         // Should generate different keys

@@ -104,7 +104,7 @@ impl Kem for MlKemManager {
     /// # Returns
     ///
     /// A tuple containing the shares secret and ciphertext (ss, ct)
-    fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_type {
             KemType::MlKem512 => {
                 encapsulate_ml!(self, MlKem512, pk)
@@ -131,7 +131,7 @@ impl Kem for MlKemManager {
     /// # Returns
     ///
     /// The shared secret
-    fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+    fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         match self.kem_type {
             KemType::MlKem512 => decapsulate::<MlKem512>(sk, ct),
             KemType::MlKem768 => decapsulate::<MlKem768>(sk, ct),
