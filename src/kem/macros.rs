@@ -11,7 +11,7 @@ macro_rules! encapsulate_ml {
         let (ct, ss) = ek.encapsulate(&mut $self.rng).unwrap();
         let ct = ct.as_slice().to_vec();
         let ss = ss.as_slice().to_vec();
-        Ok((ct, ss))
+        Ok((ss, ct))
     }};
 }
 
@@ -30,7 +30,7 @@ macro_rules! test_kem {
             assert_eq!(sk.len(), expected_sk_len);
         }
 
-        let (ct, ss) = $kem.encaps(&pk).unwrap();
+        let (ss, ct) = $kem.encaps(&pk).unwrap();
         let expected_ct_len = $kem.get_ct_byte_len();
         if let Some(expected_ct_len) = expected_ct_len {
             assert_eq!(ct.len(), expected_ct_len);

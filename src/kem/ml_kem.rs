@@ -103,7 +103,7 @@ impl Kem for MlKemManager {
     ///
     /// # Returns
     ///
-    /// A tuple containing the ciphertext and shared secret (ct, ss)
+    /// A tuple containing the shares secret and ciphertext (ss, ct)
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_type {
             KemType::MlKem512 => {

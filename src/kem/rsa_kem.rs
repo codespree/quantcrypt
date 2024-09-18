@@ -35,6 +35,15 @@ impl Kem for RsaKemManager {
         Self { kem_type }
     }
 
+    /// Generate a keypair
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - A 32-byte seed
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the public and secret keys (pk, sk)
     fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut rng = if let Some(seed) = seed {
             ChaCha20Rng::from_seed(*seed)
@@ -67,6 +76,15 @@ impl Kem for RsaKemManager {
         Ok((pk, sk))
     }
 
+    /// Encapsulate a public key
+    ///
+    /// # Arguments
+    ///
+    /// * `pk` - The public key to encapsulate
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the shared secret and ciphertext (ss, ct)
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         /*
         +====================+===================================+
@@ -98,7 +116,7 @@ impl Kem for RsaKemManager {
         let pub_key = RsaPublicKey::from_pkcs1_der(&pkcs1_der)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
         let ct = pub_key.encrypt(&mut rng, padding, &ss)?;
-        Ok((ct, ss))
+        Ok((ss, ct))
     }
 
     fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {

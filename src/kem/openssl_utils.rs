@@ -19,7 +19,7 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 ///
 /// # Returns
 ///
-/// A tuple containing the ciphertext and shared secret (ct, ss)
+/// A tuple containing the shared secret and ciphertext (ss, ct)
 pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
     // pk is the public key in uncompressed form, so we need to convert it to an EcKey
     // TODO: Should BignumContext be reused?
@@ -30,7 +30,7 @@ pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)>
     let key = EcKey::from_public_key(group, &pk_point)?;
     let pk: PKey<openssl::pkey::Public> = PKey::from_ec_key(key)?;
 
-    let (ct, ss) = {
+    let (ss, ct) = {
         // Create a new ephemeral key
         let ephemeral_key = EcKey::generate(group)?;
         let es = PKey::from_ec_key(ephemeral_key.clone())?;
@@ -43,9 +43,9 @@ pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)>
             openssl::ec::PointConversionForm::UNCOMPRESSED,
             &mut ctx,
         )?;
-        (ct, ss)
+        (ss, ct)
     };
-    Ok((ct, ss))
+    Ok((ss, ct))
 }
 
 /// Encapsulate a public key using PKey API
@@ -57,7 +57,7 @@ pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)>
 ///
 /// # Returns
 ///
-/// A tuple containing the ciphertext and shared secret (ct, ss)
+/// A tuple containing the shared secret and ciphertext (ss, ct)
 pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     let (_, esk) = get_keypair_pkey_based(None, id)?;
     let esk = PKey::private_key_from_raw_bytes(&esk, id)?;
@@ -66,7 +66,7 @@ pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     deriver.set_peer(&pk)?;
     let ss = deriver.derive_to_vec()?;
     let ct = esk.raw_public_key()?;
-    Ok((ct, ss))
+    Ok((ss, ct))
 }
 
 /// Decapsulate a ciphertext using the ECDH key exchange method
