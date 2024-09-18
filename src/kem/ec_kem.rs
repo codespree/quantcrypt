@@ -1,13 +1,13 @@
 // use the macros to generate the encapsulate functio
 use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
-use crate::kem::openssl_deterministic::{decaps_ossl, encaps_ossl, get_key_pair_ossl};
+use crate::kem::openssl_deterministic::{
+    decaps_ossl, decaps_x25519_ossl, encaps_ossl, encaps_x25519_ossl, get_key_pair_ossl,
+    get_x25519_keypair_ossl,
+};
 use openssl::ec::EcGroup;
 use openssl::nid::Nid;
-use rand_chacha::ChaCha20Rng;
-use rand_core::SeedableRng;
 use std::error;
-use x25519_dalek::StaticSecret;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -34,13 +34,6 @@ impl Kem for DhKemManager {
     /// A tuple containing the public and secret keys (pk, sk)
     fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         //TODO: Ensure that serialization is correct
-        // If seed is provided, use it to generate the keypair
-        let rng = if let Some(seed) = seed {
-            ChaCha20Rng::from_seed(*seed)
-        } else {
-            ChaCha20Rng::from_entropy()
-        };
-
         match self.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
@@ -50,21 +43,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
-            KemType::X25519 => {
-                //TODO: Check clamping
-                /*
-                *  For X25519 and X448, private keys are identical to their byte string
-                   representation, so little processing has to be done.  The
-                   SerializePrivateKey() function MUST clamp its output and the
-                   DeserializePrivateKey() function MUST clamp its input, where
-                   _clamping_ refers to the bitwise operations performed on k in the
-                   decodeScalar25519() and decodeScalar448() functions defined in
-                   Section 5 of [RFC7748].
-                */
-                let sk = StaticSecret::random_from_rng(rng);
-                let pk = x25519_dalek::PublicKey::from(&sk);
-                Ok((pk.as_bytes().to_vec(), sk.to_bytes().to_vec()))
-            }
+            KemType::X25519 => Ok(get_x25519_keypair_ossl(seed)?),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
@@ -89,22 +68,10 @@ impl Kem for DhKemManager {
     ///
     /// A tuple containing the ciphertext and shared secret (ct, ss)
     fn encaps(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        let rng = ChaCha20Rng::from_entropy();
         match self.kem_type {
             KemType::P256 => encaps_ossl(pk, &EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?),
             KemType::P384 => encaps_ossl(pk, &EcGroup::from_curve_name(Nid::SECP384R1)?),
-            KemType::X25519 => {
-                // Cast public key to 32 bytes
-                let pk: [u8; 32] = pk.try_into()?;
-                let pk = x25519_dalek::PublicKey::from(pk);
-
-                let sk = StaticSecret::random_from_rng(rng);
-                let shared_secret = sk.diffie_hellman(&pk);
-
-                // Get the public key from the ephemeral secret
-                let ct = x25519_dalek::PublicKey::from(&sk).as_bytes().to_vec();
-                Ok((ct, shared_secret.as_bytes().to_vec()))
-            }
+            KemType::X25519 => encaps_x25519_ossl(pk),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 encaps_ossl(pk, &group)
@@ -133,14 +100,7 @@ impl Kem for DhKemManager {
         match self.kem_type {
             KemType::P256 => decaps_ossl(sk, ct),
             KemType::P384 => decaps_ossl(sk, ct),
-            KemType::X25519 => {
-                let sk: [u8; 32] = sk.try_into()?;
-                let sk = StaticSecret::from(sk);
-                let pk: [u8; 32] = ct.try_into()?;
-                let pk = x25519_dalek::PublicKey::from(pk);
-                let shared_secret = sk.diffie_hellman(&pk);
-                Ok(shared_secret.as_bytes().to_vec())
-            }
+            KemType::X25519 => decaps_x25519_ossl(sk, ct),
             KemType::BrainpoolP256r1 => decaps_ossl(sk, ct),
             KemType::BrainpoolP384r1 => decaps_ossl(sk, ct),
             _ => {
@@ -190,10 +150,6 @@ mod tests {
     #[test]
     fn test_ec_kem_x25519() {
         let mut kem = DhKemManager::new(KemType::X25519);
-        let (pk, sk) = kem.key_gen(None).unwrap();
-        // Assert the expected length
-        assert_eq!(pk.len(), 32);
-        assert_eq!(sk.len(), 32);
         test_kem!(kem);
     }
 

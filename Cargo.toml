@@ -11,7 +11,6 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
 rsa = "0.9.6"
-x25519-dalek = { version="2.0.1", features=["static_secrets"]}
 openssl = { version = "*", features = ["vendored"] }
 sha2 = "0.10.8"
 
