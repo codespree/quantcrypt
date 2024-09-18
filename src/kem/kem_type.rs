@@ -19,4 +19,6 @@ pub enum KemType {
     BrainpoolP256r1,
     /// BrainpoolP384r1 key encapsulation mechanism
     BrainpoolP384r1,
+    /// X448 key encapsulation mechanism
+    X448,
 }

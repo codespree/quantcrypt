@@ -2,11 +2,12 @@
 use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
 use crate::kem::openssl_deterministic::{
-    decaps_ossl, decaps_x25519_ossl, encaps_ossl, encaps_x25519_ossl, get_key_pair_ossl,
-    get_x25519_keypair_ossl,
+    decaps_ossl, decaps_pkey_based_ossl, encaps_ossl, encaps_pkey_based_ossl, get_key_pair_ossl,
+    get_pkey_based_keypair_ossl,
 };
 use openssl::ec::EcGroup;
 use openssl::nid::Nid;
+use openssl::pkey::Id;
 use std::error;
 
 // Change the alias to use `Box<dyn error::Error>`.
@@ -43,7 +44,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
-            KemType::X25519 => Ok(get_x25519_keypair_ossl(seed)?),
+            KemType::X25519 => get_pkey_based_keypair_ossl(seed, Id::X25519),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
@@ -52,6 +53,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
                 Ok(get_key_pair_ossl(seed, &group)?)
             }
+            KemType::X448 => get_pkey_based_keypair_ossl(seed, Id::X448),
             _ => {
                 panic!("Not implemented");
             }
@@ -71,7 +73,7 @@ impl Kem for DhKemManager {
         match self.kem_type {
             KemType::P256 => encaps_ossl(pk, &EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?),
             KemType::P384 => encaps_ossl(pk, &EcGroup::from_curve_name(Nid::SECP384R1)?),
-            KemType::X25519 => encaps_x25519_ossl(pk),
+            KemType::X25519 => encaps_pkey_based_ossl(pk, Id::X25519),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 encaps_ossl(pk, &group)
@@ -80,6 +82,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
                 encaps_ossl(pk, &group)
             }
+            KemType::X448 => encaps_pkey_based_ossl(pk, Id::X448),
             _ => {
                 panic!("Not implemented");
             }
@@ -100,9 +103,10 @@ impl Kem for DhKemManager {
         match self.kem_type {
             KemType::P256 => decaps_ossl(sk, ct),
             KemType::P384 => decaps_ossl(sk, ct),
-            KemType::X25519 => decaps_x25519_ossl(sk, ct),
+            KemType::X25519 => decaps_pkey_based_ossl(sk, ct),
             KemType::BrainpoolP256r1 => decaps_ossl(sk, ct),
             KemType::BrainpoolP384r1 => decaps_ossl(sk, ct),
+            KemType::X448 => decaps_pkey_based_ossl(sk, ct),
             _ => {
                 panic!("Not implemented");
             }
@@ -121,6 +125,7 @@ impl Kem for DhKemManager {
             KemType::X25519 => 32,
             KemType::BrainpoolP256r1 => 32,
             KemType::BrainpoolP384r1 => 48,
+            KemType::X448 => 56,
             _ => {
                 panic!("Not implemented");
             }
@@ -162,6 +167,12 @@ mod tests {
     #[test]
     fn test_ec_kem_brainpool_p384r1() {
         let mut kem = DhKemManager::new(KemType::BrainpoolP384r1);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_ec_kem_x448() {
+        let mut kem = DhKemManager::new(KemType::X448);
         test_kem!(kem);
     }
 }

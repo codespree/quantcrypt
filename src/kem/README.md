@@ -13,7 +13,7 @@ KEM for Elliptic Curve and Post-Quantum Hybrid Key Exchange.
 | X25519            |      ✅     |
 | brainpoolP256r1   |      ✅     |
 | brainpoolP384r1   |      ✅     |
-| x448              |      ❌     |
+| x448              |      ✅     |
 
 ## RSA-OAEP Key Encapsulation Mechanisms (KEM)
 | Strength          | Implemented |

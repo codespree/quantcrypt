@@ -41,7 +41,8 @@ pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
     Ok((ct, ss))
 }
 
-/// Encapsulate a public key using the X25519 key exchange method
+/// Encapsulate a public key using PKey API
+/// This method is used for X25519 and X448 which are not supported by the `EcKey` API.
 ///
 /// # Arguments
 ///
@@ -50,8 +51,8 @@ pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
 /// # Returns
 ///
 /// A tuple containing the ciphertext and shared secret (ct, ss)
-pub fn encaps_x25519_ossl(pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-    let (_, esk) = get_x25519_keypair_ossl(None)?;
+pub fn encaps_pkey_based_ossl(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
+    let (_, esk) = get_pkey_based_keypair_ossl(None, id)?;
     let esk = PKey::private_key_from_der(&esk)?;
     let pk = PKey::public_key_from_der(pk)?;
     let mut deriver = Deriver::new(&esk)?;
@@ -86,7 +87,8 @@ pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
     Ok(ss)
 }
 
-/// Decapsulate a ciphertext using the X25519 key exchange method
+/// Decapsulate a ciphertext using the PKey API
+/// This method is used for X25519 and X448 which are not supported by the `EcKey` API.
 ///
 /// # Arguments
 ///
@@ -95,7 +97,7 @@ pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
 ///
 /// # Returns
 /// The shared secret
-pub fn decaps_x25519_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
+pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
     let sk = PKey::private_key_from_der(sk)?;
     let ct = PKey::public_key_from_der(ct)?;
     let mut deriver = Deriver::new(&sk)?;
@@ -186,7 +188,23 @@ fn compute_public_key(
     Ok(public_key_point)
 }
 
-/// Get an X25519 key pair using the OpenSSL library
+pub fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
+    match id {
+        Id::X448 => {
+            sk[0] &= 252;
+            sk[55] |= 128;
+        }
+        Id::X25519 => {
+            sk[0] &= 248;
+            sk[31] &= 127;
+            sk[31] |= 64;
+        }
+        _ => panic!("Unsupported ID"),
+    }
+}
+
+/// Get an elliptic curve key pair using a PKey based method. This is used for X448, and X25519
+/// which are not supported by the `EcKey` API.
 ///
 /// # Arguments
 ///
@@ -195,23 +213,32 @@ fn compute_public_key(
 /// # Returns
 ///
 /// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_x25519_keypair_ossl(seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn get_pkey_based_keypair_ossl(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut rng = if let Some(seed) = seed {
         ChaCha20Rng::from_seed(*seed)
     } else {
         ChaCha20Rng::from_entropy()
     };
 
-    // Generate 32 random bytes
-    let mut sk: [u8; 32] = [0; 32];
-    rng.fill_bytes(&mut sk);
+    // Generate 56 random bytes
+    let mut sk = match id {
+        Id::X448 => {
+            let mut sk: [u8; 56] = [0; 56];
+            rng.fill_bytes(&mut sk);
+            sk.to_vec()
+        }
+        Id::X25519 => {
+            let mut sk: [u8; 32] = [0; 32];
+            rng.fill_bytes(&mut sk);
+            sk.to_vec()
+        }
+        _ => panic!("Unsupported ID"),
+    };
 
     // Apply clamping
-    sk[0] &= 248;
-    sk[31] &= 127;
-    sk[31] |= 64;
+    clamp_pkey_based_sk(&mut sk, id);
 
-    let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X25519)?;
+    let sk_obj = PKey::private_key_from_raw_bytes(&sk, id)?;
     let pk = sk_obj.public_key_to_der()?;
     // Get sk as DER
     let sk = sk_obj.private_key_to_der()?;
