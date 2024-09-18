@@ -20,8 +20,14 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// # Returns
 ///
 /// A tuple containing the ciphertext and shared secret (ct, ss)
-pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
-    let key = EcKey::public_key_from_der(pk)?;
+pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
+    // pk is the public key in uncompressed form, so we need to convert it to an EcKey
+    // TODO: Should BignumContext be reused?
+    let mut ctx = BigNumContext::new()?;
+    let pk_point = EcPoint::from_bytes(group, pk, &mut ctx)?;
+
+    // Create the public key
+    let key = EcKey::from_public_key(group, &pk_point)?;
     let pk: PKey<openssl::pkey::Public> = PKey::from_ec_key(key)?;
 
     let (ct, ss) = {
@@ -31,11 +37,12 @@ pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut deriver = Deriver::new(&es)?;
         deriver.set_peer(&pk)?;
         let ss = deriver.derive_to_vec()?;
-        let ct = es.public_key_to_der()?;
-        if ss.len() != 32 {
-            // Handle the error if the length is incorrect
-            println!("Encapsulate: Unexpected shared secret length: {}", ss.len());
-        }
+        // Public key should be uncompressed point as octet string
+        let ct = ephemeral_key.public_key().to_bytes(
+            group,
+            openssl::ec::PointConversionForm::UNCOMPRESSED,
+            &mut ctx,
+        )?;
         (ct, ss)
     };
     Ok((ct, ss))
@@ -51,14 +58,14 @@ pub fn encaps_ossl(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
 /// # Returns
 ///
 /// A tuple containing the ciphertext and shared secret (ct, ss)
-pub fn encaps_pkey_based_ossl(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
-    let (_, esk) = get_pkey_based_keypair_ossl(None, id)?;
-    let esk = PKey::private_key_from_der(&esk)?;
-    let pk = PKey::public_key_from_der(pk)?;
+pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
+    let (_, esk) = get_keypair_pkey_based(None, id)?;
+    let esk = PKey::private_key_from_raw_bytes(&esk, id)?;
+    let pk = PKey::public_key_from_raw_bytes(pk, id)?;
     let mut deriver = Deriver::new(&esk)?;
     deriver.set_peer(&pk)?;
     let ss = deriver.derive_to_vec()?;
-    let ct = esk.public_key_to_der()?;
+    let ct = esk.raw_public_key()?;
     Ok((ct, ss))
 }
 
@@ -72,18 +79,23 @@ pub fn encaps_pkey_based_ossl(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
 /// # Returns
 ///
 /// The shared secret
-pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-    let sk = EcKey::private_key_from_der(sk)?;
-    let ct = EcKey::public_key_from_der(ct)?;
+pub fn decaps_ec_based(sk: &[u8], ct: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
+    let mut ctx = BigNumContext::new()?;
+
+    // sk is the secret key in octet string form
+    let sk_n = BigNum::from_slice(sk)?;
+    let pk_p = compute_public_key(&ctx, group, &sk_n)?;
+    let sk = EcKey::from_private_components(group, &sk_n, &pk_p)?;
+
+    // ct is the public key in uncompressed form
+    let ct_point = EcPoint::from_bytes(group, ct, &mut ctx)?;
+    let ct = EcKey::from_public_key(group, &ct_point)?;
+
     let sk = PKey::from_ec_key(sk)?;
     let ct = PKey::from_ec_key(ct)?;
     let mut deriver = Deriver::new(&sk)?;
     deriver.set_peer(&ct)?;
     let ss = deriver.derive_to_vec()?;
-    if ss.len() != 32 {
-        // Handle the error if the length is incorrect
-        println!("Decapsulate: Unexpected shared secret length: {}", ss.len());
-    }
     Ok(ss)
 }
 
@@ -97,9 +109,9 @@ pub fn decaps_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
 ///
 /// # Returns
 /// The shared secret
-pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-    let sk = PKey::private_key_from_der(sk)?;
-    let ct = PKey::public_key_from_der(ct)?;
+pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
+    let sk = PKey::private_key_from_raw_bytes(sk, id)?;
+    let ct = PKey::public_key_from_raw_bytes(ct, id)?;
     let mut deriver = Deriver::new(&sk)?;
     deriver.set_peer(&ct)?;
     let ss = deriver.derive_to_vec()?;
@@ -115,7 +127,10 @@ pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
 /// # Returns
 ///
 /// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn get_key_pair_ec_based(
+    seed: Option<&[u8; 32]>,
+    group: &EcGroup,
+) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut rng = if let Some(seed) = seed {
         ChaCha20Rng::from_seed(*seed)
     } else {
@@ -151,13 +166,20 @@ pub fn get_key_pair_ossl(seed: Option<&[u8; 32]>, group: &EcGroup) -> Result<(Ve
     // Create the public key point by multiplying the generator by the private number
     let pk_point = compute_public_key(&ctx, group, &private_key_bn)?;
 
-    // Create the EC_KEY
-    let sk = EcKey::from_private_components(group, &private_key_bn, &pk_point)?;
+    // Create the EC_KEY (just test validity)
+    EcKey::from_private_components(group, &private_key_bn, &pk_point)?;
 
-    let pk = sk.public_key_to_der()?;
-    let sk = sk.private_key_to_der()?;
+    // Public key should be uncompressed point as octet string
+    let pks = pk_point.to_bytes(
+        group,
+        openssl::ec::PointConversionForm::UNCOMPRESSED,
+        &mut ctx,
+    )?;
 
-    Ok((pk, sk))
+    // Secret key should be field element as octet string
+    let sks = private_key_bn.to_vec();
+
+    Ok((pks, sks))
 }
 
 /// Compute the public key from the private key for an EC curve
@@ -213,7 +235,7 @@ pub fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
 /// # Returns
 ///
 /// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_pkey_based_keypair_ossl(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut rng = if let Some(seed) = seed {
         ChaCha20Rng::from_seed(*seed)
     } else {
@@ -239,8 +261,7 @@ pub fn get_pkey_based_keypair_ossl(seed: Option<&[u8; 32]>, id: Id) -> Result<(V
     clamp_pkey_based_sk(&mut sk, id);
 
     let sk_obj = PKey::private_key_from_raw_bytes(&sk, id)?;
-    let pk = sk_obj.public_key_to_der()?;
-    // Get sk as DER
-    let sk = sk_obj.private_key_to_der()?;
+    let pk = sk_obj.raw_public_key()?;
+
     Ok((pk, sk))
 }

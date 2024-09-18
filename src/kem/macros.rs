@@ -19,11 +19,28 @@ macro_rules! encapsulate_ml {
 macro_rules! test_kem {
     ($kem:expr) => {{
         let (pk, sk) = $kem.key_gen(None).unwrap();
+
+        let expected_pk_len = $kem.get_pk_byte_len();
+        if let Some(expected_pk_len) = expected_pk_len {
+            assert_eq!(pk.len(), expected_pk_len);
+        }
+
+        let expected_sk_len = $kem.get_sk_byte_len();
+        if let Some(expected_sk_len) = expected_sk_len {
+            assert_eq!(sk.len(), expected_sk_len);
+        }
+
         let (ct, ss) = $kem.encaps(&pk).unwrap();
+        let expected_ct_len = $kem.get_ct_byte_len();
+        if let Some(expected_ct_len) = expected_ct_len {
+            assert_eq!(ct.len(), expected_ct_len);
+        }
+
+        let expected_ss_len = $kem.get_ss_byte_len();
+        assert_eq!(ss.len(), expected_ss_len);
+
         let ss2 = $kem.decaps(&sk, &ct).unwrap();
         assert_eq!(ss, ss2);
-        let byte_len = $kem.get_ss_byte_len();
-        assert_eq!(ss.len(), byte_len);
 
         // Should generate different keys
         let (pk2, sk2) = $kem.key_gen(None).unwrap();
@@ -39,7 +56,7 @@ macro_rules! test_kem {
         assert_eq!(sk3, sk4);
 
         // Length of shared secrets should be according to the curve
-        assert_eq!(ss.len(), byte_len);
+        assert_eq!(ss.len(), expected_ss_len);
     }};
 }
 

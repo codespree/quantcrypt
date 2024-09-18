@@ -45,10 +45,45 @@ pub trait Kem {
     /// The shared secret
     fn decaps(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>>;
 
-    /// Get the length of the shared secret in bytes
+    /// Get the expected length of the shared secret in bytes
     ///
     /// # Returns
     ///
     /// The length of the shared secret in bytes
     fn get_ss_byte_len(&self) -> usize;
+
+    /// Get the expected length of the ciphertext in bytes
+    /// (for the encaps method)
+    ///
+    /// This may return `None` if the KEM doesn't have a fixed size for the ciphertext (ML KEMs).
+    ///
+    /// # Returns
+    ///
+    /// The length of the ciphertext in bytes
+    fn get_ct_byte_len(&self) -> Option<usize>;
+
+    /// Get the expected length of the public key in bytes
+    ///
+    /// This may return `None` if the KEM doesn't have a fixed size for the secret key (RSA KEMs).
+    ///
+    /// # Returns
+    ///
+    /// The length of the public key in bytes
+    fn get_pk_byte_len(&self) -> Option<usize>;
+
+    /// Get the expected length of the secret key in bytes.
+    ///
+    /// This may return `None` if the KEM doesn't have a fixed size for the secret key (RSA KEMs).
+    ///
+    /// # Returns
+    ///
+    /// The length of the secret key in bytes
+    fn get_sk_byte_len(&self) -> Option<usize>;
+
+    /// Get the type of KEM
+    ///
+    /// # Returns
+    ///
+    /// The type of KEM
+    fn get_kem_type(&self) -> KemType;
 }

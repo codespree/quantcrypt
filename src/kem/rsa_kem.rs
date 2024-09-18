@@ -117,6 +117,49 @@ impl Kem for RsaKemManager {
     fn get_ss_byte_len(&self) -> usize {
         32
     }
+
+    /// Get the type of KEM
+    ///
+    /// # Returns
+    ///
+    /// The type of KEM
+    fn get_kem_type(&self) -> KemType {
+        self.kem_type.clone()
+    }
+
+    /// Get the length of the ciphertext in bytes
+    /// (for the encaps method)
+    ///
+    /// # Returns
+    ///
+    /// The length of the ciphertext in bytes
+    fn get_ct_byte_len(&self) -> Option<usize> {
+        match self.kem_type {
+            KemType::RsaOAEP2048 => Some(256),
+            KemType::RsaOAEP3072 => Some(384),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
+    /// Get the length of the public key in bytes
+    ///
+    /// # Returns
+    ///
+    /// The length of the public key in bytes
+    fn get_pk_byte_len(&self) -> Option<usize> {
+        None
+    }
+
+    /// Get the length of the secret key in bytes
+    ///
+    /// # Returns
+    ///
+    /// The length of the secret key in bytes
+    fn get_sk_byte_len(&self) -> Option<usize> {
+        None
+    }
 }
 
 #[cfg(test)]
