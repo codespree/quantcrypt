@@ -142,19 +142,43 @@ fn pad_bignum_to_length(bn: &BigNum, desired_length: usize) -> Vec<u8> {
     padded_bn_bytes
 }
 
-/// Get an EC key pair using the OpenSSL library
+/// Get the byte length of the secret key for an EC curve
 ///
 /// # Arguments
 ///
-/// * `seed` - An optional 32-byte seed
+/// * `ctx` - The BigNumContext
+/// * `group` - The EC group
 ///
 /// # Returns
 ///
-/// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_key_pair_ec_based(
+/// The byte length of the secret key
+fn get_sk_byte_len_ec_based(ctx: &mut BigNumContext, group: &EcGroup) -> Result<usize> {
+    // Get the order (n) of the group
+    let mut order = BigNum::new()?;
+    group.order(&mut order, ctx)?;
+
+    let bit_len = order.num_bits();
+    let byte_len = ((bit_len + 7) / 8) as usize;
+
+    Ok(byte_len)
+}
+
+/// Get a secret key as a BigNum for an EC curve
+///
+/// # Arguments
+///
+/// * `ctx` - The BigNumContext
+/// * `seed` - An optional 32-byte seed
+/// * `group` - The EC group
+///
+/// # Returns
+///
+/// The secret key as a BigNum
+fn get_sk_bignum_ec_based(
+    ctx: &mut BigNumContext,
     seed: Option<&[u8; 32]>,
     group: &EcGroup,
-) -> Result<(Vec<u8>, Vec<u8>)> {
+) -> Result<BigNum> {
     let mut rng = if let Some(seed) = seed {
         ChaCha20Rng::from_seed(*seed)
     } else {
@@ -162,13 +186,11 @@ pub fn get_key_pair_ec_based(
     };
 
     // Get the order (n) of the group
-    let mut ctx = BigNumContext::new()?;
     let mut order = BigNum::new()?;
-    group.order(&mut order, &mut ctx)?;
+    group.order(&mut order, ctx)?;
 
-    // Get the bit length and byte length of the order
-    let bit_len = order.num_bits();
-    let byte_len = ((bit_len + 7) / 8) as usize;
+    // Get the byte length of the order
+    let byte_len = get_sk_byte_len_ec_based(ctx, group)?;
 
     let private_key_bn = loop {
         // Generate byte_len random bytes, the associated BigNum may
@@ -185,24 +207,59 @@ pub fn get_key_pair_ec_based(
         }
         // Otherwise, discard and try again
     };
+    Ok(private_key_bn)
+}
 
+/// Get the public and secret keys as byte vectors from a BigNum private key
+///
+/// # Arguments
+///
+/// * `ctx` - The BigNumContext
+/// * `private_key_bn` - The private key as a BigNum
+///
+/// # Returns
+///
+/// A tuple containing the public and secret keys (pk, sk) as uncompressed point and field element octets
+fn get_pk_sk_from_bignum_ec_based(
+    ctx: &mut BigNumContext,
+    private_key_bn: &BigNum,
+    group: &EcGroup,
+) -> Result<(Vec<u8>, Vec<u8>)> {
     // Create the public key point by multiplying the generator by the private number
-    let pk_point = compute_public_key(&ctx, group, &private_key_bn)?;
+    let pk_point = compute_public_key(ctx, group, private_key_bn)?;
 
     // Create the EC_KEY (just test validity)
-    EcKey::from_private_components(group, &private_key_bn, &pk_point)?;
+    EcKey::from_private_components(group, private_key_bn, &pk_point)?;
 
     // Public key should be uncompressed point as octet string
-    let pks = pk_point.to_bytes(
-        group,
-        openssl::ec::PointConversionForm::UNCOMPRESSED,
-        &mut ctx,
-    )?;
+    let pks = pk_point.to_bytes(group, openssl::ec::PointConversionForm::UNCOMPRESSED, ctx)?;
+
+    let byte_len = get_sk_byte_len_ec_based(ctx, group)?;
 
     // Secret key should be field element as octet string
-    let sks = pad_bignum_to_length(&private_key_bn, byte_len);
+    let sks = pad_bignum_to_length(private_key_bn, byte_len);
 
     Ok((pks, sks))
+}
+
+/// Get an EC key pair using the OpenSSL library
+///
+/// # Arguments
+///
+/// * `seed` - An optional 32-byte seed
+///
+/// # Returns
+///
+/// A tuple containing the public and secret keys (pk, sk) in DER format
+pub fn get_key_pair_ec_based(
+    seed: Option<&[u8; 32]>,
+    group: &EcGroup,
+) -> Result<(Vec<u8>, Vec<u8>)> {
+    let mut ctx = BigNumContext::new()?;
+
+    // Get a big num as private key
+    let private_key_bn = get_sk_bignum_ec_based(&mut ctx, seed, group)?;
+    get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, group)
 }
 
 /// Compute the public key from the private key for an EC curve
@@ -233,7 +290,17 @@ fn compute_public_key(
     Ok(public_key_point)
 }
 
-pub fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
+/// Clamp a private key for X448 or X25519
+///
+/// # Arguments
+///
+/// * `sk` - The secret key to clamp
+/// * `id` - The ID of the curve
+///
+/// # Panics
+///
+/// Panics if the ID is not X448 or X25519
+fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
     match id {
         Id::X448 => {
             sk[0] &= 252;
@@ -291,11 +358,104 @@ pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8
 
 #[cfg(test)]
 mod tests {
+    use openssl::nid::Nid;
+
     use super::*;
     #[test]
     fn test_pad_bignum_to_length() {
         let bn = BigNum::from_u32(0x1234).unwrap();
         let padded_bn = pad_bignum_to_length(&bn, 4);
         assert_eq!(padded_bn, vec![0, 0, 0x12, 0x34]);
+    }
+
+    #[test]
+    fn test_boundary_ec() {
+        let nids = [
+            Nid::X9_62_PRIME256V1,
+            Nid::SECP384R1,
+            Nid::BRAINPOOL_P256R1,
+            Nid::BRAINPOOL_P384R1,
+        ];
+
+        let mut ctx = BigNumContext::new().unwrap();
+
+        for nid in nids.iter() {
+            let group = EcGroup::from_curve_name(*nid).unwrap();
+
+            // Use a private number which is 1
+            let private_key_bn = BigNum::from_u32(1).unwrap();
+            let (pk, sk) =
+                get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, &group).unwrap();
+            let (ss, ct) = encaps_ec_based(&pk, &group).unwrap();
+            let ss2 = decaps_ec_based(&sk, &ct, &group).unwrap();
+            assert_eq!(ss, ss2);
+
+            // Use a private number which is order - 1
+            let mut order = BigNum::new().unwrap();
+            group.order(&mut order, &mut ctx).unwrap();
+
+            let mut private_key_bn = BigNum::new().unwrap();
+            private_key_bn
+                .checked_sub(&order, &BigNum::from_u32(1).unwrap())
+                .unwrap();
+
+            let (pk, sk) =
+                get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, &group).unwrap();
+            let (ss, ct) = encaps_ec_based(&pk, &group).unwrap();
+            let ss2 = decaps_ec_based(&sk, &ct, &group).unwrap();
+            assert_eq!(ss, ss2);
+        }
+    }
+
+    #[test]
+    fn test_boundary_x25519() {
+        let mut sk = [0u8; 32];
+        clamp_pkey_based_sk(&mut sk, Id::X25519);
+
+        let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X25519).unwrap();
+        let pk = sk_obj.raw_public_key().unwrap();
+
+        let (ss, ct) = encaps_pkey_based(&pk, Id::X25519).unwrap();
+        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X25519).unwrap();
+
+        assert_eq!(ss, ss2);
+
+        // Now test with a sk with all bits set
+        let mut sk = [0xff; 32];
+        clamp_pkey_based_sk(&mut sk, Id::X25519);
+
+        let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X25519).unwrap();
+        let pk = sk_obj.raw_public_key().unwrap();
+
+        let (ss, ct) = encaps_pkey_based(&pk, Id::X25519).unwrap();
+        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X25519).unwrap();
+
+        assert_eq!(ss, ss2);
+    }
+
+    #[test]
+    fn test_boundary_x448() {
+        let mut sk = [0u8; 56];
+        clamp_pkey_based_sk(&mut sk, Id::X448);
+
+        let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X448).unwrap();
+        let pk = sk_obj.raw_public_key().unwrap();
+
+        let (ss, ct) = encaps_pkey_based(&pk, Id::X448).unwrap();
+        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X448).unwrap();
+
+        assert_eq!(ss, ss2);
+
+        // Now test with a sk with all bits set
+        let mut sk = [0xff; 56];
+        clamp_pkey_based_sk(&mut sk, Id::X448);
+
+        let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X448).unwrap();
+        let pk = sk_obj.raw_public_key().unwrap();
+
+        let (ss, ct) = encaps_pkey_based(&pk, Id::X448).unwrap();
+        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X448).unwrap();
+
+        assert_eq!(ss, ss2);
     }
 }

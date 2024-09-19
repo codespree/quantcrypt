@@ -13,7 +13,9 @@ pub trait Kem {
     ///
     /// * `kem_type` - The type of KEM to create
     /// * `seed` - A 32-byte seed
-    fn new(kem_type: KemType) -> Self;
+    fn new(kem_type: KemType) -> Self
+    where
+        Self: Sized;
 
     /// Generate a keypair
     ///

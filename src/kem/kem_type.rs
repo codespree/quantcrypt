@@ -25,12 +25,9 @@ pub enum KemType {
     BrainpoolP384r1,
     /// X448 key encapsulation mechanism
     X448,
-}
 
-// The compsite algorithm list is from the latest editor's draft:
-//https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
-#[derive(Clone, Debug)]
-pub enum CompositeKemType {
+    // The compsite algorithm list is from the latest editor's draft:
+    //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
     /// id-MLKEM768-RSA2048
     MlKem768Rsa2048,
     /// id-MLKEM768-RSA3072
