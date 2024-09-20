@@ -203,6 +203,22 @@ impl Kem for MlKemManager {
             }
         }
     }
+
+    fn get_oid(&self) -> String {
+        match self.kem_type {
+            KemType::MlKem512 => "2.16.840.1.101.3.4.4.1".to_string(),
+            KemType::MlKem768 => "2.16.840.1.101.3.4.4.2".to_string(),
+            KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3".to_string(),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
+    /// Not implemented
+    fn get_pk(&self, _sk: &[u8]) -> Result<Vec<u8>> {
+        panic!("Not implemented");
+    }
 }
 
 #[cfg(test)]

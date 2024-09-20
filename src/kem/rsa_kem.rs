@@ -1,4 +1,3 @@
-use openssl::pkey::PKey;
 use rand::RngCore;
 use rand_chacha::ChaCha20Rng;
 use rand_core::SeedableRng;
@@ -9,7 +8,7 @@ use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
 use rsa::{
     oaep::Oaep,
-    pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey},
+    pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
     RsaPrivateKey, RsaPublicKey,
 };
 
@@ -61,18 +60,13 @@ impl Kem for RsaKemManager {
         };
 
         // Use the RSA crate as we can specify the rng
-        let sk = RsaPrivateKey::new(&mut rng, bits)?;
-        let sd = sk.to_pkcs1_der()?;
+        let rpk: RsaPrivateKey = RsaPrivateKey::new(&mut rng, bits)?;
+        let sd = rpk.to_pkcs1_der()?;
+        let sk = sd.to_bytes().to_vec();
 
-        // PKCS1 DER format is compatible with OpenSSL
-        let sk = sd.as_bytes();
-
-        // Ensure compatibility with OpenSSL by creating a PKey object
-        let sk = PKey::from_rsa(openssl::rsa::Rsa::private_key_from_der(sk)?)?;
-
-        // Return keys in the SPKI format of OpenSSL
-        let pk = sk.public_key_to_der()?;
-        let sk = sk.private_key_to_der()?;
+        // PKCS1 DER format
+        let pd = rpk.to_public_key().to_pkcs1_der()?;
+        let pk = pd.to_vec();
 
         Ok((pk, sk))
     }
@@ -105,16 +99,7 @@ impl Kem for RsaKemManager {
         let mut rng = ChaCha20Rng::from_entropy();
         rng.fill_bytes(&mut ss);
 
-        let pk_obj = PKey::from_rsa(openssl::rsa::Rsa::public_key_from_der(pk)?)?;
-
-        // Extract the RSA public key from the PKey<Public>
-        let rsa = pk_obj.rsa()?;
-
-        // Serialize the RSA public key to PKCS#1 DER format
-        // This converts it from SPKI to PKCS#1
-        let pkcs1_der = rsa.public_key_to_der_pkcs1()?;
-
-        let pub_key = RsaPublicKey::from_pkcs1_der(&pkcs1_der)?;
+        let pub_key = RsaPublicKey::from_pkcs1_der(pk)?;
         let padding = Oaep::new_with_mgf_hash::<Sha256, Sha256>();
         let ct = pub_key.encrypt(&mut rng, padding, &ss)?;
         Ok((ss, ct))
@@ -180,6 +165,32 @@ impl Kem for RsaKemManager {
     fn get_sk_byte_len(&self) -> Option<usize> {
         None
     }
+
+    fn get_oid(&self) -> String {
+        match self.kem_type {
+            //TODO: Confirm the OID for RSA-OAEP
+            KemType::RsaOAEP2048 => "1.2.840.113549.1.1.7".to_string(),
+            KemType::RsaOAEP3072 => "1.2.840.113549.1.1.7".to_string(),
+            KemType::RsaOAEP4096 => "1.2.840.113549.1.1.7".to_string(),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
+    /// Get the public key given a secret key
+    ///
+    /// # Arguments
+    ///
+    /// * `sk` - The secret key
+    ///
+    /// # Returns
+    ///
+    /// The public key
+    fn get_pk(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        let sk = RsaPrivateKey::from_pkcs1_der(sk)?;
+        Ok(sk.to_public_key().to_pkcs1_der()?.to_vec())
+    }
 }
 
 #[cfg(test)]
@@ -204,5 +215,21 @@ mod tests {
     fn test_rsa_kem_4096() {
         let mut kem = RsaKemManager::new(KemType::RsaOAEP4096);
         test_kem!(kem);
+    }
+
+    #[test]
+    fn test_get_pk_from_sk() {
+        let kem_types = vec![
+            KemType::RsaOAEP2048,
+            KemType::RsaOAEP3072,
+            KemType::RsaOAEP4096,
+        ];
+
+        for kem_type in kem_types {
+            let mut kem = RsaKemManager::new(kem_type);
+            let (pk, sk) = kem.key_gen(None).unwrap();
+            let pk2 = kem.get_pk(&sk).unwrap();
+            assert_eq!(pk, pk2);
+        }
     }
 }

@@ -7,24 +7,24 @@ pub enum KemType {
     P384,
     /// X25519 key encapsulation mechanism
     X25519,
-    /// MlKem512 key encapsulation mechanism
-    MlKem512,
-    /// MlKem768 key encapsulation mechanism
-    MlKem768,
-    /// MlKem1024 key encapsulation mechanism
-    MlKem1024,
-    /// RSA 2048 key encapsulation mechanism
-    RsaOAEP2048,
-    /// RSA 3072 key encapsulation mechanism
-    RsaOAEP3072,
-    /// RSA 3072 key encapsulation mechanism
-    RsaOAEP4096,
     /// BrainpoolP256r1 key encapsulation mechanism
     BrainpoolP256r1,
     /// BrainpoolP384r1 key encapsulation mechanism
     BrainpoolP384r1,
     /// X448 key encapsulation mechanism
     X448,
+    /// RSA 2048 key encapsulation mechanism
+    RsaOAEP2048,
+    /// RSA 3072 key encapsulation mechanism
+    RsaOAEP3072,
+    /// RSA 3072 key encapsulation mechanism
+    RsaOAEP4096,
+    /// MlKem512 key encapsulation mechanism
+    MlKem512,
+    /// MlKem768 key encapsulation mechanism
+    MlKem768,
+    /// MlKem1024 key encapsulation mechanism
+    MlKem1024,
 
     // The compsite algorithm list is from the latest editor's draft:
     //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html

@@ -356,6 +356,40 @@ pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8
     Ok((pk, sk))
 }
 
+/// Get the public key from a secret key for an EC curve
+///
+/// # Arguments
+///
+/// * `sk` - The secret key
+///
+/// # Returns
+///
+/// The public key as a byte vector from an uncompressed point
+pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
+    let mut ctx = BigNumContext::new()?;
+    let private_key_bn = BigNum::from_slice(sk)?;
+    let pk_point = compute_public_key(&ctx, group, &private_key_bn)?;
+    Ok(pk_point.to_bytes(
+        group,
+        openssl::ec::PointConversionForm::UNCOMPRESSED,
+        &mut ctx,
+    )?)
+}
+
+/// Get the public key from a secret key for a PKey based method
+///
+/// # Arguments
+///
+/// * `sk` - The secret key
+///
+/// # Returns
+///
+/// The public key as a byte vector
+pub fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
+    let sk = PKey::private_key_from_raw_bytes(sk, id)?;
+    Ok(sk.raw_public_key()?)
+}
+
 #[cfg(test)]
 mod tests {
     use openssl::nid::Nid;

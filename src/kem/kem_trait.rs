@@ -88,4 +88,18 @@ pub trait Kem {
     ///
     /// The type of KEM
     fn get_kem_type(&self) -> KemType;
+
+    /// Get OID for the KEM
+    fn get_oid(&self) -> String;
+
+    /// Get the public key given a secret key
+    ///
+    /// # Arguments
+    ///
+    /// * `sk` - The secret key
+    ///
+    /// # Returns
+    ///
+    /// The public key
+    fn get_pk(&self, sk: &[u8]) -> Result<Vec<u8>>;
 }

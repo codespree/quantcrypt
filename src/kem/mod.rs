@@ -1,4 +1,7 @@
+pub mod asn1;
+pub mod composite_kem;
 pub mod ec_kem;
+pub mod kdf;
 pub mod kem_trait;
 pub mod kem_type;
 pub mod macros;

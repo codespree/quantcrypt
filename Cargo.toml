@@ -13,4 +13,10 @@ rand_core = "0.6.4"
 rsa = "0.9.6"
 openssl = { version = "*", features = ["vendored"] }
 sha2 = "0.10.8"
+der = "0.7.9"
+pkcs8 = "0.10.2"
+der_derive = "0.7.3"
+sha3 = "0.10.8"
+hkdf = "0.12.4"
+hex = "0.4.3"
 
