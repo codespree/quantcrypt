@@ -4,6 +4,7 @@ use rand_core::SeedableRng;
 use sha2::Sha256;
 use std::error;
 
+use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use rsa::{
@@ -17,7 +18,7 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 /// A KEM manager for the RSA-KEM method
 pub struct RsaKemManager {
-    kem_type: KemType,
+    kem_info: KemInfo,
 }
 
 impl Kem for RsaKemManager {
@@ -31,7 +32,8 @@ impl Kem for RsaKemManager {
     ///
     /// A new KEM instance
     fn new(kem_type: KemType) -> Self {
-        Self { kem_type }
+        let kem_info = KemInfo::new(kem_type);
+        Self { kem_info }
     }
 
     /// Generate a keypair
@@ -50,7 +52,7 @@ impl Kem for RsaKemManager {
             ChaCha20Rng::from_entropy()
         };
 
-        let bits = match self.kem_type {
+        let bits = match self.kem_info.kem_type {
             KemType::RsaOAEP2048 => 2048,
             KemType::RsaOAEP3072 => 3072,
             KemType::RsaOAEP4096 => 4096,
@@ -113,69 +115,16 @@ impl Kem for RsaKemManager {
         Ok(ss)
     }
 
-    /// Get the length of the shared secret in bytes
+    /// Get KEM metadata information such as the key lengths,
+    /// size of ciphertext, etc.
+    ///
+    /// These values are also used to test the correctness of the KEM
     ///
     /// # Returns
     ///
-    /// The length of the shared secret in bytes
-    fn get_ss_byte_len(&self) -> usize {
-        32
-    }
-
-    /// Get the type of KEM
-    ///
-    /// # Returns
-    ///
-    /// The type of KEM
-    fn get_kem_type(&self) -> KemType {
-        self.kem_type.clone()
-    }
-
-    /// Get the length of the ciphertext in bytes
-    /// (for the encaps method)
-    ///
-    /// # Returns
-    ///
-    /// The length of the ciphertext in bytes
-    fn get_ct_byte_len(&self) -> Option<usize> {
-        match self.kem_type {
-            KemType::RsaOAEP2048 => Some(256),
-            KemType::RsaOAEP3072 => Some(384),
-            KemType::RsaOAEP4096 => Some(512),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the length of the public key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the public key in bytes
-    fn get_pk_byte_len(&self) -> Option<usize> {
-        None
-    }
-
-    /// Get the length of the secret key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the secret key in bytes
-    fn get_sk_byte_len(&self) -> Option<usize> {
-        None
-    }
-
-    fn get_oid(&self) -> String {
-        match self.kem_type {
-            //TODO: Confirm the OID for RSA-OAEP
-            KemType::RsaOAEP2048 => "1.2.840.113549.1.1.7".to_string(),
-            KemType::RsaOAEP3072 => "1.2.840.113549.1.1.7".to_string(),
-            KemType::RsaOAEP4096 => "1.2.840.113549.1.1.7".to_string(),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
+    /// A structure containing metadata about the KEM
+    fn get_kem_info(&self) -> KemInfo {
+        self.kem_info.clone()
     }
 }
 

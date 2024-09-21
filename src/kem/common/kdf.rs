@@ -65,20 +65,6 @@ impl Kdf {
             }
         }
     }
-
-    /// Get the length of the output in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the output in bytes
-    pub fn get_output_len(&self) -> usize {
-        match self.kdf_type {
-            KdfType::HkdfSha256 => 32,
-            KdfType::Sha3_256 => 32,
-            KdfType::HkdfSha384 => 48,
-            KdfType::Sha3_512 => 64,
-        }
-    }
 }
 
 #[cfg(test)]

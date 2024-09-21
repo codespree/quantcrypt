@@ -68,7 +68,7 @@ mod tests {
         // This is just to test that the factory can create all KEM types
         for kem_type in all_kems {
             let kem = KemFactory::get_kem(kem_type.clone());
-            assert_eq!(kem.get_kem_type(), kem_type);
+            assert_eq!(kem.get_kem_info().kem_type, kem_type);
         }
     }
 }

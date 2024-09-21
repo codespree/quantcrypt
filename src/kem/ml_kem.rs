@@ -1,3 +1,4 @@
+use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use ml_kem::kem::Decapsulate;
@@ -15,9 +16,9 @@ macro_rules! key_gen_ml {
 }
 
 macro_rules! encapsulate_ml {
-    ($self:expr, $curve:ident, $pk:expr) => {{
+    ($rng:expr, $curve:ident, $pk:expr) => {{
         let ek = get_encapsulation_key_obj::<$curve>($pk.to_vec())?;
-        let (ct, ss) = ek.encapsulate(&mut $self.rng).unwrap();
+        let (ct, ss) = ek.encapsulate(&mut $rng).unwrap();
         let ct = ct.as_slice().to_vec();
         let ss = ss.as_slice().to_vec();
         Ok((ss, ct))
@@ -76,15 +77,13 @@ fn decapsulate<K: KemCore>(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
 
 /// A KEM manager for the MlKem method
 pub struct MlKemManager {
-    kem_type: KemType,
-    rng: ChaCha20Rng,
+    kem_info: KemInfo,
 }
 
 impl Kem for MlKemManager {
     fn new(kem_type: KemType) -> Self {
-        let rng = ChaCha20Rng::from_entropy();
-
-        Self { kem_type, rng }
+        let kem_info = KemInfo::new(kem_type);
+        Self { kem_info }
     }
 
     /// Generate a keypair
@@ -97,10 +96,10 @@ impl Kem for MlKemManager {
         let mut rng = if let Some(seed) = seed {
             ChaCha20Rng::from_seed(*seed)
         } else {
-            self.rng.clone()
+            ChaCha20Rng::from_entropy()
         };
 
-        match self.kem_type {
+        match self.kem_info.kem_type {
             KemType::MlKem512 => Ok(key_gen_ml!(rng, MlKem512)),
             KemType::MlKem768 => Ok(key_gen_ml!(rng, MlKem768)),
             KemType::MlKem1024 => Ok(key_gen_ml!(rng, MlKem1024)),
@@ -120,15 +119,16 @@ impl Kem for MlKemManager {
     ///
     /// A tuple containing the shares secret and ciphertext (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        match self.kem_type {
+        let mut rng = ChaCha20Rng::from_entropy();
+        match self.kem_info.kem_type {
             KemType::MlKem512 => {
-                encapsulate_ml!(self, MlKem512, pk)
+                encapsulate_ml!(rng, MlKem512, pk)
             }
             KemType::MlKem768 => {
-                encapsulate_ml!(self, MlKem768, pk)
+                encapsulate_ml!(rng, MlKem768, pk)
             }
             KemType::MlKem1024 => {
-                encapsulate_ml!(self, MlKem1024, pk)
+                encapsulate_ml!(rng, MlKem1024, pk)
             }
             _ => {
                 panic!("Not implemented");
@@ -147,7 +147,7 @@ impl Kem for MlKemManager {
     ///
     /// The shared secret
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-        match self.kem_type {
+        match self.kem_info.kem_type {
             KemType::MlKem512 => decapsulate::<MlKem512>(sk, ct),
             KemType::MlKem768 => decapsulate::<MlKem768>(sk, ct),
             KemType::MlKem1024 => decapsulate::<MlKem1024>(sk, ct),
@@ -157,77 +157,16 @@ impl Kem for MlKemManager {
         }
     }
 
-    fn get_ss_byte_len(&self) -> usize {
-        match self.kem_type {
-            KemType::MlKem512 => 32,
-            KemType::MlKem768 => 32,
-            KemType::MlKem1024 => 32,
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the type of KEM
+    /// Get KEM metadata information such as the key lengths,
+    /// size of ciphertext, etc.
+    ///
+    /// These values are also used to test the correctness of the KEM
     ///
     /// # Returns
     ///
-    /// The type of KEM
-    fn get_kem_type(&self) -> KemType {
-        self.kem_type.clone()
-    }
-
-    /// Get the length of the ciphertext in bytes
-    /// (for the encaps method)
-    ///
-    /// # Returns
-    ///
-    /// The length of the ciphertext in bytes
-    fn get_ct_byte_len(&self) -> Option<usize> {
-        None
-    }
-
-    /// Get the length of the public key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the public key in bytes
-    fn get_pk_byte_len(&self) -> Option<usize> {
-        match self.kem_type {
-            KemType::MlKem512 => Some(800),
-            KemType::MlKem768 => Some(1184),
-            KemType::MlKem1024 => Some(1568),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the length of the secret key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the secret key in bytes
-    fn get_sk_byte_len(&self) -> Option<usize> {
-        match self.kem_type {
-            KemType::MlKem512 => Some(1632),
-            KemType::MlKem768 => Some(2400),
-            KemType::MlKem1024 => Some(3168),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    fn get_oid(&self) -> String {
-        match self.kem_type {
-            KemType::MlKem512 => "2.16.840.1.101.3.4.4.1".to_string(),
-            KemType::MlKem768 => "2.16.840.1.101.3.4.4.2".to_string(),
-            KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3".to_string(),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
+    /// A structure containing metadata about the KEM
+    fn get_kem_info(&self) -> KemInfo {
+        self.kem_info.clone()
     }
 }
 

@@ -1,4 +1,5 @@
 // use the macros to generate the encapsulate functio
+use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::common::openssl_utils::{
@@ -15,7 +16,7 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 /// A KEM manager for the DhKem method
 pub struct DhKemManager {
-    kem_type: KemType,
+    kem_info: KemInfo,
 }
 
 impl Kem for DhKemManager {
@@ -25,7 +26,8 @@ impl Kem for DhKemManager {
     ///
     /// * `kem_type` - The type of KEM to create
     fn new(kem_type: KemType) -> Self {
-        Self { kem_type }
+        let kem_info = KemInfo::new(kem_type);
+        Self { kem_info }
     }
 
     /// Generate a keypair
@@ -35,7 +37,7 @@ impl Kem for DhKemManager {
     /// A tuple containing the public and secret keys (pk, sk)
     fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
         //TODO: Ensure that serialization is correct
-        match self.kem_type {
+        match self.kem_info.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
                 Ok(get_key_pair_ec_based(seed, &group)?)
@@ -70,7 +72,7 @@ impl Kem for DhKemManager {
     ///
     /// A tuple containing the shared secret and ciphertext (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        match self.kem_type {
+        match self.kem_info.kem_type {
             KemType::P256 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?),
             KemType::P384 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::SECP384R1)?),
             KemType::X25519 => encaps_pkey_based(pk, Id::X25519),
@@ -100,7 +102,7 @@ impl Kem for DhKemManager {
     ///
     /// The shared secret (ss)
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-        match self.kem_type {
+        match self.kem_info.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
                 decaps_ec_based(sk, ct, &group)
@@ -125,101 +127,16 @@ impl Kem for DhKemManager {
         }
     }
 
-    /// Get the length of the shared secret in bytes
+    /// Get KEM metadata information such as the key lengths,
+    /// size of ciphertext, etc.
+    ///
+    /// These values are also used to test the correctness of the KEM
     ///
     /// # Returns
     ///
-    /// The length of the shared secret in bytes
-    fn get_ss_byte_len(&self) -> usize {
-        match self.kem_type {
-            KemType::P256 => 32,
-            KemType::P384 => 48,
-            KemType::X25519 => 32,
-            KemType::BrainpoolP256r1 => 32,
-            KemType::BrainpoolP384r1 => 48,
-            KemType::X448 => 56,
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the type of KEM
-    ///
-    /// # Returns
-    ///
-    /// The type of KEM
-    fn get_kem_type(&self) -> KemType {
-        self.kem_type.clone()
-    }
-
-    /// Get the length of the ciphertext in bytes
-    /// (for the encaps method)
-    ///
-    /// # Returns
-    ///
-    /// The length of the ciphertext in bytes
-    fn get_ct_byte_len(&self) -> Option<usize> {
-        self.get_pk_byte_len()
-    }
-
-    /// Get the length of the public key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the public key in bytes
-    fn get_pk_byte_len(&self) -> Option<usize> {
-        match self.kem_type {
-            KemType::P256 => Some(65),
-            KemType::P384 => Some(97),
-            KemType::X25519 => Some(32),
-            KemType::BrainpoolP256r1 => Some(65),
-            KemType::BrainpoolP384r1 => Some(97),
-            KemType::X448 => Some(56),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the length of the secret key in bytes
-    ///
-    /// # Returns
-    ///
-    /// The length of the secret key in bytes
-    fn get_sk_byte_len(&self) -> Option<usize> {
-        match self.kem_type {
-            KemType::P256 => Some(32),
-            KemType::P384 => Some(48),
-            KemType::X25519 => Some(32),
-            KemType::BrainpoolP256r1 => Some(32),
-            KemType::BrainpoolP384r1 => Some(48),
-            KemType::X448 => Some(56),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
-
-    /// Get the OID for the KEM
-    ///
-    /// # Returns
-    ///
-    /// The OID for the KEM
-    fn get_oid(&self) -> String {
-        match self.kem_type {
-            KemType::P256 => "1.2.840.10045.3.1.7".to_string(),
-            KemType::P384 => "1.3.132.0.34".to_string(),
-            // RFC 8410
-            KemType::X25519 => "1.3.101.110".to_string(),
-            KemType::X448 => "1.3.101.110".to_string(),
-            // RFC 5639
-            KemType::BrainpoolP256r1 => "1.3.36.3.3.2.8.1.7".to_string(),
-            KemType::BrainpoolP384r1 => "1.3.36.3.3.2.8.1.11".to_string(),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
+    /// A structure containing metadata about the KEM
+    fn get_kem_info(&self) -> KemInfo {
+        self.kem_info.clone()
     }
 }
 

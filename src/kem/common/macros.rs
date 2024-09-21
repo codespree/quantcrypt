@@ -3,23 +3,25 @@ macro_rules! test_kem {
     ($kem:expr) => {{
         let (pk, sk) = $kem.key_gen(None).unwrap();
 
-        let expected_pk_len = $kem.get_pk_byte_len();
+        let kem_info = $kem.get_kem_info();
+
+        let expected_pk_len = kem_info.pk_byte_len;
         if let Some(expected_pk_len) = expected_pk_len {
             assert_eq!(pk.len(), expected_pk_len);
         }
 
-        let expected_sk_len = $kem.get_sk_byte_len();
+        let expected_sk_len = kem_info.sk_byte_len;
         if let Some(expected_sk_len) = expected_sk_len {
             assert_eq!(sk.len(), expected_sk_len);
         }
 
         let (ss, ct) = $kem.encap(&pk).unwrap();
-        let expected_ct_len = $kem.get_ct_byte_len();
+        let expected_ct_len = kem_info.ct_byte_len;
         if let Some(expected_ct_len) = expected_ct_len {
             assert_eq!(ct.len(), expected_ct_len);
         }
 
-        let expected_ss_len = $kem.get_ss_byte_len();
+        let expected_ss_len = kem_info.ss_byte_len;
         assert_eq!(ss.len(), expected_ss_len);
 
         let ss2 = $kem.decap(&sk, &ct).unwrap();

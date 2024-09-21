@@ -3,6 +3,7 @@ use crate::kem::asn1::composite_kem_primitives::{
     CompositeCiphertextValue, CompositeKEMPrivateKey, CompositeKEMPublicKey,
 };
 use crate::kem::common::kdf::{Kdf, KdfType};
+use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::ec_kem::DhKemManager;
@@ -16,7 +17,7 @@ use std::error;
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 pub struct CompositeKemManager {
-    kem_type: KemType,
+    kem_info: KemInfo,
     trad_kem: Box<dyn Kem>,
     pq_kem: Box<dyn Kem>,
     kdf: Kdf,
@@ -56,7 +57,7 @@ impl CompositeKemManager {
         combined_ss.extend_from_slice(trad_ct);
         combined_ss.extend_from_slice(trad_pk);
 
-        let dom_sep = oid_to_der(&self.get_oid())?;
+        let dom_sep = oid_to_der(&self.kem_info.oid)?;
         combined_ss.extend_from_slice(&dom_sep);
 
         let ss = self.kdf.kdf(&combined_ss);
@@ -80,57 +81,58 @@ impl Kem for CompositeKemManager {
     ///
     /// If the KEM type is not supported (should be a composite KEM)
     fn new(kem_type: KemType) -> Self {
+        let kem_info = KemInfo::new(kem_type.clone());
         match kem_type {
             KemType::MlKem768Rsa2048 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::RsaOAEP2048),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa3072 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::RsaOAEP3072),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa4096 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::RsaOAEP4096),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768X25519 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::X25519),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::Sha3_256),
             },
             KemType::MlKem768P384 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::P384),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::BrainpoolP256r1),
                 pq_kem: get_kem(KemType::MlKem768),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem1024P384 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::P384),
                 pq_kem: get_kem(KemType::MlKem1024),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::BrainpoolP384r1),
                 pq_kem: get_kem(KemType::MlKem1024),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024X448 => Self {
-                kem_type,
+                kem_info,
                 trad_kem: get_kem(KemType::X448),
                 pq_kem: get_kem(KemType::MlKem1024),
                 kdf: Kdf::new(KdfType::Sha3_512),
@@ -173,17 +175,18 @@ impl Kem for CompositeKemManager {
         // Create the OneAsymmetricKey objects for the tradition secret key
         let t_sk_pkcs8 = PrivateKeyInfo {
             algorithm: AlgorithmIdentifierRef {
-                oid: self.trad_kem.get_oid().parse().unwrap(),
+                oid: self.trad_kem.get_kem_info().oid.parse().unwrap(),
                 parameters: None,
             },
             private_key: &t_sk,
+            // The public key SHOULD be included in the secret key for the traditional KEM
             public_key: Some(&t_pk),
         };
 
         // Create the OneAsymmetricKey objects for the post-quantum secret key
         let pq_sk_pkcs8 = PrivateKeyInfo {
             algorithm: AlgorithmIdentifierRef {
-                oid: self.pq_kem.get_oid().parse().unwrap(),
+                oid: self.pq_kem.get_kem_info().oid.parse().unwrap(),
                 parameters: None,
             },
             private_key: &pq_sk,
@@ -266,45 +269,15 @@ impl Kem for CompositeKemManager {
         Ok(ss)
     }
 
-    fn get_ss_byte_len(&self) -> usize {
-        // SS length is based on the KDF
-        self.kdf.get_output_len()
-    }
-
-    fn get_ct_byte_len(&self) -> Option<usize> {
-        //TODO: Confirm the length of the composite ciphertext
-        None
-    }
-
-    fn get_pk_byte_len(&self) -> Option<usize> {
-        //TODO: Confirm the length of the composite public key
-        None
-    }
-
-    fn get_sk_byte_len(&self) -> Option<usize> {
-        None
-    }
-
-    fn get_kem_type(&self) -> KemType {
-        self.kem_type.clone()
-    }
-
-    fn get_oid(&self) -> String {
-        let oid = match self.kem_type {
-            KemType::MlKem768Rsa2048 => "2.16.840.1.114027.80.5.2.21",
-            KemType::MlKem768Rsa3072 => "2.16.840.1.114027.80.5.2.22",
-            KemType::MlKem768Rsa4096 => "2.16.840.1.114027.80.5.2.23",
-            KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.24",
-            KemType::MlKem768P384 => "2.16.840.1.114027.80.5.2.25",
-            KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.26",
-            KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.27",
-            KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.28",
-            KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.29",
-            _ => {
-                panic!("Not implemented");
-            }
-        };
-        oid.to_string()
+    /// Get KEM metadata information such as the key lengths,
+    ///
+    /// These values are also used to test the correctness of the KEM
+    ///
+    /// # Returns
+    ///
+    /// A structure containing metadata about the KEM
+    fn get_kem_info(&self) -> KemInfo {
+        self.kem_info.clone()
     }
 }
 
