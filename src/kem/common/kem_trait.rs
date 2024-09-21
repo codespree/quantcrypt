@@ -1,4 +1,4 @@
-use crate::kem::kem_type::KemType;
+use crate::kem::common::kem_type::KemType;
 
 use std::error;
 

@@ -365,6 +365,7 @@ pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8
 /// # Returns
 ///
 /// The public key as a byte vector from an uncompressed point
+#[allow(dead_code)] // This function can be used in the future
 pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
     let mut ctx = BigNumContext::new()?;
     let private_key_bn = BigNum::from_slice(sk)?;
@@ -385,6 +386,7 @@ pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
 /// # Returns
 ///
 /// The public key as a byte vector
+#[allow(dead_code)] // This function can be used in the future
 pub fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
     let sk = PKey::private_key_from_raw_bytes(sk, id)?;
     Ok(sk.raw_public_key()?)

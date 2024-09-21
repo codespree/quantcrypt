@@ -12,11 +12,11 @@ pub enum KdfType {
 }
 
 /// The Key Derivation Function (KDF)
-pub struct KDF {
+pub struct Kdf {
     kdf_type: KdfType,
 }
 
-impl KDF {
+impl Kdf {
     /// Create a new KDF
     ///
     /// # Arguments
@@ -94,7 +94,7 @@ mod tests {
             KdfType::Sha3_512,
         ];
         for kdf_type in types {
-            let kdf = KDF::new(kdf_type.clone());
+            let kdf = Kdf::new(kdf_type.clone());
             let input = b"input";
             let output1 = kdf.kdf(input);
             assert_eq!(

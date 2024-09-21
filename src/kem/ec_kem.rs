@@ -1,7 +1,7 @@
 // use the macros to generate the encapsulate functio
-use crate::kem::kem_trait::Kem;
-use crate::kem::kem_type::KemType;
-use crate::kem::openssl_utils::{
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::common::kem_type::KemType;
+use crate::kem::common::openssl_utils::{
     decaps_ec_based, decaps_pkey_based_ossl, encaps_ec_based, encaps_pkey_based,
     get_key_pair_ec_based, get_keypair_pkey_based,
 };
@@ -226,9 +226,9 @@ impl Kem for DhKemManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kem::kem_trait::Kem;
-    use crate::kem::kem_type::KemType;
-    use crate::kem::macros::test_kem;
+    use crate::kem::common::kem_trait::Kem;
+    use crate::kem::common::kem_type::KemType;
+    use crate::kem::common::macros::test_kem;
 
     #[test]
     fn test_ec_kem_p256() {

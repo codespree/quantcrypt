@@ -2,10 +2,10 @@ use crate::kem::asn1::asn_util::oid_to_der;
 use crate::kem::asn1::composite_kem_primitives::{
     CompositeCiphertextValue, CompositeKEMPrivateKey, CompositeKEMPublicKey,
 };
+use crate::kem::common::kdf::{Kdf, KdfType};
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::common::kem_type::KemType;
 use crate::kem::ec_kem::DhKemManager;
-use crate::kem::kdf::{KdfType, KDF};
-use crate::kem::kem_trait::Kem;
-use crate::kem::kem_type::KemType;
 use crate::kem::ml_kem::MlKemManager;
 use crate::kem::rsa_kem::RsaKemManager;
 use der::{Decode, Encode};
@@ -15,11 +15,11 @@ use std::error;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-pub struct CompositeKem {
+pub struct CompositeKemManager {
     kem_type: KemType,
     trad_kem: Box<dyn Kem>,
     pq_kem: Box<dyn Kem>,
-    kdf: KDF,
+    kdf: Kdf,
 }
 
 fn get_kem(kem_type: KemType) -> Box<dyn Kem> {
@@ -42,7 +42,7 @@ fn get_kem(kem_type: KemType) -> Box<dyn Kem> {
     }
 }
 
-impl CompositeKem {
+impl CompositeKemManager {
     pub fn combiner(
         &self,
         pq_kem_ss: &[u8],
@@ -65,7 +65,7 @@ impl CompositeKem {
     }
 }
 
-impl Kem for CompositeKem {
+impl Kem for CompositeKemManager {
     /// Create a new KEM instance
     ///
     /// # Arguments
@@ -85,55 +85,55 @@ impl Kem for CompositeKem {
                 kem_type,
                 trad_kem: get_kem(KemType::RsaOAEP2048),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::HkdfSha256),
+                kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa3072 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::RsaOAEP3072),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::HkdfSha256),
+                kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa4096 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::RsaOAEP4096),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::HkdfSha256),
+                kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768X25519 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::X25519),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::Sha3_256),
+                kdf: Kdf::new(KdfType::Sha3_256),
             },
             KemType::MlKem768P384 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::P384),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::HkdfSha384),
+                kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::BrainpoolP256r1),
                 pq_kem: get_kem(KemType::MlKem768),
-                kdf: KDF::new(KdfType::HkdfSha384),
+                kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem1024P384 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::P384),
                 pq_kem: get_kem(KemType::MlKem1024),
-                kdf: KDF::new(KdfType::Sha3_512),
+                kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::BrainpoolP384r1),
                 pq_kem: get_kem(KemType::MlKem1024),
-                kdf: KDF::new(KdfType::Sha3_512),
+                kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024X448 => Self {
                 kem_type,
                 trad_kem: get_kem(KemType::X448),
                 pq_kem: get_kem(KemType::MlKem1024),
-                kdf: KDF::new(KdfType::Sha3_512),
+                kdf: Kdf::new(KdfType::Sha3_512),
             },
             _ => {
                 panic!("Not implemented");
@@ -311,7 +311,7 @@ impl Kem for CompositeKem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kem::macros::test_kem;
+    use crate::kem::common::macros::test_kem;
 
     #[test]
     fn test_composite_kems() {
@@ -328,7 +328,7 @@ mod tests {
         ];
 
         for kem_type in kems {
-            let mut kem = CompositeKem::new(kem_type.clone());
+            let mut kem = CompositeKemManager::new(kem_type.clone());
             test_kem!(&mut kem);
         }
     }

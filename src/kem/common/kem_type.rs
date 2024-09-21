@@ -1,5 +1,5 @@
 // Implement Copy and Debug for KemType
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum KemType {
     /// NIST P-256 key encapsulation mechanism
     P256,

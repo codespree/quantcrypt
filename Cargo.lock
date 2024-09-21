@@ -3,6 +3,25 @@
 version = 3
 
 [[package]]
+name = "QuantCrypt"
+version = "0.1.0"
+dependencies = [
+ "der",
+ "der_derive",
+ "hex",
+ "hkdf",
+ "ml-kem",
+ "openssl",
+ "pkcs8",
+ "rand",
+ "rand_chacha",
+ "rand_core",
+ "rsa",
+ "sha2",
+ "sha3",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,25 +126,6 @@ dependencies = [
  "const-oid",
  "crypto-common",
  "subtle",
-]
-
-[[package]]
-name = "draft-ietf-lamps-pq-composite-kem-04"
-version = "0.1.0"
-dependencies = [
- "der",
- "der_derive",
- "hex",
- "hkdf",
- "ml-kem",
- "openssl",
- "pkcs8",
- "rand",
- "rand_chacha",
- "rand_core",
- "rsa",
- "sha2",
- "sha3",
 ]
 
 [[package]]

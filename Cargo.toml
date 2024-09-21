@@ -1,9 +1,17 @@
 [package]
-name = "draft-ietf-lamps-pq-composite-kem-04"
+name = "QuantCrypt"
 version = "0.1.0"
 edition = "2021"
+authors = ["Seventh Sense AI"]
+license = "Apache-2.0 OR MIT"
+rust-version = "1.77.1"
+readme = "README.md"
+categories = ["cryptography", "algorithms", "data structures"]
+keywords = ["crypto", "pqc", "post quantum", "ML-KEM", "FIPS 203"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+name = "uniffi_quantcrypt"
 
 [dependencies]
 ml-kem = "0.2.1"

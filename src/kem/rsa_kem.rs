@@ -4,8 +4,8 @@ use rand_core::SeedableRng;
 use sha2::Sha256;
 use std::error;
 
-use crate::kem::kem_trait::Kem;
-use crate::kem::kem_type::KemType;
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::common::kem_type::KemType;
 use rsa::{
     oaep::Oaep,
     pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
@@ -182,8 +182,8 @@ impl Kem for RsaKemManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kem::kem_type::KemType;
-    use crate::kem::macros::test_kem;
+    use crate::kem::common::kem_type::KemType;
+    use crate::kem::common::macros::test_kem;
 
     #[test]
     fn test_rsa_kem_2048() {

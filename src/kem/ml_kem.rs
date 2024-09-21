@@ -1,13 +1,29 @@
-use crate::kem::kem_trait::Kem;
-use crate::kem::kem_type::KemType;
-use crate::kem::macros::encapsulate_ml;
-use crate::kem::macros::key_gen_ml;
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::common::kem_type::KemType;
 use ml_kem::kem::Decapsulate;
 use ml_kem::kem::Encapsulate;
 use ml_kem::*;
 use rand_chacha::ChaCha20Rng;
 use rand_core::SeedableRng;
 use std::error;
+
+macro_rules! key_gen_ml {
+    ($rng:expr, $curve:ident) => {{
+        let (dk, ek) = $curve::generate(&mut $rng);
+        (ek.as_bytes().to_vec(), dk.as_bytes().to_vec())
+    }};
+}
+
+macro_rules! encapsulate_ml {
+    ($self:expr, $curve:ident, $pk:expr) => {{
+        let ek = get_encapsulation_key_obj::<$curve>($pk.to_vec())?;
+        let (ct, ss) = ek.encapsulate(&mut $self.rng).unwrap();
+        let ct = ct.as_slice().to_vec();
+        let ss = ss.as_slice().to_vec();
+        Ok((ss, ct))
+    }};
+}
+
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -219,8 +235,8 @@ impl Kem for MlKemManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kem::kem_type::KemType;
-    use crate::kem::macros::test_kem;
+    use crate::kem::common::kem_type::KemType;
+    use crate::kem::common::macros::test_kem;
 
     #[test]
     fn test_ml_kem_512() {
