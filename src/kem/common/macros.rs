@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 macro_rules! test_kem {
     ($kem:expr) => {{

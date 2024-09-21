@@ -314,22 +314,56 @@ mod tests {
     use crate::kem::common::macros::test_kem;
 
     #[test]
-    fn test_composite_kems() {
-        let kems = vec![
-            KemType::MlKem768Rsa2048,
-            KemType::MlKem768Rsa3072,
-            KemType::MlKem768Rsa4096,
-            KemType::MlKem768X25519,
-            KemType::MlKem768P384,
-            KemType::MlKem768BrainpoolP256r1,
-            KemType::MlKem1024P384,
-            KemType::MlKem1024BrainpoolP384r1,
-            KemType::MlKem1024X448,
-        ];
+    fn test_mlkem_768_rsa2048() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa2048);
+        test_kem!(&mut kem);
+    }
 
-        for kem_type in kems {
-            let mut kem = CompositeKemManager::new(kem_type.clone());
-            test_kem!(&mut kem);
-        }
+    #[test]
+    fn test_mlkem_768_rsa3072() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa3072);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_768_rsa4096() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa4096);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_768_x25519() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768X25519);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_768_p384() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768P384);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_768_brainpool_p256r1() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem768BrainpoolP256r1);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_1024_p384() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem1024P384);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_1024_brainpool_p384r1() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem1024BrainpoolP384r1);
+        test_kem!(&mut kem);
+    }
+
+    #[test]
+    fn test_mlkem_1024_x448() {
+        let mut kem = CompositeKemManager::new(KemType::MlKem1024X448);
+        test_kem!(&mut kem);
     }
 }

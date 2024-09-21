@@ -56,7 +56,6 @@ impl KemFactory {
 mod tests {
     use super::*;
     use crate::kem::common::kem_type::KemType;
-    use crate::kem::common::macros::test_kem;
 
     #[test]
     fn test_kem_factory() {
@@ -66,10 +65,10 @@ mod tests {
         all_kems.extend_from_slice(&EC_KEM_TYPES);
         all_kems.extend_from_slice(&COMPOSITE_KEM_TYPES);
 
+        // This is just to test that the factory can create all KEM types
         for kem_type in all_kems {
-            let mut kem = KemFactory::get_kem(kem_type.clone());
+            let kem = KemFactory::get_kem(kem_type.clone());
             assert_eq!(kem.get_kem_type(), kem_type);
-            test_kem!(*kem);
         }
     }
 }

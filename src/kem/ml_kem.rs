@@ -24,7 +24,6 @@ macro_rules! encapsulate_ml {
     }};
 }
 
-
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
