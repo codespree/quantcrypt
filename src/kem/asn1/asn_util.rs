@@ -4,6 +4,16 @@ use std::error;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+/// Convert an OID string to a DER encoded byte array
+/// represeting an ASN.1 Object Identifier
+///
+/// # Arguments
+///
+/// * `oid` - The OID string to convert
+///
+/// # Returns
+///
+/// The DER encoded byte array
 pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
     Ok(ObjectIdentifier::new_unwrap(oid).to_der()?.to_vec())
 }

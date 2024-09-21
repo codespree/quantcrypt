@@ -6,44 +6,45 @@ use crate::kem::common::kdf::{Kdf, KdfType};
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
-use crate::kem::ec_kem::DhKemManager;
-use crate::kem::ml_kem::MlKemManager;
-use crate::kem::rsa_kem::RsaKemManager;
+use crate::kem::kem_factory::KemManager;
 use der::{Decode, Encode};
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
+use rand_core::CryptoRngCore;
 
 use std::error;
+
+use super::kem_factory::KemFactory;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+/// A KEM manager for the composite KEM method
 pub struct CompositeKemManager {
+    /// The KEM metadata information
     kem_info: KemInfo,
-    trad_kem: Box<dyn Kem>,
-    pq_kem: Box<dyn Kem>,
+    /// The traditional KEM manager
+    trad_kem: Box<KemManager>,
+    /// The post-quantum KEM manager
+    pq_kem: Box<KemManager>,
+    /// The key derivation function
     kdf: Kdf,
 }
 
-fn get_kem(kem_type: KemType) -> Box<dyn Kem> {
-    match kem_type {
-        KemType::BrainpoolP256r1 => Box::new(DhKemManager::new(KemType::BrainpoolP256r1)),
-        KemType::BrainpoolP384r1 => Box::new(DhKemManager::new(KemType::BrainpoolP384r1)),
-        KemType::P256 => Box::new(DhKemManager::new(KemType::P256)),
-        KemType::P384 => Box::new(DhKemManager::new(KemType::P384)),
-        KemType::X25519 => Box::new(DhKemManager::new(KemType::X25519)),
-        KemType::X448 => Box::new(DhKemManager::new(KemType::X448)),
-        KemType::RsaOAEP2048 => Box::new(RsaKemManager::new(KemType::RsaOAEP2048)),
-        KemType::RsaOAEP3072 => Box::new(RsaKemManager::new(KemType::RsaOAEP3072)),
-        KemType::RsaOAEP4096 => Box::new(RsaKemManager::new(KemType::RsaOAEP4096)),
-        KemType::MlKem512 => Box::new(MlKemManager::new(KemType::MlKem512)),
-        KemType::MlKem768 => Box::new(MlKemManager::new(KemType::MlKem768)),
-        KemType::MlKem1024 => Box::new(MlKemManager::new(KemType::MlKem1024)),
-        _ => {
-            panic!("Not implemented");
-        }
-    }
-}
-
 impl CompositeKemManager {
+    /// See the combiner function in the RFC:
+    /// https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
+    ///
+    /// The combiner function is used to combine the shared secrets from the traditional and post-quantum KEMs
+    ///
+    /// # Arguments
+    ///
+    /// * `pq_kem_ss` - The shared secret from the post-quantum KEM
+    /// * `trad_kem_ss` - The shared secret from the traditional KEM
+    /// * `trad_ct` - The traditional ciphertext
+    /// * `trad_pk` - The traditional public key (this should exist in the OneAsymmetricKey object)
+    ///
+    /// # Returns
+    ///
+    /// The combined shared secret (ss) after applying the KDF
     pub fn combiner(
         &self,
         pq_kem_ss: &[u8],
@@ -66,6 +67,60 @@ impl CompositeKemManager {
     }
 }
 
+impl CompositeKemManager {
+    /// Generate a composite KEM keypair from constituent keys
+    ///
+    /// # Arguments
+    ///
+    /// * `t_pk` - The traditional public key
+    /// * `t_sk` - The traditional secret key
+    /// * `pq_pk` - The post-quantum public key
+    /// * `pq_sk` - The post-quantum secret key
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the composite public key and secret key. It is CompositeKEMPublicKey, CompositeKEMPrivateKey
+    /// objects in ASN.1 format converted to DER
+    fn key_gen_composite(
+        &self,
+        t_pk: &[u8],
+        t_sk: &[u8],
+        pq_pk: &[u8],
+        pq_sk: &[u8],
+    ) -> Result<(Vec<u8>, Vec<u8>)> {
+        // Create the composite public key
+        let c_pk = CompositeKEMPublicKey::new(pq_pk, t_pk);
+        let pk = c_pk.to_der()?;
+
+        // Create the OneAsymmetricKey objects for the tradition secret key
+        let t_sk_pkcs8 = PrivateKeyInfo {
+            algorithm: AlgorithmIdentifierRef {
+                oid: self.trad_kem.get_kem_info().oid.parse().unwrap(),
+                parameters: None,
+            },
+            private_key: t_sk,
+            // The public key SHOULD be included in the secret key for the traditional KEM
+            public_key: Some(t_pk),
+        };
+
+        // Create the OneAsymmetricKey objects for the post-quantum secret key
+        let pq_sk_pkcs8 = PrivateKeyInfo {
+            algorithm: AlgorithmIdentifierRef {
+                oid: self.pq_kem.get_kem_info().oid.parse().unwrap(),
+                parameters: None,
+            },
+            private_key: pq_sk,
+            public_key: None,
+        };
+
+        // Create the composite secret key
+        let c_sk: CompositeKEMPrivateKey<'_> = CompositeKEMPrivateKey::new(pq_sk_pkcs8, t_sk_pkcs8);
+        let sk = c_sk.to_der()?;
+
+        Ok((pk, sk))
+    }
+}
+
 impl Kem for CompositeKemManager {
     /// Create a new KEM instance
     ///
@@ -85,56 +140,56 @@ impl Kem for CompositeKemManager {
         match kem_type {
             KemType::MlKem768Rsa2048 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::RsaOAEP2048),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP2048)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa3072 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::RsaOAEP3072),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP3072)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa4096 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::RsaOAEP4096),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP4096)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768X25519 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::X25519),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::X25519)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::Sha3_256),
             },
             KemType::MlKem768P384 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::P384),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::P384)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::BrainpoolP256r1),
-                pq_kem: get_kem(KemType::MlKem768),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::BrainpoolP256r1)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem1024P384 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::P384),
-                pq_kem: get_kem(KemType::MlKem1024),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::P384)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::BrainpoolP384r1),
-                pq_kem: get_kem(KemType::MlKem1024),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::BrainpoolP384r1)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024X448 => Self {
                 kem_info,
-                trad_kem: get_kem(KemType::X448),
-                pq_kem: get_kem(KemType::MlKem1024),
+                trad_kem: Box::new(KemFactory::get_kem(KemType::X448)),
+                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             _ => {
@@ -143,11 +198,35 @@ impl Kem for CompositeKemManager {
         }
     }
 
-    /// Generate a composite KEM keypair
+    /// Generate a composite KEM keypair using the default RNGs of the
+    /// traditional and post-quantum KEMs of the composite KEM
     ///
     /// # Returns
     ///
-    /// A tuple containing the public key and secret key
+    /// A tuple containing the composite public key and secret key (pk, sk).
+    /// It is CompositeKEMPublicKey, CompositeKEMPrivateKey objects in ASN.1
+    /// format converted to DER
+    fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
+        // Get the keypair for the traditional KEM
+        let (t_pk, t_sk) = self.trad_kem.key_gen()?;
+
+        // Get the keypair for the post-quantum KEM
+        let (pq_pk, pq_sk) = self.pq_kem.key_gen()?;
+
+        self.key_gen_composite(&t_pk, &t_sk, &pq_pk, &pq_sk)
+    }
+
+    /// Generate a composite KEM keypair
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - The random number generator to use
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the composite public key and secret key (pk, sk).
+    /// It is CompositeKEMPublicKey, CompositeKEMPrivateKey objects in ASN.1
+    /// format converted to DER
     ///
     /// The keys are composite keys in ASN.1 format:
     /// CompositeKEMPublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
@@ -161,43 +240,14 @@ impl Kem for CompositeKemManager {
     ///    ...,
     ///    [[2: publicKey        [1] PublicKey OPTIONAL ]],
     ///    ...
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
+    fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
         // Get the keypair for the traditional KEM
-        let (t_pk, t_sk) = self.trad_kem.key_gen(seed)?;
+        let (t_pk, t_sk) = self.trad_kem.key_gen_with_rng(rng)?;
 
         // Get the keypair for the post-quantum KEM
-        let (pq_pk, pq_sk) = self.pq_kem.key_gen(seed)?;
+        let (pq_pk, pq_sk) = self.pq_kem.key_gen_with_rng(rng)?;
 
-        // Create the composite public key
-        let c_pk = CompositeKEMPublicKey::new(&pq_pk, &t_pk);
-        let pk = c_pk.to_der()?;
-
-        // Create the OneAsymmetricKey objects for the tradition secret key
-        let t_sk_pkcs8 = PrivateKeyInfo {
-            algorithm: AlgorithmIdentifierRef {
-                oid: self.trad_kem.get_kem_info().oid.parse().unwrap(),
-                parameters: None,
-            },
-            private_key: &t_sk,
-            // The public key SHOULD be included in the secret key for the traditional KEM
-            public_key: Some(&t_pk),
-        };
-
-        // Create the OneAsymmetricKey objects for the post-quantum secret key
-        let pq_sk_pkcs8 = PrivateKeyInfo {
-            algorithm: AlgorithmIdentifierRef {
-                oid: self.pq_kem.get_kem_info().oid.parse().unwrap(),
-                parameters: None,
-            },
-            private_key: &pq_sk,
-            public_key: None,
-        };
-
-        // Create the composite secret key
-        let c_sk = CompositeKEMPrivateKey::new(pq_sk_pkcs8, t_sk_pkcs8);
-        let sk = c_sk.to_der()?;
-
-        Ok((pk, sk))
+        self.key_gen_composite(&t_pk, &t_sk, &pq_pk, &pq_sk)
     }
 
     /// Encapsulate a public key
@@ -208,7 +258,9 @@ impl Kem for CompositeKemManager {
     ///
     /// # Returns
     ///
-    /// A tuple containing the ciphertext and shared secret
+    /// A tuple containing the shared secret and ciphertext (ss, ct).
+    /// The shared secret is the result of the combiner function, and the
+    /// ciphertext is the CompositeCiphertextValue in ASN.1 format converted to DER
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         // Deserialize the composite public key
         let c_pk = CompositeKEMPublicKey::from_der(pk)?;
@@ -233,12 +285,12 @@ impl Kem for CompositeKemManager {
     ///
     /// # Arguments
     ///
-    /// * `sk` - The composite secret key to decapsulate with
-    /// * `ct` - The composite ciphertext to decapsulate
+    /// * `sk` - The composite secret key to decapsulate - CompositeKEMPrivateKey in ASN.1 format converted to DER
+    /// * `ct` - The composite ciphertext to decapsulate - CompositeCiphertextValue in ASN.1 format converted to DER
     ///
     /// # Returns
     ///
-    /// The shared secret
+    /// The shared secret after applying the combiner function
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Deserialize the composite secret key
         let c_sk = CompositeKEMPrivateKey::from_der(sk).unwrap();

@@ -6,6 +6,8 @@ use crate::kem::common::config::ss_len::SSLen;
 use crate::kem::common::kem_type::KemType;
 
 /// A structure to represent metadata about a KEM
+///
+/// This is also used to test the correctness of the KEM
 #[derive(Clone)]
 pub struct KemInfo {
     /// The type of KEM
@@ -23,6 +25,11 @@ pub struct KemInfo {
 }
 
 impl KemInfo {
+    /// Create a new `KemInfo` structure
+    ///
+    /// # Arguments
+    ///
+    /// * `kem_type` - The type of KEM
     pub fn new(kem_type: KemType) -> KemInfo {
         KemInfo {
             kem_type: kem_type.clone(),

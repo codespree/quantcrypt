@@ -1,3 +1,5 @@
+use rand_core::CryptoRngCore;
+
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_type::KemType;
 
@@ -18,12 +20,29 @@ pub trait Kem {
     where
         Self: Sized;
 
-    /// Generate a keypair
+    /// Generate a keypair using the default random number generator
+    ///
+    /// For EC based KEMs, the keypair is generated using the OpenSSL library using
+    /// the default random number generator.
+    ///
+    /// For ML and RSA based KEMs, the keypair is generated usingvthe ChaCha20Rng
+    /// random number generator.
     ///
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)>;
+    fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)>;
+
+    /// Generate a keypair with a specified random number generator
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - The random number generator to use
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the public and secret keys (pk, sk)
+    fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)>;
 
     /// Encapsulate a public key
     ///

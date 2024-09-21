@@ -1,6 +1,12 @@
 use crate::kem::common::kem_type::KemType;
 
+/// A trait to get the OID of a KEM
 pub trait Oid {
+    /// Get the OID for the KEM
+    ///
+    /// # Returns
+    ///
+    /// The OID for the KEM as a string
     fn get_oid(&self) -> String;
 }
 

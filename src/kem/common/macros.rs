@@ -1,7 +1,7 @@
 #[cfg(test)]
 macro_rules! test_kem {
     ($kem:expr) => {{
-        let (pk, sk) = $kem.key_gen(None).unwrap();
+        let (pk, sk) = $kem.key_gen().unwrap();
 
         let kem_info = $kem.get_kem_info();
 
@@ -28,14 +28,21 @@ macro_rules! test_kem {
         assert_eq!(ss, ss2);
 
         // Should generate different keys
-        let (pk2, sk2) = $kem.key_gen(None).unwrap();
+        let (pk2, sk2) = $kem.key_gen().unwrap();
         assert_ne!(pk, pk2);
         assert_ne!(sk, sk2);
 
         // Should generate the same keys
         let seed = [0u8; 32];
-        let (pk3, sk3) = $kem.key_gen(Some(&seed)).unwrap();
-        let (pk4, sk4) = $kem.key_gen(Some(&seed)).unwrap();
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha20Rng;
+        let mut rng = ChaCha20Rng::from_seed(seed);
+
+        let (pk3, sk3) = $kem.key_gen_with_rng(&mut rng).unwrap();
+
+        // Seed it again
+        let mut rng = ChaCha20Rng::from_seed(seed);
+        let (pk4, sk4) = $kem.key_gen_with_rng(&mut rng).unwrap();
 
         assert_eq!(pk3, pk4);
         assert_eq!(sk3, sk4);

@@ -1,6 +1,6 @@
 use rand::RngCore;
 use rand_chacha::ChaCha20Rng;
-use rand_core::SeedableRng;
+use rand_core::{CryptoRngCore, SeedableRng};
 use sha2::Sha256;
 use std::error;
 
@@ -36,22 +36,23 @@ impl Kem for RsaKemManager {
         Self { kem_info }
     }
 
-    /// Generate a keypair
+    /// Generate a keypair using the specified RNG
     ///
     /// # Arguments
     ///
-    /// * `seed` - A 32-byte seed
+    /// * `rng` - A random number generator
     ///
     /// # Returns
     ///
-    /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
-        let mut rng = if let Some(seed) = seed {
-            ChaCha20Rng::from_seed(*seed)
-        } else {
-            ChaCha20Rng::from_entropy()
-        };
-
+    /// A tuple containing the public and secret keys (pk, sk).
+    /// Both keys are in PKCS1 DER format.
+    ///
+    /// TODO: Is the format correct?
+    ///
+    /// # Panics
+    ///
+    /// If the KEM type is not implemented (wrong type is passed)
+    fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
         let bits = match self.kem_info.kem_type {
             KemType::RsaOAEP2048 => 2048,
             KemType::RsaOAEP3072 => 3072,
@@ -62,7 +63,8 @@ impl Kem for RsaKemManager {
         };
 
         // Use the RSA crate as we can specify the rng
-        let rpk: RsaPrivateKey = RsaPrivateKey::new(&mut rng, bits)?;
+        let rpk = RsaPrivateKey::new(rng, bits)?;
+
         let sd = rpk.to_pkcs1_der()?;
         let sk = sd.to_bytes().to_vec();
 
@@ -71,6 +73,16 @@ impl Kem for RsaKemManager {
         let pk = pd.to_vec();
 
         Ok((pk, sk))
+    }
+
+    /// Generate a keypair using the default RNG ChaCha20Rng
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the public and secret keys (pk, sk)
+    fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
+        let mut rng = ChaCha20Rng::from_entropy();
+        self.key_gen_with_rng(&mut rng)
     }
 
     /// Encapsulate a public key
@@ -107,6 +119,16 @@ impl Kem for RsaKemManager {
         Ok((ss, ct))
     }
 
+    /// Decapsulate a ciphertext
+    ///
+    /// # Arguments
+    ///
+    /// * `sk` - The secret key to decapsulate with
+    /// * `ct` - The ciphertext to decapsulate
+    ///
+    /// # Returns
+    ///
+    /// The shared secret (ss)
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Create a private key from the DER-encoded bytes
         let priv_key = RsaPrivateKey::from_pkcs1_der(sk)?;

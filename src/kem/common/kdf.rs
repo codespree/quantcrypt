@@ -3,7 +3,7 @@ use sha2::{Sha256, Sha384};
 use sha3::{Digest, Sha3_256, Sha3_512};
 // Implement Copy and Debug for KemType
 #[derive(Clone, Debug)]
-/// The output bits of the KDF
+/// The type of the Key Derivation Function (KDF)
 pub enum KdfType {
     HkdfSha256,
     Sha3_256,

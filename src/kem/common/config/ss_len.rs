@@ -1,10 +1,21 @@
 use crate::kem::common::kem_type::KemType;
 
+/// A trait to get the length of the shared secret
 pub trait SSLen {
+    /// Get the length of the shared secret
+    ///
+    /// # Returns
+    ///
+    /// The length of the shared secret in bytes
     fn get_ss_len(&self) -> usize;
 }
 
 impl SSLen for KemType {
+    /// Get the length of the shared secret
+    ///
+    /// # Returns
+    ///
+    /// The length of the shared secret in bytes
     fn get_ss_len(&self) -> usize {
         match self {
             // These are NOT Nsecret length as per RFC 9180

@@ -1,10 +1,22 @@
 use crate::kem::common::kem_type::KemType;
 
+/// A trait to get the length of the secret key
+///
+/// This is used to determine the length of the secret key
+///
+/// # Returns
+///
+/// The length of the secret key in bytes or `None` if the length is variable
 pub trait SKLen {
     fn get_sk_len(&self) -> Option<usize>;
 }
 
 impl SKLen for KemType {
+    /// Get the length of the secret key
+    ///
+    /// # Returns
+    ///
+    /// The length of the secret key in bytes or `None` if the length is not fixed
     fn get_sk_len(&self) -> Option<usize> {
         match self {
             // These are Nsk length as per SerializePrivateKey(skX)

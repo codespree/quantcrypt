@@ -1,16 +1,16 @@
-use openssl::bn::{BigNum, BigNumContext};
+use openssl::bn::{BigNum, BigNumContext, BigNumRef};
 use openssl::derive::Deriver;
 use openssl::ec::{EcGroup, EcKey, EcPoint};
 use openssl::pkey::{Id, PKey};
-use rand::RngCore;
-use rand_chacha::ChaCha20Rng;
-use rand_core::SeedableRng;
+use rand_core::CryptoRngCore;
 use std::error;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-/// Encapsulate a public key using the ECDH key exchange method
+/// Encapsulate a public key using the ECDH key exchange method.
+/// This method is used for curves supported by the `EcKey` API
+/// and uses OpenSSL's RNG for the ephemeral key generation.
 ///
 /// # Arguments
 ///
@@ -50,16 +50,18 @@ pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)>
 
 /// Encapsulate a public key using PKey API
 /// This method is used for X25519 and X448 which are not supported by the `EcKey` API.
+/// It uses OpenSSL's RNG for the ephemeral key generation.
 ///
 /// # Arguments
 ///
 /// * `pk` - The public key to encapsulate
+/// * `id` - The ID of the curve (X25519 or X448)
 ///
 /// # Returns
 ///
 /// A tuple containing the shared secret and ciphertext (ss, ct)
 pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
-    let (_, esk) = get_keypair_pkey_based(None, id)?;
+    let (_, esk) = get_key_pair_pkey_based(id)?;
     let esk = PKey::private_key_from_raw_bytes(&esk, id)?;
     let pk = PKey::public_key_from_raw_bytes(pk, id)?;
     let mut deriver = Deriver::new(&esk)?;
@@ -69,12 +71,13 @@ pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     Ok((ss, ct))
 }
 
-/// Decapsulate a ciphertext using the ECDH key exchange method
+/// Decapsulate a ciphertext using the EcKey API
 ///
 /// # Arguments
 ///
 /// * `sk` - The secret key to decapsulate with
 /// * `ct` - The ciphertext to decapsulate
+/// * `group` - The EC group to use
 ///
 /// # Returns
 ///
@@ -106,10 +109,11 @@ pub fn decaps_ec_based(sk: &[u8], ct: &[u8], group: &EcGroup) -> Result<Vec<u8>>
 ///
 /// * `sk` - The secret key to decapsulate with
 /// * `ct` - The ciphertext to decapsulate
+/// * `id` - The ID of the curve (X25519 or X448)
 ///
 /// # Returns
 /// The shared secret
-pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
+pub fn decaps_pkey_based(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
     let sk = PKey::private_key_from_raw_bytes(sk, id)?;
     let ct = PKey::public_key_from_raw_bytes(ct, id)?;
     let mut deriver = Deriver::new(&sk)?;
@@ -128,7 +132,7 @@ pub fn decaps_pkey_based_ossl(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
 /// # Returns
 ///
 /// The padded BigNum as a byte vector
-fn pad_bignum_to_length(bn: &BigNum, desired_length: usize) -> Vec<u8> {
+fn pad_bignum_to_length(bn: &BigNumRef, desired_length: usize) -> Vec<u8> {
     let bn_bytes = bn.to_vec();
     if bn_bytes.len() > desired_length {
         panic!("BigNum is already larger than desired length");
@@ -142,7 +146,7 @@ fn pad_bignum_to_length(bn: &BigNum, desired_length: usize) -> Vec<u8> {
     padded_bn_bytes
 }
 
-/// Get the byte length of the secret key for an EC curve
+/// Get the byte length of the secret key for an EC curve (EcKey API)
 ///
 /// # Arguments
 ///
@@ -163,12 +167,12 @@ fn get_sk_byte_len_ec_based(ctx: &mut BigNumContext, group: &EcGroup) -> Result<
     Ok(byte_len)
 }
 
-/// Get a secret key as a BigNum for an EC curve
+/// Get a secret key as a BigNum for an EC curve (ECKey API)
 ///
 /// # Arguments
 ///
 /// * `ctx` - The BigNumContext
-/// * `seed` - An optional 32-byte seed
+/// * `rng` - A random number generator
 /// * `group` - The EC group
 ///
 /// # Returns
@@ -176,15 +180,9 @@ fn get_sk_byte_len_ec_based(ctx: &mut BigNumContext, group: &EcGroup) -> Result<
 /// The secret key as a BigNum
 fn get_sk_bignum_ec_based(
     ctx: &mut BigNumContext,
-    seed: Option<&[u8; 32]>,
+    mut rng: impl CryptoRngCore,
     group: &EcGroup,
 ) -> Result<BigNum> {
-    let mut rng = if let Some(seed) = seed {
-        ChaCha20Rng::from_seed(*seed)
-    } else {
-        ChaCha20Rng::from_entropy()
-    };
-
     // Get the order (n) of the group
     let mut order = BigNum::new()?;
     group.order(&mut order, ctx)?;
@@ -210,19 +208,22 @@ fn get_sk_bignum_ec_based(
     Ok(private_key_bn)
 }
 
-/// Get the public and secret keys as byte vectors from a BigNum private key
+/// Get the public and secret keys as byte vectors from a BigNum private key.
+/// This method is used for curves supported by the `EcKey` API.
 ///
 /// # Arguments
 ///
 /// * `ctx` - The BigNumContext
 /// * `private_key_bn` - The private key as a BigNum
+/// * `group` - The EC group
 ///
 /// # Returns
 ///
-/// A tuple containing the public and secret keys (pk, sk) as uncompressed point and field element octets
+/// A tuple containing the public and secret keys (pk, sk) as uncompressed point and field element bytes
+/// respectively. The secret key is padded to the byte length of the order of the group.
 fn get_pk_sk_from_bignum_ec_based(
     ctx: &mut BigNumContext,
-    private_key_bn: &BigNum,
+    private_key_bn: &BigNumRef,
     group: &EcGroup,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     // Create the public key point by multiplying the generator by the private number
@@ -242,27 +243,49 @@ fn get_pk_sk_from_bignum_ec_based(
     Ok((pks, sks))
 }
 
-/// Get an EC key pair using the OpenSSL library
+/// Get a key pair using the OpenSSL library (default RNG) for an EC curve
+/// that is supported by the `EcKey` API.
 ///
 /// # Arguments
 ///
-/// * `seed` - An optional 32-byte seed
+/// * `group` - The EC group
 ///
 /// # Returns
 ///
-/// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_key_pair_ec_based(
-    seed: Option<&[u8; 32]>,
+/// A tuple containing the public and secret keys (pk, sk) with pk as an uncompressed point
+/// and sk as a field element bytes
+pub fn get_key_pair_ec_based(group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
+    let mut ctx = BigNumContext::new()?;
+    let ec_key = EcKey::generate(group)?;
+    let private_key_bn = ec_key.private_key();
+    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, group)
+}
+
+/// Get an EC key pair but specify the RNG to use
+///
+/// # Arguments
+///
+/// * `rng` - The random number generator
+/// * `group` - The EC group
+///
+/// # Returns
+///
+/// A tuple containing the public and secret keys (pk, sk) with pk as an uncompressed point
+/// and sk as a field element bytes
+pub fn get_key_pair_ec_based_with_rng(
+    rng: &mut impl CryptoRngCore,
     group: &EcGroup,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut ctx = BigNumContext::new()?;
 
     // Get a big num as private key
-    let private_key_bn = get_sk_bignum_ec_based(&mut ctx, seed, group)?;
-    get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, group)
+    let private_key_bn = get_sk_bignum_ec_based(&mut ctx, rng, group)?;
+    let private_key_bn = private_key_bn.as_ref();
+    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, group)
 }
 
-/// Compute the public key from the private key for an EC curve
+/// Compute the public key from the private key for an EC curve.
+/// The private key is given as a BigNum between 1 and n-1, where n is the order of the group.
 ///
 /// # Arguments
 ///
@@ -276,7 +299,7 @@ pub fn get_key_pair_ec_based(
 fn compute_public_key(
     ctx: &BigNumContext,
     group: &EcGroup,
-    private_key_bn: &BigNum,
+    private_key_bn: &BigNumRef,
 ) -> Result<EcPoint> {
     // Create a new EC_POINT
     let mut public_key_point = EcPoint::new(group)?;
@@ -315,24 +338,49 @@ fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
     }
 }
 
-/// Get an elliptic curve key pair using a PKey based method. This is used for X448, and X25519
-/// which are not supported by the `EcKey` API.
+/// Get an elliptic curve key pair using a PKey based method
+///
+/// This is used for X448, and X25519 which are not supported by the `EcKey` API.
+///
+/// The default OpenSSL RNG is used.
 ///
 /// # Arguments
 ///
-/// * `seed` - An optional 32-byte seed
+/// * `id` - The ID of the curve
 ///
 /// # Returns
 ///
 /// A tuple containing the public and secret keys (pk, sk) in DER format
-pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
-    let mut rng = if let Some(seed) = seed {
-        ChaCha20Rng::from_seed(*seed)
-    } else {
-        ChaCha20Rng::from_entropy()
+pub fn get_key_pair_pkey_based(id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
+    let sk = match id {
+        Id::X448 => PKey::generate_x448()?,
+        Id::X25519 => PKey::generate_x25519()?,
+        _ => panic!("Unsupported ID"),
     };
 
-    // Generate 56 random bytes
+    let pk = sk.raw_public_key()?;
+    let sk = sk.raw_private_key()?;
+    Ok((pk, sk))
+}
+
+/// Get an elliptic curve key pair using a PKey based method. This is used for X448, and X25519
+/// which are not supported by the `EcKey` API.
+///
+/// The RNG is specified.
+///
+/// # Arguments
+///
+/// * `rng` - The random number generator
+/// * `id` - The ID of the curve (X448 or X25519)
+///
+/// # Returns
+///
+/// A tuple containing the public and secret keys (pk, sk) in DER format
+pub fn get_keypair_pkey_based_with_rng(
+    rng: &mut impl CryptoRngCore,
+    id: Id,
+) -> Result<(Vec<u8>, Vec<u8>)> {
+    // Generate n random bytes according to the curve
     let mut sk = match id {
         Id::X448 => {
             let mut sk: [u8; 56] = [0; 56];
@@ -356,11 +404,12 @@ pub fn get_keypair_pkey_based(seed: Option<&[u8; 32]>, id: Id) -> Result<(Vec<u8
     Ok((pk, sk))
 }
 
-/// Get the public key from a secret key for an EC curve
+/// Get the public key from a secret key for an EC curve (not used currently)
 ///
 /// # Arguments
 ///
 /// * `sk` - The secret key
+/// * `group` - The EC group
 ///
 /// # Returns
 ///
@@ -377,17 +426,18 @@ pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
     )?)
 }
 
-/// Get the public key from a secret key for a PKey based method
+/// Get the public key from a secret key for a PKey based method (not used currently)
 ///
 /// # Arguments
 ///
 /// * `sk` - The secret key
+/// * `id` - The ID of the curve
 ///
 /// # Returns
 ///
 /// The public key as a byte vector
 #[allow(dead_code)] // This function can be used in the future
-pub fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
+fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
     let sk = PKey::private_key_from_raw_bytes(sk, id)?;
     Ok(sk.raw_public_key()?)
 }
@@ -452,7 +502,7 @@ mod tests {
         let pk = sk_obj.raw_public_key().unwrap();
 
         let (ss, ct) = encaps_pkey_based(&pk, Id::X25519).unwrap();
-        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X25519).unwrap();
+        let ss2 = decaps_pkey_based(&sk, &ct, Id::X25519).unwrap();
 
         assert_eq!(ss, ss2);
 
@@ -464,7 +514,7 @@ mod tests {
         let pk = sk_obj.raw_public_key().unwrap();
 
         let (ss, ct) = encaps_pkey_based(&pk, Id::X25519).unwrap();
-        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X25519).unwrap();
+        let ss2 = decaps_pkey_based(&sk, &ct, Id::X25519).unwrap();
 
         assert_eq!(ss, ss2);
     }
@@ -478,7 +528,7 @@ mod tests {
         let pk = sk_obj.raw_public_key().unwrap();
 
         let (ss, ct) = encaps_pkey_based(&pk, Id::X448).unwrap();
-        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X448).unwrap();
+        let ss2 = decaps_pkey_based(&sk, &ct, Id::X448).unwrap();
 
         assert_eq!(ss, ss2);
 
@@ -490,7 +540,7 @@ mod tests {
         let pk = sk_obj.raw_public_key().unwrap();
 
         let (ss, ct) = encaps_pkey_based(&pk, Id::X448).unwrap();
-        let ss2 = decaps_pkey_based_ossl(&sk, &ct, Id::X448).unwrap();
+        let ss2 = decaps_pkey_based(&sk, &ct, Id::X448).unwrap();
 
         assert_eq!(ss, ss2);
     }

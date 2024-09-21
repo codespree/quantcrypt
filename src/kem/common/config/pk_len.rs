@@ -1,10 +1,16 @@
 use crate::kem::common::kem_type::KemType;
 
+/// A trait to get the length of the public key
 pub trait PKLen {
     fn get_pk_len(&self) -> Option<usize>;
 }
 
 impl PKLen for KemType {
+    /// Get the length of the public key
+    ///
+    /// # Returns
+    ///
+    /// The length of the public key in bytes or `None` if the length is not fixed
     fn get_pk_len(&self) -> Option<usize> {
         match self {
             // These are Npk length as per SerializePublicKey(pkX)

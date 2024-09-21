@@ -1,10 +1,16 @@
 use crate::kem::common::kem_type::KemType;
 
+/// A trait to get the length of the ciphertext
 pub trait CTLen {
     fn get_ct_len(&self) -> Option<usize>;
 }
 
 impl CTLen for KemType {
+    /// Get the length of the ciphertext
+    ///
+    /// # Returns
+    ///
+    /// The length of the ciphertext in bytes
     fn get_ct_len(&self) -> Option<usize> {
         match self {
             KemType::P256 => Some(65),

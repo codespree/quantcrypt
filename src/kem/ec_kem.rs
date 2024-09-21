@@ -3,12 +3,13 @@ use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::common::openssl_utils::{
-    decaps_ec_based, decaps_pkey_based_ossl, encaps_ec_based, encaps_pkey_based,
-    get_key_pair_ec_based, get_keypair_pkey_based,
+    decaps_ec_based, decaps_pkey_based, encaps_ec_based, encaps_pkey_based, get_key_pair_ec_based,
+    get_key_pair_ec_based_with_rng, get_key_pair_pkey_based, get_keypair_pkey_based_with_rng,
 };
 use openssl::ec::EcGroup;
 use openssl::nid::Nid;
 use openssl::pkey::Id;
+use rand_core::CryptoRngCore;
 use std::error;
 
 // Change the alias to use `Box<dyn error::Error>`.
@@ -30,32 +31,72 @@ impl Kem for DhKemManager {
         Self { kem_info }
     }
 
+    /// Generate a keypair using the default RNG of OpenSSL
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the public and secret keys (pk, sk).
+    ///
+    /// pk, sk, ct, lengths are all in accordance with RFC9180.
+    /// ss length is different from RFC9180 as it is not hashed.
+    fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
+        match self.kem_info.kem_type {
+            KemType::P256 => {
+                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
+                Ok(get_key_pair_ec_based(&group)?)
+            }
+            KemType::P384 => {
+                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
+                Ok(get_key_pair_ec_based(&group)?)
+            }
+            KemType::BrainpoolP256r1 => {
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
+                Ok(get_key_pair_ec_based(&group)?)
+            }
+            KemType::BrainpoolP384r1 => {
+                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
+                Ok(get_key_pair_ec_based(&group)?)
+            }
+            KemType::X25519 => get_key_pair_pkey_based(Id::X25519),
+            KemType::X448 => get_key_pair_pkey_based(Id::X448),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
+
     /// Generate a keypair
+    ///
+    /// # Arguments
+    ///
+    /// * `rng` - A random number generator
     ///
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
-        //TODO: Ensure that serialization is correct
+    ///
+    /// pk, sk, ct, lengths are all in accordance with RFC9180.
+    /// ss length is different from RFC9180 as it is not hashed.
+    fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_info.kem_type {
             KemType::P256 => {
                 let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-                Ok(get_key_pair_ec_based(seed, &group)?)
+                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
             }
             KemType::P384 => {
                 let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
-                Ok(get_key_pair_ec_based(seed, &group)?)
+                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
             }
-            KemType::X25519 => get_keypair_pkey_based(seed, Id::X25519),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                Ok(get_key_pair_ec_based(seed, &group)?)
+                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
             }
             KemType::BrainpoolP384r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                Ok(get_key_pair_ec_based(seed, &group)?)
+                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
             }
-            KemType::X448 => get_keypair_pkey_based(seed, Id::X448),
+            KemType::X25519 => get_keypair_pkey_based_with_rng(rng, Id::X25519),
+            KemType::X448 => get_keypair_pkey_based_with_rng(rng, Id::X448),
             _ => {
                 panic!("Not implemented");
             }
@@ -111,7 +152,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
                 decaps_ec_based(sk, ct, &group)
             }
-            KemType::X25519 => decaps_pkey_based_ossl(sk, ct, Id::X25519),
+            KemType::X25519 => decaps_pkey_based(sk, ct, Id::X25519),
             KemType::BrainpoolP256r1 => {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
                 decaps_ec_based(sk, ct, &group)
@@ -120,7 +161,7 @@ impl Kem for DhKemManager {
                 let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
                 decaps_ec_based(sk, ct, &group)
             }
-            KemType::X448 => decaps_pkey_based_ossl(sk, ct, Id::X448),
+            KemType::X448 => decaps_pkey_based(sk, ct, Id::X448),
             _ => {
                 panic!("Not implemented");
             }

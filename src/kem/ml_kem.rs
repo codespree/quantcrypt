@@ -5,12 +5,13 @@ use ml_kem::kem::Decapsulate;
 use ml_kem::kem::Encapsulate;
 use ml_kem::*;
 use rand_chacha::ChaCha20Rng;
+use rand_core::CryptoRngCore;
 use rand_core::SeedableRng;
 use std::error;
 
 macro_rules! key_gen_ml {
     ($rng:expr, $curve:ident) => {{
-        let (dk, ek) = $curve::generate(&mut $rng);
+        let (dk, ek) = $curve::generate($rng);
         (ek.as_bytes().to_vec(), dk.as_bytes().to_vec())
     }};
 }
@@ -81,6 +82,19 @@ pub struct MlKemManager {
 }
 
 impl Kem for MlKemManager {
+    /// Create a new KEM instance
+    ///
+    /// # Arguments
+    ///
+    /// * `kem_type` - The type of KEM to create
+    ///
+    /// # Returns
+    ///
+    /// A new KEM instance
+    ///
+    /// # Panics
+    ///
+    /// If the KEM type is not implemented (wrong type is passed)
     fn new(kem_type: KemType) -> Self {
         let kem_info = KemInfo::new(kem_type);
         Self { kem_info }
@@ -88,17 +102,14 @@ impl Kem for MlKemManager {
 
     /// Generate a keypair
     ///
+    /// # Arguments
+    ///
+    /// * `rng` - A random number generator
+    ///
     /// # Returns
     ///
     /// A tuple containing the public and secret keys (pk, sk)
-    fn key_gen(&mut self, seed: Option<&[u8; 32]>) -> Result<(Vec<u8>, Vec<u8>)> {
-        // If seed is provided, use it to generate the keypair
-        let mut rng = if let Some(seed) = seed {
-            ChaCha20Rng::from_seed(*seed)
-        } else {
-            ChaCha20Rng::from_entropy()
-        };
-
+    fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_info.kem_type {
             KemType::MlKem512 => Ok(key_gen_ml!(rng, MlKem512)),
             KemType::MlKem768 => Ok(key_gen_ml!(rng, MlKem768)),
@@ -109,6 +120,16 @@ impl Kem for MlKemManager {
         }
     }
 
+    /// Generate a keypair using the default RNG ChaCha20Rng
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the public and secret keys (pk, sk)
+    fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
+        let mut rng = ChaCha20Rng::from_entropy();
+        self.key_gen_with_rng(&mut rng)
+    }
+
     /// Encapsulate a public key
     ///
     /// # Arguments
@@ -117,7 +138,7 @@ impl Kem for MlKemManager {
     ///
     /// # Returns
     ///
-    /// A tuple containing the shares secret and ciphertext (ss, ct)
+    /// A tuple containing the shared secret and ciphertext (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut rng = ChaCha20Rng::from_entropy();
         match self.kem_info.kem_type {
