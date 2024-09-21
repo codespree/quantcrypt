@@ -177,7 +177,7 @@ impl Kem for CompositeKem {
                 parameters: None,
             },
             private_key: &t_sk,
-            public_key: None,
+            public_key: Some(&t_pk),
         };
 
         // Create the OneAsymmetricKey objects for the post-quantum secret key
@@ -256,12 +256,11 @@ impl Kem for CompositeKem {
             .unwrap();
 
         // Get the trad PK
-        let t_sk = c_sk.get_trad_sk().private_key;
-        let t_pk = self.trad_kem.get_pk(t_sk).unwrap();
+        let t_pk = c_sk.get_trad_sk().public_key.unwrap();
 
         // Get the shared secret using the combiner
         let ss = self
-            .combiner(&pq_ss, &t_ss, &c_ct.get_trad_ct(), &t_pk)
+            .combiner(&pq_ss, &t_ss, &c_ct.get_trad_ct(), t_pk)
             .unwrap();
 
         Ok(ss)
@@ -306,10 +305,6 @@ impl Kem for CompositeKem {
             }
         };
         oid.to_string()
-    }
-
-    fn get_pk(&self, _sk: &[u8]) -> Result<Vec<u8>> {
-        panic!("Not implemented");
     }
 }
 

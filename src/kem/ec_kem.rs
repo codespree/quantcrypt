@@ -3,8 +3,7 @@ use crate::kem::kem_trait::Kem;
 use crate::kem::kem_type::KemType;
 use crate::kem::openssl_utils::{
     decaps_ec_based, decaps_pkey_based_ossl, encaps_ec_based, encaps_pkey_based,
-    get_key_pair_ec_based, get_keypair_pkey_based, get_pk_from_sk_ec_based,
-    get_pk_from_sk_pkey_based,
+    get_key_pair_ec_based, get_keypair_pkey_based,
 };
 use openssl::ec::EcGroup;
 use openssl::nid::Nid;
@@ -222,41 +221,6 @@ impl Kem for DhKemManager {
             }
         }
     }
-
-    /// Get the public key given a secret key
-    ///
-    /// # Arguments
-    ///
-    /// * `sk` - The secret key
-    ///
-    /// # Returns
-    ///
-    /// The public key
-    fn get_pk(&self, sk: &[u8]) -> Result<Vec<u8>> {
-        match self.kem_type {
-            KemType::P256 => {
-                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-                Ok(get_pk_from_sk_ec_based(sk, &group)?.to_vec())
-            }
-            KemType::P384 => {
-                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
-                Ok(get_pk_from_sk_ec_based(sk, &group)?.to_vec())
-            }
-            KemType::X25519 => Ok(get_pk_from_sk_pkey_based(sk, Id::X25519)?.to_vec()),
-            KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                Ok(get_pk_from_sk_ec_based(sk, &group)?.to_vec())
-            }
-            KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                Ok(get_pk_from_sk_ec_based(sk, &group)?.to_vec())
-            }
-            KemType::X448 => Ok(get_pk_from_sk_pkey_based(sk, Id::X448)?.to_vec()),
-            _ => {
-                panic!("Not implemented");
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -300,23 +264,5 @@ mod tests {
     fn test_ec_kem_x25519() {
         let mut kem = DhKemManager::new(KemType::X25519);
         test_kem!(kem);
-    }
-
-    #[test]
-    fn test_get_pk_from_sk() {
-        let kem_types = vec![
-            KemType::P256,
-            KemType::P384,
-            KemType::X25519,
-            KemType::BrainpoolP256r1,
-            KemType::BrainpoolP384r1,
-            KemType::X448,
-        ];
-        for kem_type in kem_types {
-            let mut kem = DhKemManager::new(kem_type);
-            let (pk, sk) = kem.key_gen(None).unwrap();
-            let pk2 = kem.get_pk(&sk).unwrap();
-            assert_eq!(pk, pk2);
-        }
     }
 }

@@ -177,20 +177,6 @@ impl Kem for RsaKemManager {
             }
         }
     }
-
-    /// Get the public key given a secret key
-    ///
-    /// # Arguments
-    ///
-    /// * `sk` - The secret key
-    ///
-    /// # Returns
-    ///
-    /// The public key
-    fn get_pk(&self, sk: &[u8]) -> Result<Vec<u8>> {
-        let sk = RsaPrivateKey::from_pkcs1_der(sk)?;
-        Ok(sk.to_public_key().to_pkcs1_der()?.to_vec())
-    }
 }
 
 #[cfg(test)]
@@ -215,21 +201,5 @@ mod tests {
     fn test_rsa_kem_4096() {
         let mut kem = RsaKemManager::new(KemType::RsaOAEP4096);
         test_kem!(kem);
-    }
-
-    #[test]
-    fn test_get_pk_from_sk() {
-        let kem_types = vec![
-            KemType::RsaOAEP2048,
-            KemType::RsaOAEP3072,
-            KemType::RsaOAEP4096,
-        ];
-
-        for kem_type in kem_types {
-            let mut kem = RsaKemManager::new(kem_type);
-            let (pk, sk) = kem.key_gen(None).unwrap();
-            let pk2 = kem.get_pk(&sk).unwrap();
-            assert_eq!(pk, pk2);
-        }
     }
 }

@@ -214,11 +214,6 @@ impl Kem for MlKemManager {
             }
         }
     }
-
-    /// Not implemented
-    fn get_pk(&self, _sk: &[u8]) -> Result<Vec<u8>> {
-        panic!("Not implemented");
-    }
 }
 
 #[cfg(test)]
