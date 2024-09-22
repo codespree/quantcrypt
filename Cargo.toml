@@ -18,7 +18,7 @@ ml-kem = "0.2.1"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
-rsa = "0.9.6"
+rsa = { version="0.9.6", features=["sha2"] }
 openssl = { version = "*", features = ["vendored"] }
 sha2 = "0.10.8"
 der = "0.7.9"
@@ -28,4 +28,6 @@ sha3 = "0.10.8"
 hkdf = "0.12.4"
 hex = "0.4.3"
 fips204 = "0.2.2"
+ed25519-dalek = { version="2.1.1", features=["rand_core"]}
+ed448-rust = "0.1.1"
 

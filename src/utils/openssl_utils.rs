@@ -1,7 +1,9 @@
 use openssl::bn::{BigNum, BigNumContext, BigNumRef};
 use openssl::derive::Deriver;
 use openssl::ec::{EcGroup, EcKey, EcPoint};
-use openssl::pkey::{Id, PKey};
+use openssl::hash::MessageDigest;
+use openssl::nid::Nid;
+use openssl::pkey::{Id, PKey, Private, Public};
 use rand_core::CryptoRngCore;
 use std::error;
 
@@ -20,26 +22,27 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// # Returns
 ///
 /// A tuple containing the shared secret and ciphertext (ss, ct)
-pub fn encaps_ec_based(pk: &[u8], group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn encaps_ec_based(pk: &[u8], nid: Nid) -> Result<(Vec<u8>, Vec<u8>)> {
+    let group = EcGroup::from_curve_name(nid)?;
     // pk is the public key in uncompressed form, so we need to convert it to an EcKey
-    // TODO: Should BignumContext be reused?
+    // BigNumContext should be short-lived and used only for the operations that require it
     let mut ctx = BigNumContext::new()?;
-    let pk_point = EcPoint::from_bytes(group, pk, &mut ctx)?;
+    let pk_point = EcPoint::from_bytes(&group, pk, &mut ctx)?;
 
     // Create the public key
-    let key = EcKey::from_public_key(group, &pk_point)?;
+    let key = EcKey::from_public_key(&group, &pk_point)?;
     let pk: PKey<openssl::pkey::Public> = PKey::from_ec_key(key)?;
 
     let (ss, ct) = {
         // Create a new ephemeral key
-        let ephemeral_key = EcKey::generate(group)?;
+        let ephemeral_key = EcKey::generate(&group)?;
         let es = PKey::from_ec_key(ephemeral_key.clone())?;
         let mut deriver = Deriver::new(&es)?;
         deriver.set_peer(&pk)?;
         let ss = deriver.derive_to_vec()?;
         // Public key should be uncompressed point as octet string
         let ct = ephemeral_key.public_key().to_bytes(
-            group,
+            &group,
             openssl::ec::PointConversionForm::UNCOMPRESSED,
             &mut ctx,
         )?;
@@ -71,6 +74,36 @@ pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     Ok((ss, ct))
 }
 
+/// Get an EC key using the EcKey API
+///
+/// # Arguments
+///
+/// * `ctx` - The BigNumContext
+/// * `group` - The EC group
+/// * `sk` - The secret key
+///
+/// # Returns
+///
+/// The EC key
+pub fn get_ec_key_from_sk(id: Nid, sk: &[u8]) -> Result<EcKey<Private>> {
+    let ctx = BigNumContext::new()?;
+    let group = EcGroup::from_curve_name(id)?;
+    // sk is the secret key in octet string form
+    let sk_n = BigNum::from_slice(sk)?;
+    let pk_p = compute_public_key(&ctx, &group, &sk_n)?;
+    let sk = EcKey::from_private_components(&group, &sk_n, &pk_p)?;
+    Ok(sk)
+}
+
+pub fn get_ec_key_from_pk(id: Nid, pk: &[u8]) -> Result<EcKey<Public>> {
+    let group = EcGroup::from_curve_name(id)?;
+    let mut ctx = BigNumContext::new()?;
+    // pk is the public key in uncompressed form
+    let pk_point = EcPoint::from_bytes(&group, pk, &mut ctx)?;
+    let pk = EcKey::from_public_key(&group, &pk_point)?;
+    Ok(pk)
+}
+
 /// Decapsulate a ciphertext using the EcKey API
 ///
 /// # Arguments
@@ -82,17 +115,15 @@ pub fn encaps_pkey_based(pk: &[u8], id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
 /// # Returns
 ///
 /// The shared secret
-pub fn decaps_ec_based(sk: &[u8], ct: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
+pub fn decaps_ec_based(sk: &[u8], ct: &[u8], nid: Nid) -> Result<Vec<u8>> {
     let mut ctx = BigNumContext::new()?;
+    let group = EcGroup::from_curve_name(nid)?;
 
-    // sk is the secret key in octet string form
-    let sk_n = BigNum::from_slice(sk)?;
-    let pk_p = compute_public_key(&ctx, group, &sk_n)?;
-    let sk = EcKey::from_private_components(group, &sk_n, &pk_p)?;
+    let sk = get_ec_key_from_sk(nid, sk)?;
 
     // ct is the public key in uncompressed form
-    let ct_point = EcPoint::from_bytes(group, ct, &mut ctx)?;
-    let ct = EcKey::from_public_key(group, &ct_point)?;
+    let ct_point = EcPoint::from_bytes(&group, ct, &mut ctx)?;
+    let ct = EcKey::from_public_key(&group, &ct_point)?;
 
     let sk = PKey::from_ec_key(sk)?;
     let ct = PKey::from_ec_key(ct)?;
@@ -254,11 +285,12 @@ fn get_pk_sk_from_bignum_ec_based(
 ///
 /// A tuple containing the public and secret keys (pk, sk) with pk as an uncompressed point
 /// and sk as a field element bytes
-pub fn get_key_pair_ec_based(group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
+pub fn get_key_pair_ec_based(nid: Nid) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut ctx = BigNumContext::new()?;
-    let ec_key = EcKey::generate(group)?;
+    let group = EcGroup::from_curve_name(nid)?;
+    let ec_key = EcKey::generate(&group)?;
     let private_key_bn = ec_key.private_key();
-    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, group)
+    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, &group)
 }
 
 /// Get an EC key pair but specify the RNG to use
@@ -274,14 +306,16 @@ pub fn get_key_pair_ec_based(group: &EcGroup) -> Result<(Vec<u8>, Vec<u8>)> {
 /// and sk as a field element bytes
 pub fn get_key_pair_ec_based_with_rng(
     rng: &mut impl CryptoRngCore,
-    group: &EcGroup,
+    nid: Nid,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut ctx = BigNumContext::new()?;
 
+    let group = EcGroup::from_curve_name(nid)?;
+
     // Get a big num as private key
-    let private_key_bn = get_sk_bignum_ec_based(&mut ctx, rng, group)?;
+    let private_key_bn = get_sk_bignum_ec_based(&mut ctx, rng, &group)?;
     let private_key_bn = private_key_bn.as_ref();
-    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, group)
+    get_pk_sk_from_bignum_ec_based(&mut ctx, private_key_bn, &group)
 }
 
 /// Compute the public key from the private key for an EC curve.
@@ -355,6 +389,8 @@ pub fn get_key_pair_pkey_based(id: Id) -> Result<(Vec<u8>, Vec<u8>)> {
     let sk = match id {
         Id::X448 => PKey::generate_x448()?,
         Id::X25519 => PKey::generate_x25519()?,
+        Id::ED25519 => PKey::generate_ed25519()?,
+        Id::ED448 => PKey::generate_ed448()?,
         _ => panic!("Unsupported ID"),
     };
 
@@ -389,6 +425,16 @@ pub fn get_keypair_pkey_based_with_rng(
         }
         Id::X25519 => {
             let mut sk: [u8; 32] = [0; 32];
+            rng.fill_bytes(&mut sk);
+            sk.to_vec()
+        }
+        Id::ED25519 => {
+            let mut sk: [u8; 32] = [0; 32];
+            rng.fill_bytes(&mut sk);
+            sk.to_vec()
+        }
+        Id::ED448 => {
+            let mut sk: [u8; 57] = [0; 57];
             rng.fill_bytes(&mut sk);
             sk.to_vec()
         }
@@ -442,6 +488,90 @@ fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
     Ok(sk.raw_public_key()?)
 }
 
+/// Sign a message using an EC based method
+///
+/// # Arguments
+///
+/// * `id` - The ID of the curve
+/// * `sk` - The secret key
+/// * `msg` - The message to sign
+/// * `digest` - The digest to use
+///
+/// # Returns
+///
+/// The signature as a byte vector
+pub fn sign_ec_based(id: Nid, sk: &[u8], msg: &[u8], digest: MessageDigest) -> Result<Vec<u8>> {
+    let sk = get_ec_key_from_sk(id, sk)?;
+    let pkey = PKey::from_ec_key(sk)?;
+    let mut signer = openssl::sign::Signer::new(digest, &pkey)?;
+    signer.update(msg)?;
+    Ok(signer.sign_to_vec()?)
+}
+
+/// Sign a message using a PKey based method (used for Ed25519 and Ed448)
+///
+/// # Arguments
+///
+/// * `id` - The ID of the curve
+/// * `sk` - The secret key
+/// * `msg` - The message to sign
+/// * `digest` - The digest to use
+///
+/// # Returns
+///
+/// The signature as a byte vector
+pub fn sign_pkey_based(id: Id, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+    let sk = PKey::private_key_from_raw_bytes(sk, id)?;
+    let mut signer = openssl::sign::Signer::new_without_digest(&sk)?;
+    Ok(signer.sign_oneshot_to_vec(msg)?)
+}
+
+/// Verify a signature using an EC based method
+///
+/// # Arguments
+///
+/// * `id` - The ID of the curve
+/// * `pk` - The public key
+/// * `msg` - The message
+/// * `signature` - The signature
+/// * `digest` - The digest to use
+///
+/// # Returns
+///
+/// A boolean indicating if the signature is valid
+pub fn verify_ec_based(
+    id: Nid,
+    pk: &[u8],
+    msg: &[u8],
+    signature: &[u8],
+    digest: MessageDigest,
+) -> Result<bool> {
+    let ec_key = get_ec_key_from_pk(id, pk)?;
+    let pkey = openssl::pkey::PKey::from_ec_key(ec_key)?;
+    let mut v = openssl::sign::Verifier::new(digest, &pkey)?;
+    v.update(msg)?;
+    Ok(v.verify(signature)?)
+}
+
+/// Verify a signature using a PKey based method
+///
+/// # Arguments
+///
+/// * `id` - The ID of the curve
+/// * `pk` - The public key
+/// * `msg` - The message
+/// * `signature` - The signature
+/// * `digest` - The digest to use
+///
+/// # Returns
+///
+/// A boolean indicating if the signature is valid
+pub fn verify_pkey_based(id: Id, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
+    let pkey = PKey::public_key_from_raw_bytes(pk, id)?;
+    let mut v = openssl::sign::Verifier::new_without_digest(&pkey)?;
+    Ok(v.verify_oneshot(signature, msg)?)
+}
+
 #[cfg(test)]
 mod tests {
     use openssl::nid::Nid;
@@ -472,8 +602,8 @@ mod tests {
             let private_key_bn = BigNum::from_u32(1).unwrap();
             let (pk, sk) =
                 get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, &group).unwrap();
-            let (ss, ct) = encaps_ec_based(&pk, &group).unwrap();
-            let ss2 = decaps_ec_based(&sk, &ct, &group).unwrap();
+            let (ss, ct) = encaps_ec_based(&pk, *nid).unwrap();
+            let ss2 = decaps_ec_based(&sk, &ct, *nid).unwrap();
             assert_eq!(ss, ss2);
 
             // Use a private number which is order - 1
@@ -487,8 +617,8 @@ mod tests {
 
             let (pk, sk) =
                 get_pk_sk_from_bignum_ec_based(&mut ctx, &private_key_bn, &group).unwrap();
-            let (ss, ct) = encaps_ec_based(&pk, &group).unwrap();
-            let ss2 = decaps_ec_based(&sk, &ct, &group).unwrap();
+            let (ss, ct) = encaps_ec_based(&pk, *nid).unwrap();
+            let ss2 = decaps_ec_based(&sk, &ct, *nid).unwrap();
             assert_eq!(ss, ss2);
         }
     }

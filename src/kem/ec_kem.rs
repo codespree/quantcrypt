@@ -2,11 +2,10 @@
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
-use crate::kem::common::openssl_utils::{
+use crate::utils::openssl_utils::{
     decaps_ec_based, decaps_pkey_based, encaps_ec_based, encaps_pkey_based, get_key_pair_ec_based,
     get_key_pair_ec_based_with_rng, get_key_pair_pkey_based, get_keypair_pkey_based_with_rng,
 };
-use openssl::ec::EcGroup;
 use openssl::nid::Nid;
 use openssl::pkey::Id;
 use rand_core::CryptoRngCore;
@@ -18,6 +17,8 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// A KEM manager for the DhKem method
 pub struct DhKemManager {
     kem_info: KemInfo,
+    ec_based_nid: Option<Nid>,
+    pk_based_id: Option<Id>,
 }
 
 impl Kem for DhKemManager {
@@ -27,8 +28,23 @@ impl Kem for DhKemManager {
     ///
     /// * `kem_type` - The type of KEM to create
     fn new(kem_type: KemType) -> Self {
-        let kem_info = KemInfo::new(kem_type);
-        Self { kem_info }
+        let kem_info = KemInfo::new(kem_type.clone());
+        let (ec_based_nid, pk_based_id) = match kem_type {
+            KemType::P256 => (Some(Nid::X9_62_PRIME256V1), None),
+            KemType::P384 => (Some(Nid::SECP384R1), None),
+            KemType::BrainpoolP256r1 => (Some(Nid::BRAINPOOL_P256R1), None),
+            KemType::BrainpoolP384r1 => (Some(Nid::BRAINPOOL_P384R1), None),
+            KemType::X25519 => (None, Some(Id::X25519)),
+            KemType::X448 => (None, Some(Id::X448)),
+            _ => {
+                panic!("Not implemented");
+            }
+        };
+        Self {
+            kem_info,
+            ec_based_nid,
+            pk_based_id,
+        }
     }
 
     /// Generate a keypair using the default RNG of OpenSSL
@@ -40,28 +56,12 @@ impl Kem for DhKemManager {
     /// pk, sk, ct, lengths are all in accordance with RFC9180.
     /// ss length is different from RFC9180 as it is not hashed.
     fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
-        match self.kem_info.kem_type {
-            KemType::P256 => {
-                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-                Ok(get_key_pair_ec_based(&group)?)
-            }
-            KemType::P384 => {
-                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
-                Ok(get_key_pair_ec_based(&group)?)
-            }
-            KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                Ok(get_key_pair_ec_based(&group)?)
-            }
-            KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                Ok(get_key_pair_ec_based(&group)?)
-            }
-            KemType::X25519 => get_key_pair_pkey_based(Id::X25519),
-            KemType::X448 => get_key_pair_pkey_based(Id::X448),
-            _ => {
-                panic!("Not implemented");
-            }
+        if let Some(nid) = self.ec_based_nid {
+            get_key_pair_ec_based(nid)
+        } else if let Some(id) = self.pk_based_id {
+            get_key_pair_pkey_based(id)
+        } else {
+            panic!("Not implemented");
         }
     }
 
@@ -78,28 +78,12 @@ impl Kem for DhKemManager {
     /// pk, sk, ct, lengths are all in accordance with RFC9180.
     /// ss length is different from RFC9180 as it is not hashed.
     fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
-        match self.kem_info.kem_type {
-            KemType::P256 => {
-                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
-            }
-            KemType::P384 => {
-                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
-                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
-            }
-            KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
-            }
-            KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                Ok(get_key_pair_ec_based_with_rng(rng, &group)?)
-            }
-            KemType::X25519 => get_keypair_pkey_based_with_rng(rng, Id::X25519),
-            KemType::X448 => get_keypair_pkey_based_with_rng(rng, Id::X448),
-            _ => {
-                panic!("Not implemented");
-            }
+        if let Some(nid) = self.ec_based_nid {
+            get_key_pair_ec_based_with_rng(rng, nid)
+        } else if let Some(id) = self.pk_based_id {
+            get_keypair_pkey_based_with_rng(rng, id)
+        } else {
+            panic!("Not implemented");
         }
     }
 
@@ -113,22 +97,12 @@ impl Kem for DhKemManager {
     ///
     /// A tuple containing the shared secret and ciphertext (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        match self.kem_info.kem_type {
-            KemType::P256 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?),
-            KemType::P384 => encaps_ec_based(pk, &EcGroup::from_curve_name(Nid::SECP384R1)?),
-            KemType::X25519 => encaps_pkey_based(pk, Id::X25519),
-            KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                encaps_ec_based(pk, &group)
-            }
-            KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                encaps_ec_based(pk, &group)
-            }
-            KemType::X448 => encaps_pkey_based(pk, Id::X448),
-            _ => {
-                panic!("Not implemented");
-            }
+        if let Some(nid) = self.ec_based_nid {
+            encaps_ec_based(pk, nid)
+        } else if let Some(id) = self.pk_based_id {
+            encaps_pkey_based(pk, id)
+        } else {
+            panic!("Not implemented");
         }
     }
 
@@ -143,28 +117,12 @@ impl Kem for DhKemManager {
     ///
     /// The shared secret (ss)
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-        match self.kem_info.kem_type {
-            KemType::P256 => {
-                let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-                decaps_ec_based(sk, ct, &group)
-            }
-            KemType::P384 => {
-                let group = EcGroup::from_curve_name(Nid::SECP384R1)?;
-                decaps_ec_based(sk, ct, &group)
-            }
-            KemType::X25519 => decaps_pkey_based(sk, ct, Id::X25519),
-            KemType::BrainpoolP256r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P256R1)?;
-                decaps_ec_based(sk, ct, &group)
-            }
-            KemType::BrainpoolP384r1 => {
-                let group = EcGroup::from_curve_name(Nid::BRAINPOOL_P384R1)?;
-                decaps_ec_based(sk, ct, &group)
-            }
-            KemType::X448 => decaps_pkey_based(sk, ct, Id::X448),
-            _ => {
-                panic!("Not implemented");
-            }
+        if let Some(nid) = self.ec_based_nid {
+            decaps_ec_based(sk, ct, nid)
+        } else if let Some(id) = self.pk_based_id {
+            decaps_pkey_based(sk, ct, id)
+        } else {
+            panic!("Not implemented");
         }
     }
 
