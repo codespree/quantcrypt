@@ -145,9 +145,7 @@ pub fn decaps_ec_based(sk: &[u8], ct: &[u8], nid: Nid) -> Result<Vec<u8>> {
 /// # Returns
 /// The shared secret
 pub fn decaps_pkey_based(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
-    // Apply clamping
-    let mut sk = sk.to_vec();
-    clamp_pkey_based_sk(&mut sk, id);
+    let sk = sk.to_vec();
 
     let sk = PKey::private_key_from_raw_bytes(&sk, id)?;
     let ct = PKey::public_key_from_raw_bytes(ct, id)?;
@@ -351,31 +349,6 @@ fn compute_public_key(
     Ok(public_key_point)
 }
 
-/// Clamp a private key for X448 or X25519
-///
-/// # Arguments
-///
-/// * `sk` - The secret key to clamp
-/// * `id` - The ID of the curve
-///
-/// # Panics
-///
-/// Panics if the ID is not X448 or X25519
-pub fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
-    match id {
-        Id::X448 => {
-            sk[0] &= 252;
-            sk[55] |= 128;
-        }
-        Id::X25519 => {
-            sk[0] &= 248;
-            sk[31] &= 127;
-            sk[31] |= 64;
-        }
-        _ => panic!("Unsupported ID"),
-    }
-}
-
 /// Get an elliptic curve key pair using a PKey based method
 ///
 /// This is used for X448, and X25519 which are not supported by the `EcKey` API.
@@ -421,7 +394,7 @@ pub fn get_keypair_pkey_based_with_rng(
     id: Id,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     // Generate n random bytes according to the curve
-    let mut sk = match id {
+    let sk = match id {
         Id::X448 => {
             let mut sk: [u8; 56] = [0; 56];
             rng.fill_bytes(&mut sk);
@@ -435,15 +408,11 @@ pub fn get_keypair_pkey_based_with_rng(
         _ => panic!("Unsupported ID"),
     };
 
-    let sk_original = sk.clone();
-
-    // Apply clamping
-    clamp_pkey_based_sk(&mut sk, id);
-
     let sk_obj = PKey::private_key_from_raw_bytes(&sk, id)?;
     let pk = sk_obj.raw_public_key()?;
+    let sk = sk_obj.raw_private_key()?;
 
-    Ok((pk, sk_original))
+    Ok((pk, sk))
 }
 
 /// Get the public key from a secret key for an EC curve (not used currently)
@@ -621,8 +590,7 @@ mod tests {
 
     #[test]
     fn test_boundary_x25519() {
-        let mut sk = [0u8; 32];
-        clamp_pkey_based_sk(&mut sk, Id::X25519);
+        let sk = [0u8; 32];
 
         let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X25519).unwrap();
         let pk = sk_obj.raw_public_key().unwrap();
@@ -633,8 +601,7 @@ mod tests {
         assert_eq!(ss, ss2);
 
         // Now test with a sk with all bits set
-        let mut sk = [0xff; 32];
-        clamp_pkey_based_sk(&mut sk, Id::X25519);
+        let sk = [0xff; 32];
 
         let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X25519).unwrap();
         let pk = sk_obj.raw_public_key().unwrap();
@@ -647,8 +614,7 @@ mod tests {
 
     #[test]
     fn test_boundary_x448() {
-        let mut sk = [0u8; 56];
-        clamp_pkey_based_sk(&mut sk, Id::X448);
+        let sk = [0u8; 56];
 
         let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X448).unwrap();
         let pk = sk_obj.raw_public_key().unwrap();
@@ -659,8 +625,7 @@ mod tests {
         assert_eq!(ss, ss2);
 
         // Now test with a sk with all bits set
-        let mut sk = [0xff; 56];
-        clamp_pkey_based_sk(&mut sk, Id::X448);
+        let sk = [0xff; 56];
 
         let sk_obj = PKey::private_key_from_raw_bytes(&sk, Id::X448).unwrap();
         let pk = sk_obj.raw_public_key().unwrap();
