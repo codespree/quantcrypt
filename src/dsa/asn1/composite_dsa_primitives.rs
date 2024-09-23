@@ -151,7 +151,7 @@ mod test {
 
         let pq_sk = vec![0x01, 0x02, 0x03, 0x04];
         let trad_sk = vec![0x05, 0x06, 0x07, 0x08];
-        
+
         // Create the OneAsymmetricKey objects for the tradition secret key
         let t_sk_pkcs8 = PrivateKeyInfo {
             algorithm: AlgorithmIdentifierRef {
@@ -180,6 +180,5 @@ mod test {
 
         assert_eq!(c_sk.get_pq_sk().private_key, pq_sk);
         assert_eq!(c_sk.get_trad_sk().private_key, trad_sk);
-
     }
 }

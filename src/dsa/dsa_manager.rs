@@ -4,10 +4,10 @@ use rand_core::CryptoRngCore;
 
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::common::dsa_type::DsaType;
+use crate::dsa::composite_dsa::CompositeDsaManager;
 use crate::dsa::ec_dsa::EcDsaManager;
 use crate::dsa::ml_dsa::MlDsaManager;
 use crate::dsa::rsa_dsa::RsaDsaManager;
-use crate::dsa::composite_dsa::CompositeDsaManager;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
