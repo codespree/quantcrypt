@@ -15,13 +15,13 @@ use std::error;
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 /// A KEM manager for the DhKem method
-pub struct DhKemManager {
+pub struct EcKemManager {
     kem_info: KemInfo,
     ec_based_nid: Option<Nid>,
     pk_based_id: Option<Id>,
 }
 
-impl Kem for DhKemManager {
+impl Kem for EcKemManager {
     /// Create a new KEM instance
     ///
     /// # Arguments
@@ -148,37 +148,37 @@ mod tests {
 
     #[test]
     fn test_ec_kem_p256() {
-        let mut kem = DhKemManager::new(KemType::P256);
+        let mut kem = EcKemManager::new(KemType::P256);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_p384() {
-        let mut kem = DhKemManager::new(KemType::P384);
+        let mut kem = EcKemManager::new(KemType::P384);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_brainpool_p256r1() {
-        let mut kem = DhKemManager::new(KemType::BrainpoolP256r1);
+        let mut kem = EcKemManager::new(KemType::BrainpoolP256r1);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_brainpool_p384r1() {
-        let mut kem = DhKemManager::new(KemType::BrainpoolP384r1);
+        let mut kem = EcKemManager::new(KemType::BrainpoolP384r1);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_x448() {
-        let mut kem = DhKemManager::new(KemType::X448);
+        let mut kem = EcKemManager::new(KemType::X448);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_x25519() {
-        let mut kem = DhKemManager::new(KemType::X25519);
+        let mut kem = EcKemManager::new(KemType::X25519);
         test_kem!(kem);
     }
 }

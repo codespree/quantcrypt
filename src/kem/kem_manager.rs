@@ -4,7 +4,7 @@ use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::composite_kem::CompositeKemManager;
-use crate::kem::ec_kem::DhKemManager;
+use crate::kem::ec_kem::EcKemManager;
 use crate::kem::ml_kem::MlKemManager;
 use crate::kem::rsa_kem::RsaKemManager;
 
@@ -12,8 +12,6 @@ use std::error;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
-
-pub struct KemFactory {}
 
 const ML_KEM_TYPES: [KemType; 3] = [KemType::MlKem512, KemType::MlKem768, KemType::MlKem1024];
 
@@ -51,7 +49,7 @@ pub enum KemManager {
     /// RSA KEM manager
     Rsa(RsaKemManager),
     /// EC KEM manager
-    Dh(DhKemManager),
+    Ec(EcKemManager),
     /// Composite KEM manager
     Composite(CompositeKemManager),
 }
@@ -73,7 +71,7 @@ impl Kem for KemManager {
         match kem_type {
             _ if ML_KEM_TYPES.contains(&kem_type) => KemManager::Ml(MlKemManager::new(kem_type)),
             _ if RSA_KEM_TYPES.contains(&kem_type) => KemManager::Rsa(RsaKemManager::new(kem_type)),
-            _ if EC_KEM_TYPES.contains(&kem_type) => KemManager::Dh(DhKemManager::new(kem_type)),
+            _ if EC_KEM_TYPES.contains(&kem_type) => KemManager::Ec(EcKemManager::new(kem_type)),
             _ if COMPOSITE_KEM_TYPES.contains(&kem_type) => {
                 KemManager::Composite(CompositeKemManager::new(kem_type))
             }
@@ -93,7 +91,7 @@ impl Kem for KemManager {
         match self {
             KemManager::Ml(kem) => kem.get_kem_info(),
             KemManager::Rsa(kem) => kem.get_kem_info(),
-            KemManager::Dh(kem) => kem.get_kem_info(),
+            KemManager::Ec(kem) => kem.get_kem_info(),
             KemManager::Composite(kem) => kem.get_kem_info(),
         }
     }
@@ -111,7 +109,7 @@ impl Kem for KemManager {
         match self {
             KemManager::Ml(kem) => kem.key_gen_with_rng(rng),
             KemManager::Rsa(kem) => kem.key_gen_with_rng(rng),
-            KemManager::Dh(kem) => kem.key_gen_with_rng(rng),
+            KemManager::Ec(kem) => kem.key_gen_with_rng(rng),
             KemManager::Composite(kem) => kem.key_gen_with_rng(rng),
         }
     }
@@ -126,7 +124,7 @@ impl Kem for KemManager {
         match self {
             KemManager::Ml(kem) => kem.key_gen(),
             KemManager::Rsa(kem) => kem.key_gen(),
-            KemManager::Dh(kem) => kem.key_gen(),
+            KemManager::Ec(kem) => kem.key_gen(),
             KemManager::Composite(kem) => kem.key_gen(),
         }
     }
@@ -144,7 +142,7 @@ impl Kem for KemManager {
         match self {
             KemManager::Ml(kem) => kem.encap(pk),
             KemManager::Rsa(kem) => kem.encap(pk),
-            KemManager::Dh(kem) => kem.encap(pk),
+            KemManager::Ec(kem) => kem.encap(pk),
             KemManager::Composite(kem) => kem.encap(pk),
         }
     }
@@ -163,24 +161,8 @@ impl Kem for KemManager {
         match self {
             KemManager::Ml(kem) => kem.decap(ct, sk),
             KemManager::Rsa(kem) => kem.decap(ct, sk),
-            KemManager::Dh(kem) => kem.decap(ct, sk),
+            KemManager::Ec(kem) => kem.decap(ct, sk),
             KemManager::Composite(kem) => kem.decap(ct, sk),
-        }
-    }
-}
-
-impl KemFactory {
-    pub fn get_kem(kem_type: KemType) -> KemManager {
-        match kem_type {
-            _ if ML_KEM_TYPES.contains(&kem_type) => KemManager::Ml(MlKemManager::new(kem_type)),
-            _ if RSA_KEM_TYPES.contains(&kem_type) => KemManager::Rsa(RsaKemManager::new(kem_type)),
-            _ if EC_KEM_TYPES.contains(&kem_type) => KemManager::Dh(DhKemManager::new(kem_type)),
-            _ if COMPOSITE_KEM_TYPES.contains(&kem_type) => {
-                KemManager::Composite(CompositeKemManager::new(kem_type))
-            }
-            _ => {
-                panic!("Not implemented");
-            }
         }
     }
 }
@@ -191,7 +173,7 @@ mod tests {
     use crate::kem::common::kem_type::KemType;
 
     #[test]
-    fn test_kem_factory() {
+    fn test_kem_manager() {
         let mut all_kems: Vec<KemType> = Vec::new();
         all_kems.extend_from_slice(&ML_KEM_TYPES);
         all_kems.extend_from_slice(&RSA_KEM_TYPES);
@@ -200,7 +182,7 @@ mod tests {
 
         // This is just to test that the factory can create all KEM types
         for kem_type in all_kems {
-            let kem = KemFactory::get_kem(kem_type.clone());
+            let kem = KemManager::new(kem_type.clone());
             assert_eq!(kem.get_kem_info().kem_type, kem_type);
         }
     }

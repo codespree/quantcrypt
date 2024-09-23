@@ -30,6 +30,21 @@ impl PKLen for DsaType {
             DsaType::MlDsa44 => Some(1312),
             DsaType::MlDsa65 => Some(1952),
             DsaType::MlDsa87 => Some(2592),
+
+            // TODO: Investigate lengths
+            DsaType::MlDsa44Rsa2048PssSha256 => None,
+            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
+            DsaType::MlDsa44Ed25519SHA512 => None,
+            DsaType::MlDsa44EcdsaP256SHA256 => None,
+            DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => None,
+            DsaType::MlDsa65Rsa3072PssSHA512 => None,
+            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => None,
+            DsaType::MlDsa65EcdsaP256SHA512 => None,
+            DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => None,
+            DsaType::MlDsa65Ed25519SHA512 => None,
+            DsaType::MlDsa87EcdsaP384SHA512 => None,
+            DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => None,
+            DsaType::MlDsa87Ed448SHA512 => None,
         }
     }
 }

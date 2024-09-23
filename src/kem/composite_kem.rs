@@ -1,4 +1,4 @@
-use crate::kem::asn1::asn_util::oid_to_der;
+use crate::asn1::asn_util::oid_to_der;
 use crate::kem::asn1::composite_kem_primitives::{
     CompositeCiphertextValue, CompositeKEMPrivateKey, CompositeKEMPublicKey,
 };
@@ -6,14 +6,13 @@ use crate::kem::common::kdf::{Kdf, KdfType};
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
-use crate::kem::kem_factory::KemManager;
+use crate::kem::kem_manager::KemManager;
 use der::{Decode, Encode};
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 use rand_core::CryptoRngCore;
 
 use std::error;
 
-use super::kem_factory::KemFactory;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
@@ -140,56 +139,56 @@ impl Kem for CompositeKemManager {
         match kem_type {
             KemType::MlKem768Rsa2048 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP2048)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa3072 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP3072)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP3072)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa4096 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::RsaOAEP4096)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP4096)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768X25519 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::X25519)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::X25519)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::Sha3_256),
             },
             KemType::MlKem768P384 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::P384)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::P384)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::BrainpoolP256r1)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP256r1)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem1024P384 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::P384)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::P384)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::BrainpoolP384r1)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP384r1)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024X448 => Self {
                 kem_info,
-                trad_kem: Box::new(KemFactory::get_kem(KemType::X448)),
-                pq_kem: Box::new(KemFactory::get_kem(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::X448)),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             _ => {
