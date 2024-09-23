@@ -145,7 +145,11 @@ pub fn decaps_ec_based(sk: &[u8], ct: &[u8], nid: Nid) -> Result<Vec<u8>> {
 /// # Returns
 /// The shared secret
 pub fn decaps_pkey_based(sk: &[u8], ct: &[u8], id: Id) -> Result<Vec<u8>> {
-    let sk = PKey::private_key_from_raw_bytes(sk, id)?;
+    // Apply clamping
+    let mut sk = sk.to_vec();
+    clamp_pkey_based_sk(&mut sk, id);
+
+    let sk = PKey::private_key_from_raw_bytes(&sk, id)?;
     let ct = PKey::public_key_from_raw_bytes(ct, id)?;
     let mut deriver = Deriver::new(&sk)?;
     deriver.set_peer(&ct)?;
@@ -357,7 +361,7 @@ fn compute_public_key(
 /// # Panics
 ///
 /// Panics if the ID is not X448 or X25519
-fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
+pub fn clamp_pkey_based_sk(sk: &mut [u8], id: Id) {
     match id {
         Id::X448 => {
             sk[0] &= 252;
@@ -428,18 +432,10 @@ pub fn get_keypair_pkey_based_with_rng(
             rng.fill_bytes(&mut sk);
             sk.to_vec()
         }
-        Id::ED25519 => {
-            let mut sk: [u8; 32] = [0; 32];
-            rng.fill_bytes(&mut sk);
-            sk.to_vec()
-        }
-        Id::ED448 => {
-            let mut sk: [u8; 57] = [0; 57];
-            rng.fill_bytes(&mut sk);
-            sk.to_vec()
-        }
         _ => panic!("Unsupported ID"),
     };
+
+    let sk_original = sk.clone();
 
     // Apply clamping
     clamp_pkey_based_sk(&mut sk, id);
@@ -447,7 +443,7 @@ pub fn get_keypair_pkey_based_with_rng(
     let sk_obj = PKey::private_key_from_raw_bytes(&sk, id)?;
     let pk = sk_obj.raw_public_key()?;
 
-    Ok((pk, sk))
+    Ok((pk, sk_original))
 }
 
 /// Get the public key from a secret key for an EC curve (not used currently)
