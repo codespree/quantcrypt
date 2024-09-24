@@ -1,9 +1,9 @@
 use std::error;
 
 use crate::asn1::asn_util::oid_to_der;
-use crate::dsa::asn1::composite_dsa_primitives::{
-    CompositeDsaPrivateKey, CompositeDsaPublicKey, CompositeSignatureValue,
-};
+use crate::asn1::composite_private_key::CompositePrivateKey;
+use crate::asn1::composite_public_key::CompositePublicKey;
+use crate::dsa::asn1::composite_dsa_primitives::CompositeSignatureValue;
 use crate::dsa::common::dsa_info::DsaInfo;
 use crate::dsa::dsa_manager::DsaManager;
 use openssl::hash::Hasher;
@@ -12,7 +12,6 @@ use openssl::hash::MessageDigest;
 use der::{Decode, Encode};
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 
-use super::common::config::oids::Oid;
 use super::common::{dsa_trait::Dsa, dsa_type::DsaType};
 
 // Change the alias to use `Box<dyn error::Error>`.
@@ -46,7 +45,7 @@ impl CompositeDsaManager {
         hasher.update(msg)?;
         let msg = hasher.finish()?.to_vec();
 
-        let mut domain = oid_to_der(&self.dsa_info.dsa_type.get_oid())?;
+        let mut domain = oid_to_der(&self.dsa_info.oid)?;
         domain.extend_from_slice(&msg);
 
         let msg = domain;
@@ -74,7 +73,7 @@ impl CompositeDsaManager {
         pq_sk: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         // Create the composite public key
-        let c_pk = CompositeDsaPublicKey::new(pq_pk, t_pk);
+        let c_pk = CompositePublicKey::new(&self.dsa_info.oid, pq_pk, t_pk);
         let pk = c_pk.to_der()?;
 
         // Create the OneAsymmetricKey objects for the tradition secret key
@@ -98,7 +97,7 @@ impl CompositeDsaManager {
         };
 
         // Create the composite secret key
-        let c_sk: CompositeDsaPrivateKey<'_> = CompositeDsaPrivateKey::new(pq_sk_pkcs8, t_sk_pkcs8);
+        let c_sk = CompositePrivateKey::new(&self.dsa_info.oid, &pq_sk_pkcs8, &t_sk_pkcs8)?;
         let sk = c_sk.to_der()?;
 
         Ok((pk, sk))
@@ -213,9 +212,9 @@ impl Dsa for CompositeDsaManager {
     fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
         let msg = self.pre_hash(msg)?;
 
-        let c_key = CompositeDsaPrivateKey::from_der(sk)?;
-        let sk_trad = c_key.get_trad_sk().private_key;
-        let sk_pq = c_key.get_pq_sk().private_key;
+        let c_key = CompositePrivateKey::from_der(sk)?;
+        let sk_trad = c_key.get_trad_sk()?.private_key;
+        let sk_pq = c_key.get_pq_sk()?.private_key;
 
         let trad_sig = self.trad_dsa.sign(sk_trad, &msg)?;
         let pq_sig = self.pq_dsa.sign(sk_pq, &msg)?;
@@ -228,7 +227,7 @@ impl Dsa for CompositeDsaManager {
     fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
         let msg = self.pre_hash(msg)?;
 
-        let c_key = CompositeDsaPublicKey::from_der(pk)?;
+        let c_key = CompositePublicKey::from_der(pk)?;
 
         let trad_pk = c_key.get_trad_pk();
         let pq_pk = c_key.get_pq_pk();

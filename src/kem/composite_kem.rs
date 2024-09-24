@@ -1,7 +1,7 @@
 use crate::asn1::asn_util::oid_to_der;
-use crate::kem::asn1::composite_kem_primitives::{
-    CompositeCiphertextValue, CompositeKEMPrivateKey, CompositeKEMPublicKey,
-};
+use crate::asn1::composite_private_key::CompositePrivateKey;
+use crate::asn1::composite_public_key::CompositePublicKey;
+use crate::kem::asn1::composite_kem_primitives::CompositeCiphertextValue;
 use crate::kem::common::kdf::{Kdf, KdfType};
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
@@ -88,7 +88,7 @@ impl CompositeKemManager {
         pq_sk: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         // Create the composite public key
-        let c_pk = CompositeKEMPublicKey::new(pq_pk, t_pk);
+        let c_pk = CompositePublicKey::new(&self.kem_info.oid, pq_pk, t_pk);
         let pk = c_pk.to_der()?;
 
         // Create the OneAsymmetricKey objects for the tradition secret key
@@ -113,7 +113,7 @@ impl CompositeKemManager {
         };
 
         // Create the composite secret key
-        let c_sk: CompositeKEMPrivateKey<'_> = CompositeKEMPrivateKey::new(pq_sk_pkcs8, t_sk_pkcs8);
+        let c_sk = CompositePrivateKey::new(&self.kem_info.oid, &pq_sk_pkcs8, &t_sk_pkcs8)?;
         let sk = c_sk.to_der()?;
 
         Ok((pk, sk))
@@ -262,7 +262,7 @@ impl Kem for CompositeKemManager {
     /// ciphertext is the CompositeCiphertextValue in ASN.1 format converted to DER
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         // Deserialize the composite public key
-        let c_pk = CompositeKEMPublicKey::from_der(pk)?;
+        let c_pk = CompositePublicKey::from_der(pk)?;
 
         // Encapsulate the public key for the traditional KEM
         let (t_ss, t_ct) = self.trad_kem.encap(&c_pk.get_trad_pk())?;
@@ -292,7 +292,7 @@ impl Kem for CompositeKemManager {
     /// The shared secret after applying the combiner function
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Deserialize the composite secret key
-        let c_sk = CompositeKEMPrivateKey::from_der(sk).unwrap();
+        let c_sk = CompositePrivateKey::from_der(sk).unwrap();
 
         // Deserialize the composite ciphertext
         let c_ct = CompositeCiphertextValue::from_der(ct).unwrap();
@@ -300,17 +300,17 @@ impl Kem for CompositeKemManager {
         // Decapsulate the ciphertext for the traditional KEM
         let t_ss = self
             .trad_kem
-            .decap(c_sk.get_trad_sk().private_key, &c_ct.get_trad_ct())
+            .decap(c_sk.get_trad_sk()?.private_key, &c_ct.get_trad_ct())
             .unwrap();
 
         // Decapsulate the ciphertext for the post-quantum KEM
         let pq_ss = self
             .pq_kem
-            .decap(c_sk.get_pq_sk().private_key, &c_ct.get_pq_ct())
+            .decap(c_sk.get_pq_sk()?.private_key, &c_ct.get_pq_ct())
             .unwrap();
 
         // Get the trad PK
-        let t_pk = c_sk.get_trad_sk().public_key.unwrap();
+        let t_pk = c_sk.get_trad_sk()?.public_key.unwrap();
 
         // Get the shared secret using the combiner
         let ss = self

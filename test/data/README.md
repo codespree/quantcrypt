@@ -1,0 +1,1 @@
+The files in this folder are taken from version 02 of the [specification](https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs)
