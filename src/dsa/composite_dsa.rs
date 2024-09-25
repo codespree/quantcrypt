@@ -249,6 +249,9 @@ impl Dsa for CompositeDsaManager {
 
 #[cfg(test)]
 mod tests {
+    use der::DecodePem;
+    use x509_cert::Certificate;
+
     use crate::dsa::common::macros::test_dsa;
 
     use super::*;
@@ -329,5 +332,25 @@ mod tests {
     fn test_mldsa_87_ed448_sha512() {
         let mut dsa = CompositeDsaManager::new(DsaType::MlDsa87Ed448SHA512);
         test_dsa!(dsa);
+    }
+
+    #[test]
+    fn test_certificate_sig_verify() {
+        let pem_bytes =
+            include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_self_signed.pem");
+        let cert = Certificate::from_pem(pem_bytes).unwrap();
+        let pk_bytes = include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_pk.pem");
+        let pk =
+            CompositePublicKey::from_pem(std::str::from_utf8(pk_bytes).unwrap().trim()).unwrap();
+        let oid = cert.signature_algorithm.oid.to_string();
+        let kem = CompositeDsaManager::new_from_oid(&oid).unwrap();
+        let is_verified = kem
+            .verify(
+                &pk.to_der().unwrap(),
+                &cert.tbs_certificate.to_der().unwrap(),
+                &cert.signature.raw_bytes(),
+            )
+            .unwrap();
+        assert!(is_verified);
     }
 }
