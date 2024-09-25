@@ -1,5 +1,7 @@
 # QuantCrypt
 
+![example workflow](https://github.com/codespree/quantcrypt/actions/workflows/rust.yml/badge.svg) [![dependency status](https://deps.rs/repo/github/codespree/quantcrypt/status.svg)](https://deps.rs/repo/github/codespree/quantcrypt)
+
 A collection of post-quantum cryptographic algorithms (and emerging standards) implemented in Rust.
 
 ## Composite ML-KEM for Use in the Internet X.509 Public Key Infrastructure and CMS
