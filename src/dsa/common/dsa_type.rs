@@ -1,4 +1,7 @@
-#[derive(Clone, Debug, PartialEq)]
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+#[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum DsaType {
     // RSA
     Rsa2048PssSHA256,
@@ -38,4 +41,10 @@ pub enum DsaType {
     // id-Falon512-ECDSA-P256-SHA256 //TODO: Unsupported
     // id-Falcon512-ECDSA-brainpoolP256r1-SHA256 //TODO: Unsupported
     // id-Falcon512-Ed25519-SHA512 //TODO: Unsupported
+}
+
+impl DsaType {
+    pub fn all() -> Vec<DsaType> {
+        DsaType::iter().collect()
+    }
 }

@@ -5,6 +5,7 @@ use crate::dsa::common::dsa_type::DsaType;
 use std::error;
 
 use super::dsa_info::DsaInfo;
+use crate::dsa::common::config::oids::Oid;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -19,6 +20,19 @@ pub trait Dsa {
     fn new(dsa_type: DsaType) -> Self
     where
         Self: Sized;
+
+    fn new_from_oid(oid: &str) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let all_dsa_types = DsaType::all();
+        for dsa_type in all_dsa_types {
+            if dsa_type.get_oid() == oid {
+                return Ok(Self::new(dsa_type));
+            }
+        }
+        Err("Invalid DSA OID".into())
+    }
 
     /// Generate a keypair using the default RNG of OpenSSL
     ///
