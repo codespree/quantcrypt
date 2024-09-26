@@ -3,31 +3,36 @@ use std::error;
 use der::{asn1::BitString, Decode, Encode};
 use der_derive::Sequence;
 use pem::EncodeConfig;
-use pkcs8::ObjectIdentifier;
+use pkcs8::spki::AlgorithmIdentifierWithOid;
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+/// PublicKeyInfo ::= SEQUENCE {
+///     algorithm   AlgorithmIdentifier,
+///     PublicKey   BIT STRING
+/// }
 #[derive(Debug, Clone, Sequence)]
-struct CompressedPublicKey {
-    pub oid: OidSeq,
-    pub data: BitString,
+struct PublicKeyInfo {
+    pub algorithm: AlgorithmIdentifierWithOid,
+    pub public_key: BitString,
 }
 
+/// CompositeSignaturePublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
+/// CompositeKEMPublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
 #[derive(Debug, Clone, Sequence)]
-struct OidSeq {
-    pub oid: ObjectIdentifier,
-}
-
-#[derive(Debug, Clone, Sequence)]
-struct CompositePublicKeyData {
+struct CompositeSigKemPublicKey {
     pq_pk: BitString,
     trad_pk: BitString,
 }
 
+/// A public key for a composite DSA / KEM
 pub struct CompositePublicKey {
+    /// The OID for the composite DSA / KEM
     oid: String,
+    /// The public key for the post-quantum DSA / KEM
     pq_pk: Vec<u8>,
+    /// The public key for the traditional DSA / KEM
     trad_pk: Vec<u8>,
 }
 
@@ -36,12 +41,13 @@ impl CompositePublicKey {
     ///
     /// # Arguments
     ///
-    /// * `pq_pk` - The public key for the post-quantum KEM
-    /// * `trad_pk` - The public key for the traditional KEM
+    /// * `oid` - The OID for the composite DSA
+    /// * `pq_pk` - The public key for the post-quantum DSA / KEM
+    /// * `trad_pk` - The public key for the traditional DSA / KEM
     ///
     /// # Returns
     ///
-    /// A new composite DSA public key
+    /// A new composite DSA / KEM public key
     pub fn new(oid: &str, pq_pk: &[u8], trad_pk: &[u8]) -> Self {
         Self {
             oid: oid.to_string(),
@@ -50,24 +56,33 @@ impl CompositePublicKey {
         }
     }
 
-    /// Get the public key for the traditional DSA
+    /// Get the public key for the traditional DSA / KEM
     ///
     /// # Returns
     ///
-    /// The public key for the traditional DSA
+    /// The public key for the traditional DSA / KEM
     pub fn get_trad_pk(&self) -> Vec<u8> {
         self.trad_pk.clone()
     }
 
-    /// Get the public key for the post-quantum DSA
+    /// Get the public key for the post-quantum DSA / KEM
     ///
     /// # Returns
     ///
-    /// The public key for the post-quantum DSA
+    /// The public key for the post-quantum DSA / KEM
     pub fn get_pq_pk(&self) -> Vec<u8> {
         self.pq_pk.clone()
     }
 
+    /// Create a new composite public key from a PEM-encoded public key
+    ///
+    /// # Arguments
+    ///
+    /// * `pem` - The PEM-encoded public key
+    ///
+    /// # Returns
+    ///
+    /// A new composite public key
     pub fn from_pem(pem: &str) -> Result<Self> {
         let pem = pem::parse(pem)?;
 
@@ -78,18 +93,27 @@ impl CompositePublicKey {
         CompositePublicKey::from_der(pem.contents())
     }
 
+    /// Create a new composite public key from a DER-encoded public key
+    ///
+    /// # Arguments
+    ///
+    /// * `der` - The DER-encoded public key
+    ///
+    /// # Returns
+    ///
+    /// A new composite public key
     pub fn from_der(der: &[u8]) -> Result<Self> {
         // Parse as compressed public key
-        let compressed_pk: CompressedPublicKey = CompressedPublicKey::from_der(der)?;
-        let oid = compressed_pk.oid.oid.to_string();
+        let public_key_info = PublicKeyInfo::from_der(der)?;
+        let oid = public_key_info.algorithm.oid.to_string();
 
-        let raw_data = if let Some(data) = compressed_pk.data.as_bytes() {
+        let raw_data = if let Some(data) = public_key_info.public_key.as_bytes() {
             data
         } else {
             return Err("Invalid public key data".into());
         };
 
-        let comp_pk: CompositePublicKeyData = CompositePublicKeyData::from_der(raw_data)?;
+        let comp_pk: CompositeSigKemPublicKey = CompositeSigKemPublicKey::from_der(raw_data)?;
         Ok(CompositePublicKey::new(
             &oid,
             comp_pk.pq_pk.as_bytes().unwrap(),
@@ -97,6 +121,11 @@ impl CompositePublicKey {
         ))
     }
 
+    /// Encode the composite public key as a PEM-encoded public key
+    ///
+    /// # Returns
+    ///
+    /// The PEM-encoded public key
     pub fn to_pem(&self) -> Result<String> {
         let data = self.to_der()?;
         let encode_conf = EncodeConfig::default().set_line_ending(pem::LineEnding::LF);
@@ -105,21 +134,27 @@ impl CompositePublicKey {
         Ok(pem::encode_config(&pem, encode_conf))
     }
 
+    /// Encode the composite public key as a DER-encoded public key
+    ///
+    /// # Returns
+    ///
+    /// The DER-encoded public key
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let comp_pk = CompositePublicKeyData {
+        let comp_sig_pk = CompositeSigKemPublicKey {
             pq_pk: BitString::new(0, self.pq_pk.as_slice())?,
             trad_pk: BitString::new(0, self.trad_pk.as_slice())?,
         };
 
-        let raw_data = comp_pk.to_der()?;
-        let compressed_pk = CompressedPublicKey {
-            oid: OidSeq {
-                oid: self.oid.parse().unwrap(),
+        let raw_data = comp_sig_pk.to_der()?;
+        let pk_info = PublicKeyInfo {
+            algorithm: AlgorithmIdentifierWithOid {
+                oid: pkcs8::ObjectIdentifier::new(self.oid.as_str())?,
+                parameters: None,
             },
-            data: BitString::new(0, raw_data.as_slice())?,
+            public_key: BitString::new(0, raw_data.as_slice())?,
         };
 
-        Ok(compressed_pk.to_der()?.as_slice().to_vec())
+        Ok(pk_info.to_der()?.as_slice().to_vec())
     }
 }
 

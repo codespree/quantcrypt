@@ -27,6 +27,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "x509-cert",
+ "zeroize",
 ]
 
 [[package]]

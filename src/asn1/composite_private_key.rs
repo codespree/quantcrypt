@@ -1,5 +1,6 @@
 use std::error;
 
+use der::zeroize::Zeroize;
 use der::{Decode, Encode, EncodePem};
 use der_derive::Sequence;
 use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
@@ -8,30 +9,36 @@ use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 #[derive(Debug, Clone, Sequence)]
-/// The public key for the composite KEM
-struct CompositePrivateKeyHolder<'a> {
+/// CompositeSignaturePrivateKey ::= SEQUENCE SIZE (2) OF OneAsymmetricKey
+/// CompositeKEMPrivateKey ::= SEQUENCE SIZE (2) OF OneAsymmetricKey
+struct CompositeSigKemPrivateKey<'a> {
     pq_sk: PrivateKeyInfo<'a>,
     trad_sk: PrivateKeyInfo<'a>,
 }
 
+/// A private key for a composite DSA / KEM
+#[derive(Zeroize)]
 pub struct CompositePrivateKey {
+    /// The private key for the post-quantum DSA / KEM
     pq_sk_der: Vec<u8>,
+    /// The private key for the traditional DSA / KEM
     trad_sk_der: Vec<u8>,
+    /// The OID for the composite DSA / KEM
     oid: String,
 }
 
 impl CompositePrivateKey {
-    /// Create a new composite KEM private key
+    /// Create a new composite DSA / KEM private key
     ///
     /// # Arguments
     ///
-    /// * `oid` - The OID for the composite KEM
-    /// * `pq_sk` - The private key for the post-quantum KEM
-    /// * `trad_sk` - The private key for the traditional KEM
+    /// * `oid` - The OID for the composite DSA / KEM
+    /// * `pq_sk` - The private key for the post-quantum DSA / KEM
+    /// * `trad_sk` - The private key for the traditional DSA / KEM
     ///
     /// # Returns
     ///
-    /// A new composite KEM private key
+    /// A new composite DSA / KEM private key
     pub fn new(
         oid: &str,
         pq_sk: &PrivateKeyInfo<'_>,
@@ -46,52 +53,80 @@ impl CompositePrivateKey {
         })
     }
 
+    /// Get the OID for the composite DSA / KEM
+    ///
+    /// # Returns
+    ///
+    /// The OID for the composite DSA / KEM
     pub fn get_oid(&self) -> &str {
         &self.oid
     }
 
-    /// Get the private key for the post-quantum KEM
+    /// Get the private key for the post-quantum DSA / KEM
     ///
     /// # Returns
     ///
-    /// The private key for the post-quantum KEM
+    /// The private key for the post-quantum DSA / KEM
     pub fn get_pq_sk(&self) -> Result<PrivateKeyInfo<'_>> {
         Ok(PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())?)
     }
 
-    /// Get the private key for the traditional KEM
+    /// Get the private key for the traditional DSA / KEM
     ///
     /// # Returns
     ///
-    /// The private key for the traditional KEM
+    /// The private key for the traditional DSA / KEM
     pub fn get_trad_sk(&self) -> Result<PrivateKeyInfo<'_>> {
         Ok(PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())?)
     }
 
+    /// Create a new composite private key from a PEM-encoded private key
+    ///
+    /// # Arguments
+    ///
+    /// * `pem` - The PEM-encoded private key
+    ///
+    /// # Returns
+    ///
+    /// A new composite private key
     pub fn from_pem(pem: &str) -> Result<Self> {
         let parsed = pem::parse(pem)?;
         // Should be -----BEGIN PRIVATE KEY-----
         if parsed.tag() != "PRIVATE KEY" {
-            panic!("Expected a private key, got {:?}", parsed.tag());
+            return Err("Invalid PEM tag".into());
         }
 
         CompositePrivateKey::from_der(parsed.contents())
     }
 
+    /// Create a new composite private key from a DER-encoded private key
+    ///
+    /// # Arguments
+    ///
+    /// * `der` - The DER-encoded private key
+    ///
+    /// # Returns
+    ///
+    /// A new composite private key
     pub fn from_der(der: &[u8]) -> Result<Self> {
-        let top_sk = PrivateKeyInfo::from_der(der)?;
-        let top_oid = top_sk.algorithm.oid.to_string();
-        let key_data = CompositePrivateKeyHolder::from_der(top_sk.private_key).unwrap();
-        CompositePrivateKey::new(&top_oid, &key_data.pq_sk, &key_data.trad_sk)
+        let priv_key_info = PrivateKeyInfo::from_der(der)?;
+        let composite_alg_oid = priv_key_info.algorithm.oid.to_string();
+        let key_data = CompositeSigKemPrivateKey::from_der(priv_key_info.private_key).unwrap();
+        CompositePrivateKey::new(&composite_alg_oid, &key_data.pq_sk, &key_data.trad_sk)
     }
 
+    /// Serialize the composite private key to a PEM-encoded private key
+    ///
+    /// # Returns
+    ///
+    /// The PEM-encoded private key
     pub fn to_pem(&self) -> Result<String> {
-        let comp = CompositePrivateKeyHolder {
+        let comp = CompositeSigKemPrivateKey {
             pq_sk: self.get_pq_sk()?,
             trad_sk: self.get_trad_sk()?,
         };
 
-        let top_sk = PrivateKeyInfo {
+        let priv_key_info = PrivateKeyInfo {
             algorithm: AlgorithmIdentifier {
                 oid: self.oid.parse().unwrap(),
                 parameters: None,
@@ -99,16 +134,21 @@ impl CompositePrivateKey {
             private_key: &comp.to_der()?,
             public_key: None,
         };
-        Ok(top_sk.to_pem(pkcs8::LineEnding::LF)?)
+        Ok(priv_key_info.to_pem(pkcs8::LineEnding::LF)?)
     }
 
+    /// Serialize the composite private key to a DER-encoded private key
+    ///
+    /// # Returns
+    ///
+    /// The DER-encoded private key
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let comp = CompositePrivateKeyHolder {
+        let comp = CompositeSigKemPrivateKey {
             pq_sk: self.get_pq_sk()?,
             trad_sk: self.get_trad_sk()?,
         };
 
-        let top_sk = PrivateKeyInfo {
+        let priv_key_info = PrivateKeyInfo {
             algorithm: AlgorithmIdentifier {
                 oid: self.oid.parse().unwrap(),
                 parameters: None,
@@ -116,7 +156,7 @@ impl CompositePrivateKey {
             private_key: &comp.to_der()?,
             public_key: None,
         };
-        Ok(top_sk.to_der()?)
+        Ok(priv_key_info.to_der()?)
     }
 }
 

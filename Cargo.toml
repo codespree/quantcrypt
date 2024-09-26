@@ -35,4 +35,5 @@ x509-cert = "0.2.5"
 serde = "1.0.210"
 strum = "0.26.3"
 strum_macros = "0.26.4"
+zeroize = "1.8.1"
 
