@@ -31,9 +31,10 @@ fips204 = "0.2.2"
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
 ed448-rust = "0.1.1"
 pem = "3.0.4"
-x509-cert = "0.2.5"
+x509-cert = { version="0.2.5", features=["builder"]}
 serde = "1.0.210"
 strum = "0.26.3"
 strum_macros = "0.26.4"
 zeroize = "1.8.1"
+chrono = "0.4.38"
 

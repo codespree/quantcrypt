@@ -1,9 +1,9 @@
 use std::error;
 
-use der::{asn1::BitString, Decode, Encode};
+use der::{asn1::BitString, Decode, Document, Encode};
 use der_derive::Sequence;
 use pem::EncodeConfig;
-use pkcs8::spki::AlgorithmIdentifierWithOid;
+use pkcs8::{spki::AlgorithmIdentifierWithOid, EncodePublicKey};
 
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -26,6 +26,7 @@ struct CompositeSigKemPublicKey {
     trad_pk: BitString,
 }
 
+#[derive(Debug, Clone)]
 /// A public key for a composite DSA / KEM
 pub struct CompositePublicKey {
     /// The OID for the composite DSA / KEM
@@ -54,6 +55,15 @@ impl CompositePublicKey {
             pq_pk: pq_pk.to_vec(),
             trad_pk: trad_pk.to_vec(),
         }
+    }
+
+    /// Get the OID for the composite DSA / KEM
+    ///
+    /// # Returns
+    ///
+    /// The OID for the composite DSA / KEM
+    pub fn get_oid(&self) -> &str {
+        &self.oid
     }
 
     /// Get the public key for the traditional DSA / KEM
@@ -155,6 +165,13 @@ impl CompositePublicKey {
         };
 
         Ok(pk_info.to_der()?.as_slice().to_vec())
+    }
+}
+
+impl EncodePublicKey for CompositePublicKey {
+    fn to_public_key_der(&self) -> std::result::Result<Document, pkcs8::spki::Error> {
+        let doc = Document::try_from(self.to_der().unwrap())?;
+        Ok(doc)
     }
 }
 

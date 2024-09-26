@@ -171,15 +171,12 @@ mod tests {
     fn test_composite_private_key() {
         let pem_bytes = include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_sk.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        println!("{}", pem);
         let sk = CompositePrivateKey::from_pem(pem).unwrap();
 
         let oid = sk.get_oid();
         assert_eq!(oid, DsaType::MlDsa44EcdsaP256SHA256.get_oid());
 
         let pem2 = sk.to_pem().unwrap();
-        //println!("{}", pem2);
-        //let pem_bytes2 = pem2.as_bytes();
         assert_eq!(pem, pem2.trim());
 
         // Test der serialization

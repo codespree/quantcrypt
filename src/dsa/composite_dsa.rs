@@ -17,7 +17,8 @@ use super::common::{dsa_trait::Dsa, dsa_type::DsaType};
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-/// A KEM manager for the composite KEM method
+/// A DSA manager for the composite KEM method
+#[derive(Clone)]
 pub struct CompositeDsaManager {
     /// The KEM metadata information
     dsa_info: DsaInfo,

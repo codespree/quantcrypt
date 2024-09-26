@@ -48,6 +48,8 @@ const COMPOSITE_DSA_TYPES: [DsaType; 13] = [
     DsaType::MlDsa87Ed448SHA512,
 ];
 
+// Implement clone
+#[derive(Clone)]
 /// Enum to representthe different types of KEM managers
 pub enum DsaManager {
     /// ML DSA manager

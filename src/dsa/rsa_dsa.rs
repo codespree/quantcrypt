@@ -12,6 +12,7 @@ use std::error;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+#[derive(Clone)]
 pub struct RsaDsaManager {
     pub dsa_info: DsaInfo,
 }

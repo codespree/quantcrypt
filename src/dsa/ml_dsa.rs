@@ -13,6 +13,7 @@ use fips204::ml_dsa_87;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+#[derive(Clone)]
 pub struct MlDsaManager {
     pub dsa_info: DsaInfo,
 }
