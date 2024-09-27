@@ -337,15 +337,14 @@ mod tests {
 
     #[test]
     fn test_certificate_sig_verify() {
-        let pem_bytes =
-            include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_self_signed.pem");
+        let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_self_signed.pem");
         let cert = Certificate::from_pem(pem_bytes).unwrap();
-        let pk_bytes = include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_pk.pem");
+        let pk_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_pk.pem");
         let pk =
             CompositePublicKey::from_pem(std::str::from_utf8(pk_bytes).unwrap().trim()).unwrap();
         let oid = cert.signature_algorithm.oid.to_string();
-        let kem = CompositeDsaManager::new_from_oid(&oid).unwrap();
-        let is_verified = kem
+        let dsa = CompositeDsaManager::new_from_oid(&oid).unwrap();
+        let is_verified = dsa
             .verify(
                 &pk.to_der().unwrap(),
                 &cert.tbs_certificate.to_der().unwrap(),
@@ -353,5 +352,14 @@ mod tests {
             )
             .unwrap();
         assert!(is_verified);
+
+        let key_from_cert = cert
+            .tbs_certificate
+            .subject_public_key_info
+            .to_der()
+            .unwrap();
+
+        // The public key in the tbs certificate should be the same as the public key
+        assert_eq!(pk.to_der().unwrap(), key_from_cert);
     }
 }

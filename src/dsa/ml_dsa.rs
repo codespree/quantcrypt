@@ -187,6 +187,10 @@ impl Dsa for MlDsaManager {
 
 #[cfg(test)]
 mod tests {
+    use crate::asn1::composite_public_key::PublicKeyInfo;
+    use der::{Decode, DecodePem, Encode};
+    use x509_cert::Certificate;
+
     use super::*;
     use crate::dsa::common::dsa_type::DsaType;
     use crate::dsa::common::macros::test_dsa;
@@ -207,5 +211,23 @@ mod tests {
     fn test_ml_dsa_87() {
         let mut dsa = MlDsaManager::new(DsaType::MlDsa87);
         test_dsa!(dsa);
+    }
+
+    #[test]
+    fn test_ml_dsa_44_cert() {
+        let pem_bytes = include_bytes!("../../test/data/mldsa44_self_signed.pem");
+        let dsa = MlDsaManager::new(DsaType::MlDsa44);
+        let cert = Certificate::from_pem(pem_bytes).unwrap();
+        let cert_pub_key = cert
+            .tbs_certificate
+            .subject_public_key_info
+            .to_der()
+            .unwrap();
+        let spki = PublicKeyInfo::from_der(&cert_pub_key).unwrap();
+        let sig = cert.signature.as_bytes().unwrap();
+        let msg = cert.tbs_certificate.to_der().unwrap();
+        let cert_pub_key = spki.public_key.as_bytes().unwrap();
+        let is_verified = dsa.verify(&cert_pub_key, &msg, &sig).unwrap();
+        assert!(is_verified);
     }
 }

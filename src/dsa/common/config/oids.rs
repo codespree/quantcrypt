@@ -28,10 +28,10 @@ impl Oid for DsaType {
             | DsaType::EcdsaP384SHA512 => "1.2.840.10045.4.3.4",
             DsaType::Ed25519SHA512 => "1.3.101.112",
             DsaType::Ed448SHA512 => "1.3.101.113",
-            // TODO: Check if this has changed after finalization of FIPS204
-            DsaType::MlDsa44 => "1.3.6.1.4.1.2.267.12.4.4",
-            DsaType::MlDsa65 => "1.3.6.1.4.1.2.267.12.6.5",
-            DsaType::MlDsa87 => "1.3.6.1.4.1.2.267.12.8.7",
+            // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
+            DsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
+            DsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
+            DsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
 
             // TODO: Change when finalized
             DsaType::MlDsa44Rsa2048PssSha256 => "2.16.840.1.114027.80.8.1.1",

@@ -13,7 +13,7 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 ///     PublicKey   BIT STRING
 /// }
 #[derive(Debug, Clone, Sequence)]
-struct PublicKeyInfo {
+pub struct PublicKeyInfo {
     pub algorithm: AlgorithmIdentifierWithOid,
     pub public_key: BitString,
 }
@@ -184,7 +184,7 @@ mod test {
 
     #[test]
     fn test_composite_public_key() {
-        let pem_bytes = include_bytes!("../../test/data/mldsa444_ecdsa_p256_sha256_pk.pem");
+        let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_pk.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let pk = CompositePublicKey::from_pem(pem).unwrap();
 
