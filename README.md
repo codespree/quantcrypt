@@ -12,7 +12,7 @@ A set of [Key Encapsulation Mechanism](https://lamps-wg.github.io/draft-composit
 
 During the transition to post-quantum cryptography, there will be uncertainty as to the strength of cryptographic algorithms; we will no longer fully trust traditional cryptography such as RSA, Diffie-Hellman, DSA and their elliptic curve variants, but we will also not fully trust their post-quantum replacements until they have had sufficient scrutiny and time to discover and fix implementation bugs. Unlike previous cryptographic algorithm migrations, the choice of when to migrate and which algorithms to migrate to, is not so clear. Even after the migration period, it may be advantageous for an entity's cryptographic identity to be composed of multiple public-key algorithms.
 
-The [composite DSA](https://www.ietf.org/archive/id/draft-ounsworth-pq-composite-sigs-13.html#RFC8017) schemes follow the draft standard for Composite Digital Signature Algorithms (DSA) for use in the Internet Public Key Infrastructure (PKI). These schemes are designed to be compatible with existing X.509, PKIX, and CMS data structures and protocols.
+The [composite DSA](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) schemes follow the draft standard for Composite Digital Signature Algorithms (DSA) for use in the Internet Public Key Infrastructure (PKI). These schemes are designed to be compatible with existing X.509, PKIX, and CMS data structures and protocols.
 
 # License
 

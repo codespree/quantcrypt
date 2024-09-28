@@ -262,7 +262,7 @@ impl Kem for CompositeKemManager {
     /// ciphertext is the CompositeCiphertextValue in ASN.1 format converted to DER
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         // Deserialize the composite public key
-        let c_pk = CompositePublicKey::from_der(pk)?;
+        let c_pk = CompositePublicKey::from_der(&self.kem_info.oid, pk)?;
 
         // Encapsulate the public key for the traditional KEM
         let (t_ss, t_ct) = self.trad_kem.encap(&c_pk.get_trad_pk())?;
@@ -292,7 +292,7 @@ impl Kem for CompositeKemManager {
     /// The shared secret after applying the combiner function
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Deserialize the composite secret key
-        let c_sk = CompositePrivateKey::from_der(sk).unwrap();
+        let c_sk = CompositePrivateKey::from_der(&self.kem_info.oid, sk).unwrap();
 
         // Deserialize the composite ciphertext
         let c_ct = CompositeCiphertextValue::from_der(ct).unwrap();

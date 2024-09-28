@@ -1,6 +1,8 @@
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use super::config::oids::Oid;
+
 #[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum DsaType {
     // RSA
@@ -38,13 +40,21 @@ pub enum DsaType {
     MlDsa87EcdsaP384SHA512,
     MlDsa87EcdsaBrainpoolP384r1SHA512,
     MlDsa87Ed448SHA512,
-    // id-Falon512-ECDSA-P256-SHA256 //TODO: Unsupported
-    // id-Falcon512-ECDSA-brainpoolP256r1-SHA256 //TODO: Unsupported
-    // id-Falcon512-Ed25519-SHA512 //TODO: Unsupported
 }
 
 impl DsaType {
     pub fn all() -> Vec<DsaType> {
         DsaType::iter().collect()
+    }
+
+    pub fn is_composite(&self) -> bool {
+        !matches!(self, DsaType::MlDsa44 | DsaType::MlDsa65 | DsaType::MlDsa87)
+    }
+
+    pub fn from_oid(oid: &str) -> Option<DsaType> {
+        let all_dsa_types = DsaType::all();
+        all_dsa_types
+            .into_iter()
+            .find(|dsa_type| dsa_type.get_oid() == oid)
     }
 }

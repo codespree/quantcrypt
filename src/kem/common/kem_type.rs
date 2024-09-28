@@ -1,4 +1,9 @@
-#[derive(Clone, Debug, PartialEq)]
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+use crate::kem::common::config::oids::Oid;
+
+#[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum KemType {
     /// NIST P-256 key encapsulation mechanism
     P256,
@@ -45,4 +50,24 @@ pub enum KemType {
     MlKem1024BrainpoolP384r1,
     /// id-MLKEM1024-X448
     MlKem1024X448,
+}
+
+impl KemType {
+    pub fn all() -> Vec<KemType> {
+        KemType::iter().collect()
+    }
+
+    pub fn is_composite(&self) -> bool {
+        !matches!(
+            self,
+            KemType::MlKem512 | KemType::MlKem768 | KemType::MlKem1024
+        )
+    }
+
+    pub fn from_oid(oid: &str) -> Option<KemType> {
+        let all_kem_types = KemType::all();
+        all_kem_types
+            .into_iter()
+            .find(|kem_type| kem_type.get_oid() == oid)
+    }
 }

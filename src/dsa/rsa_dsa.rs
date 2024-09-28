@@ -1,3 +1,4 @@
+use openssl::sign::RsaPssSaltlen;
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use rsa::pkcs1::{EncodeRsaPrivateKey, EncodeRsaPublicKey};
@@ -123,6 +124,7 @@ impl Dsa for RsaDsaManager {
 
         if padding == openssl::rsa::Padding::PKCS1_PSS {
             signer.set_rsa_mgf1_md(hash)?;
+            signer.set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)?;
         }
 
         // Sign the message
@@ -175,6 +177,7 @@ impl Dsa for RsaDsaManager {
 
         if padding == openssl::rsa::Padding::PKCS1_PSS {
             verifier.set_rsa_mgf1_md(hash)?;
+            verifier.set_rsa_pss_saltlen(RsaPssSaltlen::DIGEST_LENGTH)?;
         }
 
         // Verify the signature

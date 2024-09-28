@@ -187,7 +187,7 @@ impl Dsa for MlDsaManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::asn1::composite_public_key::PublicKeyInfo;
+    use crate::asn1::public_key_info::PublicKeyInfo;
     use der::{Decode, DecodePem, Encode};
     use x509_cert::Certificate;
 

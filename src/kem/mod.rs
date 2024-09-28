@@ -1,5 +1,5 @@
 mod asn1;
-mod common;
+pub mod common;
 pub mod composite_kem;
 pub mod ec_kem;
 pub mod kem_manager;

@@ -1,6 +1,11 @@
 use der::{oid::ObjectIdentifier, Encode};
 
 use std::error;
+
+use crate::{
+    dsa::common::{config::oids::Oid as _, dsa_type::DsaType},
+    kem::common::{config::oids::Oid as _, kem_type::KemType},
+};
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
@@ -18,6 +23,51 @@ pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
     Ok(ObjectIdentifier::new_unwrap(oid).to_der()?.to_vec())
 }
 
+/// Check if an OID is valid
+///
+/// # Arguments
+///
+/// * `oid` - The OID to check
+///
+/// # Returns
+///
+/// True if the OID is valid, false otherwise
+pub fn is_valid_oid(oid: &String) -> bool {
+    // Get all oids based on dsa and kem types as a string array
+    let dsa_oids = DsaType::all();
+    let kem_oids = KemType::all();
+
+    let all_dsa_oids: Vec<String> = dsa_oids.iter().map(|x| x.get_oid()).collect();
+    let all_kem_oids: Vec<String> = kem_oids.iter().map(|x| x.get_oid()).collect();
+
+    // Check if oid is valid
+    all_dsa_oids.contains(oid) || all_kem_oids.contains(oid)
+}
+
+/// Check if an OID is a composite OID
+///
+/// # Arguments
+///
+/// * `oid` - The OID to check
+///
+/// # Returns
+///
+/// True if the OID is a composite OID, false otherwise
+pub fn is_composite_oid(oid: &str) -> bool {
+    let is_composite_kem = if let Some(k_type) = KemType::from_oid(oid) {
+        k_type.is_composite()
+    } else {
+        false
+    };
+
+    let is_composite_dsa = if let Some(d_type) = DsaType::from_oid(oid) {
+        d_type.is_composite()
+    } else {
+        false
+    };
+
+    is_composite_kem || is_composite_dsa
+}
 #[cfg(test)]
 mod tests {
     use super::*;
