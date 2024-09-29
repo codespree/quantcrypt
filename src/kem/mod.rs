@@ -1,3 +1,4 @@
+pub mod api;
 mod asn1;
 pub mod common;
 pub mod composite_kem;

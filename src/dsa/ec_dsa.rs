@@ -14,11 +14,9 @@ use crate::utils::openssl_utils::verify_pkey_based;
 use crate::utils::openssl_utils::{
     get_key_pair_ec_based, get_key_pair_ec_based_with_rng, get_key_pair_pkey_based,
 };
+use crate::QuantCryptError;
 
-use std::error;
-
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 #[derive(Clone)]
 pub struct EcDsaManager {
@@ -29,7 +27,7 @@ pub struct EcDsaManager {
 }
 
 impl Dsa for EcDsaManager {
-    fn new(dsa_type: DsaType) -> Self
+    fn new(dsa_type: DsaType) -> Result<Self>
     where
         Self: Sized,
     {
@@ -54,30 +52,32 @@ impl Dsa for EcDsaManager {
             DsaType::Ed25519SHA512 => (None, Some(Id::ED25519), MessageDigest::sha512()),
             DsaType::Ed448SHA512 => (None, Some(Id::ED448), MessageDigest::sha512()),
             _ => {
-                panic!("Not implemented");
+                return Err(QuantCryptError::NotImplemented);
             }
         };
 
-        Self {
+        Ok(Self {
             dsa_info,
             ec_based_nid,
             pk_based_id,
             digest,
-        }
+        })
     }
 
     fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
-        if let Some(nid) = self.ec_based_nid {
+        let result = if let Some(nid) = self.ec_based_nid {
             get_key_pair_ec_based(nid)
         } else if let Some(id) = self.pk_based_id {
             get_key_pair_pkey_based(id)
         } else {
-            panic!("Not implemented");
-        }
+            return Err(QuantCryptError::NotImplemented);
+        };
+        let result = result.map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
+        Ok(result)
     }
 
     fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
-        if let Some(nid) = self.ec_based_nid {
+        let result = if let Some(nid) = self.ec_based_nid {
             get_key_pair_ec_based_with_rng(rng, nid)
         } else if let Some(id) = self.pk_based_id {
             match id {
@@ -95,32 +95,38 @@ impl Dsa for EcDsaManager {
                     Ok((pk.to_vec(), sk.to_vec()))
                 }
                 _ => {
-                    panic!("Not implemented");
+                    return Err(QuantCryptError::NotImplemented);
                 }
             }
         } else {
-            panic!("Not implemented");
-        }
+            return Err(QuantCryptError::NotImplemented);
+        };
+        let result = result.map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
+        Ok(result)
     }
 
     fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
-        if let Some(nid) = self.ec_based_nid {
+        let result = if let Some(nid) = self.ec_based_nid {
             sign_ec_based(nid, sk, msg, self.digest)
         } else if let Some(id) = self.pk_based_id {
             sign_pkey_based(id, sk, msg)
         } else {
-            panic!("Not implemented");
-        }
+            return Err(QuantCryptError::NotImplemented);
+        };
+        let result = result.map_err(|_| QuantCryptError::SignatureFailed)?;
+        Ok(result)
     }
 
     fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
-        if let Some(nid) = self.ec_based_nid {
+        let result = if let Some(nid) = self.ec_based_nid {
             verify_ec_based(nid, pk, msg, signature, self.digest)
         } else if let Some(id) = self.pk_based_id {
             verify_pkey_based(id, pk, msg, signature)
         } else {
-            panic!("Not implemented");
-        }
+            return Err(QuantCryptError::NotImplemented);
+        };
+        let result = result.map_err(|_| QuantCryptError::SignatureVerificationFailed)?;
+        Ok(result)
     }
 
     fn get_dsa_info(&self) -> DsaInfo {
@@ -135,49 +141,49 @@ mod tests {
 
     #[test]
     fn test_ecdsa_p256_sha256() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaP256SHA256);
+        let dsa = EcDsaManager::new(DsaType::EcdsaP256SHA256);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ecdsa_p256_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaP256SHA512);
+        let dsa = EcDsaManager::new(DsaType::EcdsaP256SHA512);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ecdsa_p384_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaP384SHA512);
+        let dsa = EcDsaManager::new(DsaType::EcdsaP384SHA512);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ecdsa_brainpool_p256r1_sha256() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA256);
+        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA256);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ecdsa_brainpool_p256r1_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA512);
+        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA512);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ecdsa_brainpool_p384r1_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA512);
+        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA512);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ed25519_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::Ed25519SHA512);
+        let dsa = EcDsaManager::new(DsaType::Ed25519SHA512);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ed448_sha512() {
-        let mut dsa = EcDsaManager::new(DsaType::Ed448SHA512);
+        let dsa = EcDsaManager::new(DsaType::Ed448SHA512);
         test_dsa!(dsa);
     }
 }

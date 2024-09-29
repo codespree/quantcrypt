@@ -1,21 +1,23 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum KeyError {
+pub enum QuantCryptError {
+    #[error("Invalid OID")]
+    InvalidOid,
     #[error("Invalid public key")]
     InvalidPublicKey,
     #[error("Invalid private key")]
     InvalidPrivateKey,
-}
-
-#[derive(Error, Debug)]
-pub enum KeyGenError {
+    #[error("Serilization to/from PEM/DER failed")]
+    SerializationFailed,
+    #[error("Signature verification failed")]
+    SignatureVerificationFailed,
+    #[error("Signature failed")]
+    SignatureFailed,
+    #[error("Invalid signature")]
+    InvalidSignature,
     #[error("Key pair generation failed")]
     KeyPairGenerationFailed,
-}
-
-#[derive(Error, Debug)]
-pub enum CertificateBuilderError {
     #[error("Missing serial number")]
     MissingSerialNumber,
     #[error("Missing not_after")]
@@ -34,18 +36,24 @@ pub enum CertificateBuilderError {
     BadIssuersPublicKey,
     #[error("Bad serial number key")]
     BadSerialNumber,
-    #[error("Invalid not before")]
+    #[error("Invalid not_before. Please use an ISO 8601 date string and ensure that not_before is before not_after")]
     InvalidNotBefore,
-    #[error("Invalid not after")]
+    #[error("Invalid not after. Please use an ISO 8601 date string and ensure that not_after is after not_before. Also, ensure that not_after is not in the past")]
     InvalidNotAfter,
-    #[error("Invalid signature")]
-    InvalidSignature,
-    #[error("Unknown error")]
-    Unknown,
-}
-
-#[derive(Error, Debug)]
-pub enum CertificateError {
     #[error("Certificate is invalid")]
     InvalidCertificate,
+    #[error(
+        "Unsupported operation. Only DSA keys can be used for signing and KEM keys for encap/decap"
+    )]
+    UnsupportedOperation,
+    #[error("Not implemented")]
+    NotImplemented,
+    #[error("Invalid ciphertext")]
+    InvalidCiphertext,
+    #[error("Encap failed")]
+    EncapFailed,
+    #[error("Decap failed")]
+    DecapFailed,
+    #[error("Unknown error")]
+    Unknown,
 }

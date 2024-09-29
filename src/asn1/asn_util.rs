@@ -1,13 +1,12 @@
 use der::{oid::ObjectIdentifier, Encode};
 
-use std::error;
-
 use crate::{
-    dsa::common::{config::oids::Oid as _, dsa_type::DsaType},
-    kem::common::{config::oids::Oid as _, kem_type::KemType},
+    dsa::common::dsa_type::DsaType, errors, kem::common::kem_type::KemType, DsaAlgorithm,
+    KemAlgorithm,
 };
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+
+// Change the alias to use `QuantCryptError`.
+type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 
 /// Convert an OID string to a DER encoded byte array
 /// represeting an ASN.1 Object Identifier
@@ -19,8 +18,15 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// # Returns
 ///
 /// The DER encoded byte array
+///
+/// # Errors
+///
+/// `QuantCryptError::InvalidOid` will be returned if the OID is invalid
 pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
-    Ok(ObjectIdentifier::new_unwrap(oid).to_der()?.to_vec())
+    let oid = ObjectIdentifier::new_unwrap(oid)
+        .to_der()
+        .map_err(|_| errors::QuantCryptError::InvalidOid)?;
+    Ok(oid.to_vec())
 }
 
 /// Check if an OID is valid
@@ -34,8 +40,8 @@ pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
 /// True if the OID is valid, false otherwise
 pub fn is_valid_oid(oid: &String) -> bool {
     // Get all oids based on dsa and kem types as a string array
-    let dsa_oids = DsaType::all();
-    let kem_oids = KemType::all();
+    let dsa_oids = DsaAlgorithm::all();
+    let kem_oids = KemAlgorithm::all();
 
     let all_dsa_oids: Vec<String> = dsa_oids.iter().map(|x| x.get_oid()).collect();
     let all_kem_oids: Vec<String> = kem_oids.iter().map(|x| x.get_oid()).collect();
@@ -67,6 +73,14 @@ pub fn is_composite_oid(oid: &str) -> bool {
     };
 
     is_composite_kem || is_composite_dsa
+}
+
+// pub fn is_kem_oid(oid: &str) -> bool {
+//     KemAlgorithm::from_oid(oid).is_some()
+// }
+
+pub fn is_dsa_oid(oid: &str) -> bool {
+    DsaAlgorithm::from_oid(oid).is_some()
 }
 #[cfg(test)]
 mod tests {

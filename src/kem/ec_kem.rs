@@ -6,13 +6,12 @@ use crate::utils::openssl_utils::{
     decaps_ec_based, decaps_pkey_based, encaps_ec_based, encaps_pkey_based, get_key_pair_ec_based,
     get_key_pair_ec_based_with_rng, get_key_pair_pkey_based, get_keypair_pkey_based_with_rng,
 };
+use crate::QuantCryptError;
 use openssl::nid::Nid;
 use openssl::pkey::Id;
 use rand_core::CryptoRngCore;
-use std::error;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// A KEM manager for the DhKem method
 pub struct EcKemManager {
@@ -27,7 +26,7 @@ impl Kem for EcKemManager {
     /// # Arguments
     ///
     /// * `kem_type` - The type of KEM to create
-    fn new(kem_type: KemType) -> Self {
+    fn new(kem_type: KemType) -> Result<Self> {
         let kem_info = KemInfo::new(kem_type.clone());
         let (ec_based_nid, pk_based_id) = match kem_type {
             KemType::P256 => (Some(Nid::X9_62_PRIME256V1), None),
@@ -37,14 +36,14 @@ impl Kem for EcKemManager {
             KemType::X25519 => (None, Some(Id::X25519)),
             KemType::X448 => (None, Some(Id::X448)),
             _ => {
-                panic!("Not implemented");
+                return Err(QuantCryptError::NotImplemented);
             }
         };
-        Self {
+        Ok(Self {
             kem_info,
             ec_based_nid,
             pk_based_id,
-        }
+        })
     }
 
     /// Generate a keypair using the default RNG of OpenSSL
@@ -57,11 +56,11 @@ impl Kem for EcKemManager {
     /// ss length is different from RFC9180 as it is not hashed.
     fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
         if let Some(nid) = self.ec_based_nid {
-            get_key_pair_ec_based(nid)
+            get_key_pair_ec_based(nid).map_err(|_| QuantCryptError::KeyPairGenerationFailed)
         } else if let Some(id) = self.pk_based_id {
-            get_key_pair_pkey_based(id)
+            get_key_pair_pkey_based(id).map_err(|_| QuantCryptError::KeyPairGenerationFailed)
         } else {
-            panic!("Not implemented");
+            return Err(QuantCryptError::NotImplemented);
         }
     }
 
@@ -80,10 +79,12 @@ impl Kem for EcKemManager {
     fn key_gen_with_rng(&mut self, rng: &mut impl CryptoRngCore) -> Result<(Vec<u8>, Vec<u8>)> {
         if let Some(nid) = self.ec_based_nid {
             get_key_pair_ec_based_with_rng(rng, nid)
+                .map_err(|_| QuantCryptError::KeyPairGenerationFailed)
         } else if let Some(id) = self.pk_based_id {
             get_keypair_pkey_based_with_rng(rng, id)
+                .map_err(|_| QuantCryptError::KeyPairGenerationFailed)
         } else {
-            panic!("Not implemented");
+            return Err(QuantCryptError::NotImplemented);
         }
     }
 
@@ -98,11 +99,11 @@ impl Kem for EcKemManager {
     /// A tuple containing the shared secret and ciphertext (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         if let Some(nid) = self.ec_based_nid {
-            encaps_ec_based(pk, nid)
+            encaps_ec_based(pk, nid).map_err(|_| QuantCryptError::EncapFailed)
         } else if let Some(id) = self.pk_based_id {
-            encaps_pkey_based(pk, id)
+            encaps_pkey_based(pk, id).map_err(|_| QuantCryptError::EncapFailed)
         } else {
-            panic!("Not implemented");
+            return Err(QuantCryptError::NotImplemented);
         }
     }
 
@@ -118,9 +119,9 @@ impl Kem for EcKemManager {
     /// The shared secret (ss)
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         if let Some(nid) = self.ec_based_nid {
-            decaps_ec_based(sk, ct, nid)
+            decaps_ec_based(sk, ct, nid).map_err(|_| QuantCryptError::DecapFailed)
         } else if let Some(id) = self.pk_based_id {
-            decaps_pkey_based(sk, ct, id)
+            decaps_pkey_based(sk, ct, id).map_err(|_| QuantCryptError::DecapFailed)
         } else {
             panic!("Not implemented");
         }
@@ -148,37 +149,37 @@ mod tests {
 
     #[test]
     fn test_ec_kem_p256() {
-        let mut kem = EcKemManager::new(KemType::P256);
+        let kem = EcKemManager::new(KemType::P256);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_p384() {
-        let mut kem = EcKemManager::new(KemType::P384);
+        let kem = EcKemManager::new(KemType::P384);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_brainpool_p256r1() {
-        let mut kem = EcKemManager::new(KemType::BrainpoolP256r1);
+        let kem = EcKemManager::new(KemType::BrainpoolP256r1);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_brainpool_p384r1() {
-        let mut kem = EcKemManager::new(KemType::BrainpoolP384r1);
+        let kem = EcKemManager::new(KemType::BrainpoolP384r1);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_x448() {
-        let mut kem = EcKemManager::new(KemType::X448);
+        let kem = EcKemManager::new(KemType::X448);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ec_kem_x25519() {
-        let mut kem = EcKemManager::new(KemType::X25519);
+        let kem = EcKemManager::new(KemType::X25519);
         test_kem!(kem);
     }
 }

@@ -22,11 +22,11 @@ use x509_cert::{
     TbsCertificate, Version,
 };
 
-use crate::{errors::CertificateBuilderError, PrivateKey, PublicKey};
+use crate::{errors::QuantCryptError, PrivateKey, PublicKey};
 
 use crate::asn1::certificate::Certificate;
 
-type Result<T> = std::result::Result<T, CertificateBuilderError>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 pub struct CertValidity {
     pub not_before: der::asn1::UtcTime,
@@ -48,34 +48,35 @@ impl CertValidity {
         let result = der::asn1::UtcTime::from_date_time(dt)?;
         Ok(result)
     }
+
     pub fn new(not_before: &Option<String>, not_after: &str) -> Result<CertValidity> {
         let not_after = DateTime::parse_from_rfc3339(not_after)
-            .map_err(|_| CertificateBuilderError::InvalidNotAfter)?;
+            .map_err(|_| QuantCryptError::InvalidNotAfter)?;
 
         // Set time to UTC
         let not_after = chrono::Utc.from_utc_datetime(&not_after.naive_utc());
 
         // Check if not after is in the past
         if not_after <= chrono::Utc::now() {
-            return Err(CertificateBuilderError::InvalidNotAfter);
+            return Err(QuantCryptError::InvalidNotAfter);
         }
 
         let not_after_dt = CertValidity::date_time_to_asn(&not_after)
-            .map_err(|_| CertificateBuilderError::InvalidNotAfter)?;
+            .map_err(|_| QuantCryptError::InvalidNotAfter)?;
 
         if let Some(not_before) = not_before {
             let not_before = DateTime::parse_from_rfc3339(not_before)
-                .map_err(|_| CertificateBuilderError::InvalidNotBefore)?;
+                .map_err(|_| QuantCryptError::InvalidNotBefore)?;
 
             // Set time to UTC
             let not_before = chrono::Utc.from_utc_datetime(&not_before.naive_utc());
 
             if not_before > not_after {
-                return Err(CertificateBuilderError::InvalidNotBefore);
+                return Err(QuantCryptError::InvalidNotBefore);
             }
 
             let not_before_dt = CertValidity::date_time_to_asn(&not_before)
-                .map_err(|_| CertificateBuilderError::InvalidNotBefore)?;
+                .map_err(|_| QuantCryptError::InvalidNotBefore)?;
 
             Ok(CertValidity {
                 not_before: not_before_dt,
@@ -86,11 +87,11 @@ impl CertValidity {
             let not_before = chrono::Utc::now();
 
             if not_before > not_after {
-                return Err(CertificateBuilderError::InvalidNotAfter);
+                return Err(QuantCryptError::InvalidNotAfter);
             }
 
             let not_before_dt = CertValidity::date_time_to_asn(&not_before)
-                .map_err(|_| CertificateBuilderError::InvalidNotBefore)?;
+                .map_err(|_| QuantCryptError::InvalidNotBefore)?;
 
             Ok(CertValidity {
                 not_before: not_before_dt,
@@ -228,17 +229,43 @@ impl Profile {
 /// ```
 /// use quantcrypt::CertificateBuilder;
 /// use quantcrypt::DsaAlgorithm;
+/// use quantcrypt::KemAlgorithm;
 /// use quantcrypt::Profile;
 /// use quantcrypt::DsaKeyGenerator;
-/// let (pk, sk) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().unwrap();
+/// use quantcrypt::KemKeyGenerator;
+///
+/// // Create a TA key pair
+/// let (pk_root, sk_root) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().unwrap();
 /// let serial_no: [u8;20] = [0; 20];
-/// let cert = CertificateBuilder::new(Profile::Root)
+///
+/// // Create the TA certificate
+/// let cert_root = CertificateBuilder::new(Profile::Root)
 ///    .set_serial_number(&serial_no)
 ///    .set_not_after("2025-01-01T00:00:00Z")
 ///    .set_subject("CN=example.com")
-///    .set_public_key(pk)
-///    .build(sk).unwrap();
-/// assert!(cert.verify_self_signed().unwrap());
+///    .set_public_key(pk_root.clone())
+///    .build(&sk_root).unwrap();
+/// assert!(cert_root.verify_self_signed().unwrap());
+///
+/// // Create a leaf key pair for KEM
+/// let (pk_kem, sk_kem) = KemKeyGenerator::new(KemAlgorithm::MlKem512).generate().unwrap();
+/// let cert_kem = CertificateBuilder::new(Profile::Leaf {
+///   issuer: "CN=example.com".parse().unwrap(),
+///   enable_key_agreement: false,
+///   enable_key_encipherment: true,
+/// })
+///   .set_serial_number(&serial_no)
+///   .set_not_after("2025-01-01T00:00:00Z")
+///   .set_subject("CN=ssai.example.com")
+///   .set_public_key(pk_kem)
+///   .set_signers_public_key(pk_root)
+///   .build(&sk_root).unwrap();
+///
+/// // It's not self signed so verification as self signed should fail
+/// assert!(!cert_kem.verify_self_signed().unwrap());
+///
+/// // But it should verify against the root
+/// assert!(cert_root.verify_child(&cert_kem).unwrap());
 /// ```
 pub struct CertificateBuilder {
     profile: Profile,
@@ -301,27 +328,27 @@ impl CertificateBuilder {
         self
     }
 
-    pub fn build(&self, sk: PrivateKey) -> Result<Certificate> {
+    pub fn build(&self, sk: &PrivateKey) -> Result<Certificate> {
         let serial_number = self
             .serial_number
-            .ok_or(CertificateBuilderError::MissingSerialNumber)?;
-        let serial_number = SerialNumber::new(&serial_number)
-            .map_err(|_| CertificateBuilderError::BadSerialNumber)?;
+            .ok_or(QuantCryptError::MissingSerialNumber)?;
+        let serial_number =
+            SerialNumber::new(&serial_number).map_err(|_| QuantCryptError::BadSerialNumber)?;
         let not_after = self
             .not_after
             .as_ref()
-            .ok_or(CertificateBuilderError::MissingNotAfter)?;
+            .ok_or(QuantCryptError::MissingNotAfter)?;
         let subject = self
             .subject
             .as_ref()
-            .ok_or(CertificateBuilderError::MissingSubject)?;
+            .ok_or(QuantCryptError::MissingSubject)?;
 
-        let subject = Name::from_str(subject).map_err(|_| CertificateBuilderError::BadSubject)?;
+        let subject = Name::from_str(subject).map_err(|_| QuantCryptError::BadSubject)?;
 
         let public_key = self
             .public_key
             .clone()
-            .ok_or(CertificateBuilderError::MissingPublicKey)?;
+            .ok_or(QuantCryptError::MissingPublicKey)?;
 
         let c_validity = CertValidity::new(&self.not_before, not_after)?;
 
@@ -330,8 +357,8 @@ impl CertificateBuilder {
             not_after: Time::UtcTime(c_validity.not_after),
         };
 
-        let oid = ObjectIdentifier::new(sk.get_oid())
-            .map_err(|_| CertificateBuilderError::BadPrivateKey)?;
+        let oid =
+            ObjectIdentifier::new(sk.get_oid()).map_err(|_| QuantCryptError::BadPrivateKey)?;
 
         let signature_alg = AlgorithmIdentifier {
             oid,
@@ -339,7 +366,7 @@ impl CertificateBuilder {
         };
 
         let spki = SubjectPublicKeyInfo::from_key(public_key)
-            .map_err(|_| CertificateBuilderError::BadPublicKey)?;
+            .map_err(|_| QuantCryptError::BadPublicKey)?;
 
         let tbs = TbsCertificate {
             version: Version::V3,
@@ -356,11 +383,11 @@ impl CertificateBuilder {
 
         let default_ext = if let Some(signers_public_key) = &self.signers_public_key {
             let issuers_pk = SubjectPublicKeyInfo::from_key(signers_public_key.clone())
-                .map_err(|_| CertificateBuilderError::BadIssuersPublicKey)?;
+                .map_err(|_| QuantCryptError::BadIssuersPublicKey)?;
 
             self.profile
                 .build_extensions(spki.owned_to_ref(), Some(issuers_pk.owned_to_ref()), &tbs)
-                .map_err(|_| CertificateBuilderError::BadPublicKey)?
+                .map_err(|_| QuantCryptError::BadPublicKey)?
         } else {
             Vec::new()
         };
@@ -378,18 +405,15 @@ impl CertificateBuilder {
             ..tbs
         };
 
-        let tbs_der = tbs
-            .clone()
-            .to_der()
-            .map_err(|_| CertificateBuilderError::Unknown)?;
+        let tbs_der = tbs.clone().to_der().map_err(|_| QuantCryptError::Unknown)?;
 
         let signature = sk
             .sign(&tbs_der)
-            .map_err(|_| CertificateBuilderError::BadPrivateKey)?;
+            .map_err(|_| QuantCryptError::BadPrivateKey)?;
 
         // Convert signature to BitString
         let signature =
-            BitString::new(0, signature).map_err(|_| CertificateBuilderError::InvalidSignature)?;
+            BitString::new(0, signature).map_err(|_| QuantCryptError::InvalidSignature)?;
 
         Ok(Certificate::new(x509_cert::Certificate {
             tbs_certificate: tbs.clone(),

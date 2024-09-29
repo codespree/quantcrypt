@@ -27,7 +27,7 @@ impl CTLen for KemType {
             KemType::MlKem512 => None,
             KemType::MlKem768 => None,
             KemType::MlKem1024 => None,
-            // Composite also vary
+            // Composite also varies as ML varies
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
             KemType::MlKem768Rsa4096 => None,

@@ -5,10 +5,12 @@ use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
 use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
+use crate::QuantCryptError;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, errors::KeyError>;
+use crate::asn1::asn_util::is_dsa_oid;
+
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 // Implement clone
 #[derive(Clone)]
@@ -39,7 +41,7 @@ impl PrivateKey {
     /// `KeyError::InvalidPrivateKey` will be returned if the OID is invalid
     pub fn new(oid: &str, key: &[u8]) -> Result<Self> {
         if !is_valid_oid(&oid.to_string()) {
-            return Err(errors::KeyError::InvalidPrivateKey);
+            return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
         let is_composite = is_composite_oid(oid);
         Ok(Self {
@@ -67,7 +69,7 @@ impl PrivateKey {
             oid: composite_sk.get_oid().to_string(),
             key: composite_sk
                 .to_der()
-                .map_err(|_| errors::KeyError::InvalidPrivateKey)?,
+                .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?,
             is_composite: true,
         })
     }
@@ -119,7 +121,7 @@ impl PrivateKey {
         };
         Ok(priv_key_info
             .to_der()
-            .map_err(|_| errors::KeyError::InvalidPrivateKey))?
+            .map_err(|_| errors::QuantCryptError::InvalidPrivateKey))?
     }
 
     /// Get the key material as a PEM-encoded string
@@ -134,7 +136,7 @@ impl PrivateKey {
     pub fn to_pem(&self) -> Result<String> {
         let der = self
             .to_der()
-            .map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+            .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?;
         let pem_obj = pem::Pem::new("PRIVATE KEY", der);
         let encode_conf = EncodeConfig::default().set_line_ending(pem::LineEnding::LF);
         Ok(pem::encode_config(&pem_obj, encode_conf))
@@ -154,10 +156,10 @@ impl PrivateKey {
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
     pub fn from_pem(pem: &str) -> Result<Self> {
-        let pem = pem::parse(pem).map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+        let pem = pem::parse(pem).map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?;
         // Header should be "PRIVATE KEY"
         if pem.tag() != "PRIVATE KEY" {
-            return Err(errors::KeyError::InvalidPrivateKey);
+            return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
 
         let der = pem.contents();
@@ -178,12 +180,12 @@ impl PrivateKey {
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
     pub fn from_der(der: &[u8]) -> Result<Self> {
-        let priv_key_info =
-            PrivateKeyInfo::from_der(der).map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+        let priv_key_info = PrivateKeyInfo::from_der(der)
+            .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?;
 
         // Check if the OID is valid
         if !is_valid_oid(&priv_key_info.algorithm.oid.to_string()) {
-            return Err(errors::KeyError::InvalidPrivateKey);
+            return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
 
         // Check if the OID is a composite key
@@ -206,12 +208,14 @@ impl PrivateKey {
     ///
     /// The signature
     pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let dsa =
-            DsaManager::new_from_oid(&self.oid).map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+        // Signing is only possible with DSA keys
+        if !is_dsa_oid(&self.oid) {
+            return Err(errors::QuantCryptError::UnsupportedOperation);
+        }
 
-        let sig = dsa
-            .sign(&self.key, data)
-            .map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+        let dsa = DsaManager::new_from_oid(&self.oid)?;
+
+        let sig = dsa.sign(&self.key, data)?;
 
         Ok(sig)
     }
@@ -255,7 +259,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPrivateKey
+            errors::QuantCryptError::InvalidPrivateKey
         ));
     }
 
@@ -268,7 +272,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPrivateKey
+            errors::QuantCryptError::InvalidPrivateKey
         ));
     }
 
@@ -281,7 +285,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPrivateKey
+            errors::QuantCryptError::InvalidPrivateKey
         ));
     }
 
@@ -294,7 +298,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPrivateKey
+            errors::QuantCryptError::InvalidPrivateKey
         ));
     }
 
@@ -307,7 +311,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPrivateKey
+            errors::QuantCryptError::InvalidPrivateKey
         ));
     }
 

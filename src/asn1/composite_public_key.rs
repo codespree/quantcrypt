@@ -1,10 +1,9 @@
-use std::error;
-
 use der::{asn1::BitString, Decode, Encode};
 use der_derive::Sequence;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+use crate::QuantCryptError;
+
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// CompositeSignaturePublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
 /// CompositeKEMPublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
@@ -83,13 +82,22 @@ impl CompositePublicKey {
     /// A new composite public key
     pub fn from_der(oid: &str, der: &[u8]) -> Result<Self> {
         // Parse as compressed public key
-        let comp_pk = CompositeSigKemPublicKey::from_der(der)?;
+        let comp_pk = CompositeSigKemPublicKey::from_der(der)
+            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        Ok(CompositePublicKey::new(
-            oid,
-            comp_pk.pq_pk.as_bytes().unwrap(),
-            comp_pk.trad_pk.as_bytes().unwrap(),
-        ))
+        let pq_pk = if let Some(pq_pk) = comp_pk.pq_pk.as_bytes() {
+            pq_pk
+        } else {
+            return Err(QuantCryptError::InvalidPublicKey);
+        };
+
+        let trad_pk = if let Some(trad_pk) = comp_pk.trad_pk.as_bytes() {
+            trad_pk
+        } else {
+            return Err(QuantCryptError::InvalidPublicKey);
+        };
+
+        Ok(CompositePublicKey::new(oid, pq_pk, trad_pk))
     }
 
     /// Encode the composite public key as a DER-encoded public key
@@ -99,10 +107,16 @@ impl CompositePublicKey {
     /// The DER-encoded public key
     pub fn to_der(&self) -> Result<Vec<u8>> {
         let comp_sig_pk = CompositeSigKemPublicKey {
-            pq_pk: BitString::new(0, self.pq_pk.as_slice())?,
-            trad_pk: BitString::new(0, self.trad_pk.as_slice())?,
+            pq_pk: BitString::new(0, self.pq_pk.as_slice())
+                .map_err(|_| QuantCryptError::InvalidPublicKey)?,
+            trad_pk: BitString::new(0, self.trad_pk.as_slice())
+                .map_err(|_| QuantCryptError::InvalidPublicKey)?,
         };
 
-        Ok(comp_sig_pk.to_der()?.as_slice().to_vec())
+        let comp_sig_pk = comp_sig_pk
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
+
+        Ok(comp_sig_pk.as_slice().to_vec())
     }
 }

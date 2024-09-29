@@ -1,5 +1,9 @@
 use crate::dsa::common::{config::oids::Oid, dsa_type::DsaType};
 
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+#[derive(Clone, Debug, PartialEq, EnumIter)]
 /// The permissible algorithms for the `AlgorithmIdentifier` type.
 pub enum DsaAlgorithm {
     // ML DSA
@@ -24,6 +28,10 @@ pub enum DsaAlgorithm {
 }
 
 impl DsaAlgorithm {
+    pub(crate) fn all() -> Vec<DsaAlgorithm> {
+        DsaAlgorithm::iter().collect()
+    }
+
     /// Get the corresponding `DsaType` for the algorithm
     pub(crate) fn get_dsa_type(&self) -> DsaType {
         match self {
@@ -70,5 +78,12 @@ impl DsaAlgorithm {
     /// The OID for the algorithm
     pub fn get_oid(&self) -> String {
         self.get_dsa_type().get_oid()
+    }
+
+    pub fn from_oid(oid: &str) -> Option<DsaAlgorithm> {
+        DsaAlgorithm::all()
+            .iter()
+            .find(|x| x.get_oid() == oid)
+            .cloned()
     }
 }

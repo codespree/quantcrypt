@@ -1,8 +1,9 @@
 #[cfg(test)]
 macro_rules! test_dsa {
     ($dsa:expr) => {{
-        let (pk, sk) = $dsa.key_gen().unwrap();
-        let dsa_info = $dsa.get_dsa_info();
+        let mut dsa = $dsa.unwrap();
+        let (pk, sk) = dsa.key_gen().unwrap();
+        let dsa_info = dsa.get_dsa_info();
         let expected_pk_len = dsa_info.pk_byte_len;
         if let Some(expected_pk_len) = expected_pk_len {
             assert_eq!(pk.len(), expected_pk_len);
@@ -14,13 +15,13 @@ macro_rules! test_dsa {
 
         let msg = b"Hello, world! 
         This is a test message for the DSA algorithm.";
-        let signature = $dsa.sign(&sk, msg).unwrap();
+        let signature = dsa.sign(&sk, msg).unwrap();
         let expected_signature_len = dsa_info.sig_byte_len;
         if let Some(expected_signature_len) = expected_signature_len {
             assert_eq!(signature.len(), expected_signature_len);
         }
 
-        let verified = $dsa.verify(&pk, msg, &signature).unwrap();
+        let verified = dsa.verify(&pk, msg, &signature).unwrap();
         assert!(verified);
     }};
 }

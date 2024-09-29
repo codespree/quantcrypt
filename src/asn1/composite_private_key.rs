@@ -1,12 +1,11 @@
-use std::error;
-
 use der::zeroize::Zeroize;
 use der::{Decode, Encode};
 use der_derive::Sequence;
 use pkcs8::PrivateKeyInfo;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+use crate::QuantCryptError;
+
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 #[derive(Debug, Clone, Sequence)]
 /// CompositeSignaturePrivateKey ::= SEQUENCE SIZE (2) OF OneAsymmetricKey
@@ -44,8 +43,12 @@ impl CompositePrivateKey {
         pq_sk: &PrivateKeyInfo<'_>,
         trad_sk: &PrivateKeyInfo<'_>,
     ) -> Result<Self> {
-        let pq_sk_der = pq_sk.to_der()?;
-        let trad_sk_der = trad_sk.to_der()?;
+        let pq_sk_der = pq_sk
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        let trad_sk_der = trad_sk
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
         Ok(Self {
             pq_sk_der,
             trad_sk_der,
@@ -68,7 +71,9 @@ impl CompositePrivateKey {
     ///
     /// The private key for the post-quantum DSA / KEM
     pub fn get_pq_sk(&self) -> Result<PrivateKeyInfo<'_>> {
-        Ok(PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())?)
+        let res = PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        Ok(res)
     }
 
     /// Get the private key for the traditional DSA / KEM
@@ -77,7 +82,9 @@ impl CompositePrivateKey {
     ///
     /// The private key for the traditional DSA / KEM
     pub fn get_trad_sk(&self) -> Result<PrivateKeyInfo<'_>> {
-        Ok(PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())?)
+        let res = PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        Ok(res)
     }
 
     /// Create a new composite private key from a DER-encoded private key
@@ -91,8 +98,10 @@ impl CompositePrivateKey {
     ///
     /// A new composite private key
     pub fn from_der(oid: &str, der: &[u8]) -> Result<Self> {
-        let key_data = CompositeSigKemPrivateKey::from_der(der)?;
-        let comp = CompositePrivateKey::new(oid, &key_data.pq_sk, &key_data.trad_sk)?;
+        let key_data = CompositeSigKemPrivateKey::from_der(der)
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        let comp = CompositePrivateKey::new(oid, &key_data.pq_sk, &key_data.trad_sk)
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
         Ok(comp)
     }
 
@@ -103,9 +112,14 @@ impl CompositePrivateKey {
     /// The DER-encoded private key
     pub fn to_der(&self) -> Result<Vec<u8>> {
         let key_data = CompositeSigKemPrivateKey {
-            pq_sk: PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())?,
-            trad_sk: PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())?,
+            pq_sk: PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())
+                .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
+            trad_sk: PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())
+                .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
         };
-        Ok(key_data.to_der()?)
+        let res = key_data
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        Ok(res)
     }
 }

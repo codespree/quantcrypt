@@ -1,17 +1,63 @@
 use crate::dsa::common::dsa_info::DsaInfo;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::common::dsa_type::DsaType;
+use crate::QuantCryptError;
 use fips204::traits::{SerDes, Signer, Verifier};
 use rand_core::SeedableRng;
-
-use std::error;
 
 use fips204::ml_dsa_44;
 use fips204::ml_dsa_65;
 use fips204::ml_dsa_87;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
+
+macro_rules! sign_ml {
+    ($ml_type:ident, $sk:expr, $msg:expr) => {{
+        if $sk.len() != $ml_type::SK_LEN {
+            return Err(QuantCryptError::InvalidPrivateKey);
+        }
+
+        // Convert sk to a fixed-size array [u8; SK_LEN]
+        let mut sk_buf = [0u8; $ml_type::SK_LEN];
+        sk_buf.copy_from_slice($sk);
+
+        // Try to create a private key from the byte array
+        let sk = $ml_type::PrivateKey::try_from_bytes(sk_buf)
+            .map_err(|_| QuantCryptError::SignatureFailed)?;
+
+        // Try signing the message
+        let sig = sk
+            .try_sign($msg)
+            .map_err(|_| QuantCryptError::SignatureFailed)?;
+
+        // Convert the signature to a Vec<u8> and return it
+        let sig: Vec<u8> = sig.to_vec();
+        Ok(sig)
+    }};
+}
+
+macro_rules! verify_ml {
+    ($ml_type:ident, $pk: expr, $msg: expr, $signature: expr) => {{
+        if $pk.len() != $ml_type::PK_LEN {
+            return Err(QuantCryptError::InvalidPublicKey);
+        }
+
+        if $signature.len() != $ml_type::SIG_LEN {
+            return Err(QuantCryptError::InvalidSignature);
+        }
+
+        // Convert pk to [u8; 1312]
+        let mut pk_buf = [0u8; $ml_type::PK_LEN];
+        pk_buf.copy_from_slice($pk);
+
+        let mut sig_buf = [0u8; $ml_type::SIG_LEN];
+        sig_buf.copy_from_slice($signature);
+
+        let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
+            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
+        Ok(pk.verify($msg, &sig_buf))
+    }};
+}
 
 #[derive(Clone)]
 pub struct MlDsaManager {
@@ -24,9 +70,9 @@ impl Dsa for MlDsaManager {
     /// # Arguments
     ///
     /// * `dsa_type` - The type of DSA to create
-    fn new(dsa_type: DsaType) -> Self {
+    fn new(dsa_type: DsaType) -> Result<Self> {
         let dsa_info = DsaInfo::new(dsa_type);
-        Self { dsa_info }
+        Ok(Self { dsa_info })
     }
 
     /// Generate a keypair using the specified RNG
@@ -44,26 +90,27 @@ impl Dsa for MlDsaManager {
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.dsa_info.dsa_type {
             DsaType::MlDsa44 => {
-                let (pk, sk) = ml_dsa_44::try_keygen_with_rng(rng)?;
+                let (pk, sk) = ml_dsa_44::try_keygen_with_rng(rng)
+                    .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
                 let sk = sk.into_bytes().to_vec();
                 Ok((pk, sk))
             }
             DsaType::MlDsa65 => {
-                let (pk, sk) = ml_dsa_65::try_keygen_with_rng(rng)?;
+                let (pk, sk) = ml_dsa_65::try_keygen_with_rng(rng)
+                    .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
                 let sk = sk.into_bytes().to_vec();
                 Ok((pk, sk))
             }
             DsaType::MlDsa87 => {
-                let (pk, sk) = ml_dsa_87::try_keygen_with_rng(rng)?;
+                let (pk, sk) = ml_dsa_87::try_keygen_with_rng(rng)
+                    .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
                 let sk = sk.into_bytes().to_vec();
                 Ok((pk, sk))
             }
-            _ => {
-                panic!("Not implemented");
-            }
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 
@@ -89,39 +136,10 @@ impl Dsa for MlDsaManager {
     /// The signature
     fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
         match self.dsa_info.dsa_type {
-            DsaType::MlDsa44 => {
-                // Convert sk to [u8; 2560]
-                let mut sk_buf = [0u8; 2560];
-                sk_buf.copy_from_slice(sk);
-
-                let sk = ml_dsa_44::PrivateKey::try_from_bytes(sk_buf)?;
-                let sig = sk.try_sign(msg)?;
-                let sig: Vec<u8> = sig.to_vec();
-                Ok(sig)
-            }
-            DsaType::MlDsa65 => {
-                // Convert sk to [u8; 2560]
-                let mut sk_buf = [0u8; 4032];
-                sk_buf.copy_from_slice(sk);
-
-                let sk = ml_dsa_65::PrivateKey::try_from_bytes(sk_buf)?;
-                let sig = sk.try_sign(msg)?;
-                let sig: Vec<u8> = sig.to_vec();
-                Ok(sig)
-            }
-            DsaType::MlDsa87 => {
-                // Convert sk to [u8; 2560]
-                let mut sk_buf = [0u8; 4896];
-                sk_buf.copy_from_slice(sk);
-
-                let sk = ml_dsa_87::PrivateKey::try_from_bytes(sk_buf)?;
-                let sig = sk.try_sign(msg)?;
-                let sig: Vec<u8> = sig.to_vec();
-                Ok(sig)
-            }
-            _ => {
-                panic!("Not implemented");
-            }
+            DsaType::MlDsa44 => sign_ml!(ml_dsa_44, sk, msg),
+            DsaType::MlDsa65 => sign_ml!(ml_dsa_65, sk, msg),
+            DsaType::MlDsa87 => sign_ml!(ml_dsa_87, sk, msg),
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 
@@ -139,65 +157,15 @@ impl Dsa for MlDsaManager {
     fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
         match self.dsa_info.dsa_type {
             DsaType::MlDsa44 => {
-                if pk.len() != ml_dsa_44::PK_LEN {
-                    return Err("Invalid public key length".into());
-                }
-
-                if signature.len() != ml_dsa_44::SIG_LEN {
-                    return Err("Invalid signature length".into());
-                }
-
-                // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; ml_dsa_44::PK_LEN];
-                pk_buf.copy_from_slice(pk);
-
-                let mut sig_buf = [0u8; ml_dsa_44::SIG_LEN];
-                sig_buf.copy_from_slice(signature);
-
-                let pk = ml_dsa_44::PublicKey::try_from_bytes(pk_buf)?;
-                Ok(pk.verify(msg, &sig_buf))
+                verify_ml!(ml_dsa_44, pk, msg, signature)
             }
             DsaType::MlDsa65 => {
-                if pk.len() != ml_dsa_65::PK_LEN {
-                    return Err("Invalid public key length".into());
-                }
-
-                if signature.len() != ml_dsa_65::SIG_LEN {
-                    return Err("Invalid signature length".into());
-                }
-
-                // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; ml_dsa_65::PK_LEN];
-                pk_buf.copy_from_slice(pk);
-
-                let mut sig_buf = [0u8; ml_dsa_65::SIG_LEN];
-                sig_buf.copy_from_slice(signature);
-
-                let pk = ml_dsa_65::PublicKey::try_from_bytes(pk_buf)?;
-                Ok(pk.verify(msg, &sig_buf))
+                verify_ml!(ml_dsa_65, pk, msg, signature)
             }
             DsaType::MlDsa87 => {
-                if pk.len() != ml_dsa_87::PK_LEN {
-                    return Err("Invalid public key length".into());
-                }
-
-                if signature.len() != ml_dsa_87::SIG_LEN {
-                    return Err("Invalid signature length".into());
-                }
-
-                // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; ml_dsa_87::PK_LEN];
-                pk_buf.copy_from_slice(pk);
-
-                let mut sig_buf = [0u8; ml_dsa_87::SIG_LEN];
-                sig_buf.copy_from_slice(signature);
-
-                let pk = ml_dsa_87::PublicKey::try_from_bytes(pk_buf)?;
-                Ok(pk.verify(msg, &sig_buf))
+                verify_ml!(ml_dsa_87, pk, msg, signature)
             }
-            _ => {
-                panic!("Not implemented");
-            }
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 
@@ -216,19 +184,19 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44() {
-        let mut dsa = MlDsaManager::new(DsaType::MlDsa44);
+        let dsa = MlDsaManager::new(DsaType::MlDsa44);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ml_dsa_65() {
-        let mut dsa = MlDsaManager::new(DsaType::MlDsa65);
+        let dsa = MlDsaManager::new(DsaType::MlDsa65);
         test_dsa!(dsa);
     }
 
     #[test]
     fn test_ml_dsa_87() {
-        let mut dsa = MlDsaManager::new(DsaType::MlDsa87);
+        let dsa = MlDsaManager::new(DsaType::MlDsa87);
         test_dsa!(dsa);
     }
 }

@@ -4,8 +4,7 @@ use crate::dsa::common::config::oids::Oid;
 use crate::dsa::{api::algorithm::DsaAlgorithm, common::dsa_trait::Dsa, dsa_manager::DsaManager};
 use crate::errors;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, errors::KeyGenError>;
+type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 
 /// A key generator for DSA keys
 ///
@@ -48,15 +47,11 @@ impl DsaKeyGenerator {
     /// A tuple containing the public and secret keys (pk, sk)
     pub fn generate(&mut self) -> Result<(PublicKey, PrivateKey)> {
         let dsa_type = self.algorithm.get_dsa_type();
-        let mut dsa_manager = DsaManager::new(dsa_type.clone());
-        let (pk, sk) = dsa_manager
-            .key_gen()
-            .map_err(|_| errors::KeyGenError::KeyPairGenerationFailed)?;
+        let mut dsa_manager = DsaManager::new(dsa_type.clone())?;
+        let (pk, sk) = dsa_manager.key_gen()?;
         let oid = dsa_type.get_oid();
-        let pk =
-            PublicKey::new(&oid, &pk).map_err(|_| errors::KeyGenError::KeyPairGenerationFailed)?;
-        let sk =
-            PrivateKey::new(&oid, &sk).map_err(|_| errors::KeyGenError::KeyPairGenerationFailed)?;
+        let pk = PublicKey::new(&oid, &pk)?;
+        let sk = PrivateKey::new(&oid, &sk)?;
         Ok((pk, sk))
     }
 }

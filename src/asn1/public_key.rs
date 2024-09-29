@@ -11,8 +11,9 @@ use crate::asn1::composite_public_key::CompositePublicKey;
 
 use crate::asn1::public_key_info::PublicKeyInfo;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, errors::KeyError>;
+use super::asn_util::is_dsa_oid;
+
+type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 
 // Implement clone
 #[derive(Clone)]
@@ -44,7 +45,7 @@ impl PublicKey {
     /// or the key is invalid
     pub fn new(oid: &str, key: &[u8]) -> Result<Self> {
         if !is_valid_oid(&oid.to_string()) {
-            return Err(errors::KeyError::InvalidPublicKey);
+            return Err(errors::QuantCryptError::InvalidPublicKey);
         }
         let is_composite = is_composite_oid(oid);
         Ok(Self {
@@ -72,7 +73,7 @@ impl PublicKey {
             oid: composite_pk.get_oid().to_string(),
             key: composite_pk
                 .to_der()
-                .map_err(|_| errors::KeyError::InvalidPublicKey)?,
+                .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?,
             is_composite: true,
         })
     }
@@ -116,7 +117,7 @@ impl PublicKey {
     pub fn to_pem(&self) -> Result<String> {
         let der = self
             .to_der()
-            .map_err(|_| errors::KeyError::InvalidPublicKey)?;
+            .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         let pem_obj = pem::Pem::new("PUBLIC KEY", der);
         let encode_conf = EncodeConfig::default().set_line_ending(pem::LineEnding::LF);
         Ok(pem::encode_config(&pem_obj, encode_conf))
@@ -132,8 +133,8 @@ impl PublicKey {
     ///
     /// `KeyError::InvalidPublicKey` will be returned if the public key is invalid
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let pk_bs =
-            BitString::from_bytes(&self.key).map_err(|_| errors::KeyError::InvalidPublicKey)?;
+        let pk_bs = BitString::from_bytes(&self.key)
+            .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         let pub_key_info = PublicKeyInfo {
             algorithm: AlgorithmIdentifierWithOid {
                 oid: self.oid.parse().unwrap(),
@@ -143,7 +144,7 @@ impl PublicKey {
         };
         let der = pub_key_info
             .to_der()
-            .map_err(|_| errors::KeyError::InvalidPublicKey)?;
+            .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         Ok(der)
     }
 
@@ -161,10 +162,10 @@ impl PublicKey {
     ///
     /// `KeyError::InvalidPublicKey` will be returned if the public key is invalid
     pub fn from_pem(pem: &str) -> Result<Self> {
-        let pem = pem::parse(pem).map_err(|_| errors::KeyError::InvalidPublicKey)?;
+        let pem = pem::parse(pem).map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         // Header should be "PUBLIC KEY"
         if pem.tag() != "PUBLIC KEY" {
-            return Err(errors::KeyError::InvalidPublicKey);
+            return Err(errors::QuantCryptError::InvalidPublicKey);
         }
 
         let der = pem.contents();
@@ -186,18 +187,18 @@ impl PublicKey {
     /// `KeyError::InvalidPublicKey` will be returned if the public key is invalid
     pub fn from_der(der: &[u8]) -> Result<Self> {
         let pub_key_info =
-            PublicKeyInfo::from_der(der).map_err(|_| errors::KeyError::InvalidPublicKey)?;
+            PublicKeyInfo::from_der(der).map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         let pk_bytes = if let Some(pk_bytes) = pub_key_info.public_key.as_bytes() {
             pk_bytes
         } else {
-            return Err(errors::KeyError::InvalidPublicKey);
+            return Err(errors::QuantCryptError::InvalidPublicKey);
         };
 
         let oid = pub_key_info.algorithm.oid.to_string();
 
         // Check if oid is valid
         if !is_valid_oid(&oid) {
-            return Err(errors::KeyError::InvalidPublicKey);
+            return Err(errors::QuantCryptError::InvalidPublicKey);
         }
 
         let is_composite = is_composite_oid(&oid);
@@ -224,8 +225,13 @@ impl PublicKey {
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<bool> {
+        // Check if this is a DSA key
+        if !is_dsa_oid(&self.oid) {
+            return Err(errors::QuantCryptError::UnsupportedOperation);
+        }
+
         let dsa =
-            DsaManager::new_from_oid(&self.oid).map_err(|_| errors::KeyError::InvalidPrivateKey)?;
+            DsaManager::new_from_oid(&self.oid).map_err(|_| errors::QuantCryptError::InvalidOid)?;
 
         let verified = if let Ok(sig) = dsa.verify(self.get_key(), message, signature) {
             sig
@@ -285,7 +291,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPublicKey
+            errors::QuantCryptError::InvalidPublicKey
         ));
     }
 
@@ -298,7 +304,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPublicKey
+            errors::QuantCryptError::InvalidPublicKey
         ));
     }
 
@@ -311,7 +317,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPublicKey
+            errors::QuantCryptError::InvalidPublicKey
         ));
     }
 
@@ -324,7 +330,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPublicKey
+            errors::QuantCryptError::InvalidPublicKey
         ));
     }
 
@@ -337,7 +343,7 @@ mod test {
         assert!(pk.is_err());
         assert!(matches!(
             pk.err().unwrap(),
-            errors::KeyError::InvalidPublicKey
+            errors::QuantCryptError::InvalidPublicKey
         ));
     }
 }

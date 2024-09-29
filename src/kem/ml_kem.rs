@@ -1,13 +1,13 @@
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
+use crate::QuantCryptError;
 use ml_kem::kem::Decapsulate;
 use ml_kem::kem::Encapsulate;
 use ml_kem::*;
 use rand_chacha::ChaCha20Rng;
 use rand_core::CryptoRngCore;
 use rand_core::SeedableRng;
-use std::error;
 
 macro_rules! key_gen_ml {
     ($rng:expr, $curve:ident) => {{
@@ -26,8 +26,7 @@ macro_rules! encapsulate_ml {
     }};
 }
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 // Get the encapsulated key object for the post quantum key encapsulation mechanism
 ///
@@ -40,7 +39,8 @@ type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 /// The encapsulated key object
 fn get_encapsulation_key_obj<K: KemCore>(pk: Vec<u8>) -> Result<K::EncapsulationKey> {
     // Deserialize the public key
-    let pk = Encoded::<K::EncapsulationKey>::try_from(pk.as_slice())?;
+    let pk = Encoded::<K::EncapsulationKey>::try_from(pk.as_slice())
+        .map_err(|_| QuantCryptError::InvalidPublicKey)?;
     Ok(K::EncapsulationKey::from_bytes(&pk))
 }
 
@@ -55,7 +55,8 @@ fn get_encapsulation_key_obj<K: KemCore>(pk: Vec<u8>) -> Result<K::Encapsulation
 /// The decapsulation key object
 fn get_decapsulation_key_obj<K: KemCore>(sk: &[u8]) -> Result<K::DecapsulationKey> {
     // Deserialize the public key
-    let sk = Encoded::<K::DecapsulationKey>::try_from(sk)?;
+    let sk = Encoded::<K::DecapsulationKey>::try_from(sk)
+        .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
     Ok(K::DecapsulationKey::from_bytes(&sk))
 }
 
@@ -70,9 +71,11 @@ fn get_decapsulation_key_obj<K: KemCore>(sk: &[u8]) -> Result<K::DecapsulationKe
 ///
 /// The shared secret (ss)
 fn decapsulate<K: KemCore>(sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
-    let c = Ciphertext::<K>::try_from(ct)?;
+    let c = Ciphertext::<K>::try_from(ct).map_err(|_| QuantCryptError::InvalidCiphertext)?;
     let dk = get_decapsulation_key_obj::<K>(sk)?;
-    let session_key = dk.decapsulate(&c).unwrap();
+    let session_key = dk
+        .decapsulate(&c)
+        .map_err(|_| QuantCryptError::DecapFailed)?;
     Ok(session_key.as_slice().to_vec())
 }
 
@@ -91,13 +94,9 @@ impl Kem for MlKemManager {
     /// # Returns
     ///
     /// A new KEM instance
-    ///
-    /// # Panics
-    ///
-    /// If the KEM type is not implemented (wrong type is passed)
-    fn new(kem_type: KemType) -> Self {
+    fn new(kem_type: KemType) -> Result<Self> {
         let kem_info = KemInfo::new(kem_type);
-        Self { kem_info }
+        Ok(Self { kem_info })
     }
 
     /// Generate a keypair
@@ -172,9 +171,7 @@ impl Kem for MlKemManager {
             KemType::MlKem512 => decapsulate::<MlKem512>(sk, ct),
             KemType::MlKem768 => decapsulate::<MlKem768>(sk, ct),
             KemType::MlKem1024 => decapsulate::<MlKem1024>(sk, ct),
-            _ => {
-                panic!("Not implemented");
-            }
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 
@@ -199,19 +196,19 @@ mod tests {
 
     #[test]
     fn test_ml_kem_512() {
-        let mut kem = MlKemManager::new(KemType::MlKem512);
+        let kem = MlKemManager::new(KemType::MlKem512);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ml_kem_768() {
-        let mut kem = MlKemManager::new(KemType::MlKem768);
+        let kem = MlKemManager::new(KemType::MlKem768);
         test_kem!(kem);
     }
 
     #[test]
     fn test_ml_kem_1024() {
-        let mut kem = MlKemManager::new(KemType::MlKem1024);
+        let kem = MlKemManager::new(KemType::MlKem1024);
         test_kem!(kem);
     }
 }

@@ -1,9 +1,9 @@
 use crate::PublicKey;
 use der::{Decode, DecodePem, Encode, EncodePem};
 
-use crate::errors::CertificateError;
+use crate::errors::QuantCryptError;
 
-type Result<T> = std::result::Result<T, CertificateError>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// A certificate
 ///
@@ -38,15 +38,11 @@ impl Certificate {
     /// # Returns
     ///
     /// The DER format bytes
-    ///
-    /// # Errors
-    ///
-    /// `CertificateError::InvalidCertificate` will be returned if the certificate is invalid
     pub fn to_der(&self) -> Result<Vec<u8>> {
         let result = self
             .cert
             .to_der()
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(result)
     }
 
@@ -55,15 +51,11 @@ impl Certificate {
     /// # Returns
     ///
     /// The PEM format certificate as a string
-    ///
-    /// # Errors
-    ///
-    /// `CertificateError::InvalidCertificate` will be returned if the certificate is invalid
     pub fn to_pem(&self) -> Result<String> {
         let result = self
             .cert
             .to_pem(pkcs8::LineEnding::CR)
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(result)
     }
 
@@ -82,7 +74,7 @@ impl Certificate {
     /// `CertificateError::InvalidCertificate` will be returned if the certificate is invalid
     pub fn from_der(der: &[u8]) -> Result<Certificate> {
         let cert = x509_cert::Certificate::from_der(der)
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(Certificate::new(cert))
     }
 
@@ -101,7 +93,7 @@ impl Certificate {
     /// `CertificateError::InvalidCertificate` will be returned if the certificate is invalid
     pub fn from_pem(pem: &str) -> Result<Certificate> {
         let cert = x509_cert::Certificate::from_pem(pem)
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(Certificate::new(cert))
     }
 
@@ -114,27 +106,56 @@ impl Certificate {
         self.cert.tbs_certificate.subject.to_string()
     }
 
+    /// Verify that the certificate is self-signed
+    ///
+    /// # Returns
+    ///
+    /// True if the certificate is self-signed, false otherwise
     pub fn verify_self_signed(&self) -> Result<bool> {
         let msg = self
             .cert
             .tbs_certificate
             .to_der()
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
 
         let sig = self.cert.signature.raw_bytes();
 
+        let pk = self.get_public_key()?;
+
+        let result = if let Ok(result) = pk.verify(&msg, sig) {
+            result
+        } else {
+            false
+        };
+
+        Ok(result)
+    }
+
+    pub fn get_public_key(&self) -> Result<PublicKey> {
         let pk_der = self
             .cert
             .tbs_certificate
             .subject_public_key_info
             .to_der()
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
 
-        let pk = PublicKey::from_der(&pk_der).map_err(|_| CertificateError::InvalidCertificate)?;
+        let pk = PublicKey::from_der(&pk_der).map_err(|_| QuantCryptError::InvalidCertificate)?;
+
+        Ok(pk)
+    }
+
+    pub fn verify_child(&self, child: &Certificate) -> Result<bool> {
+        let msg = child
+            .cert
+            .tbs_certificate
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
+        let sig = child.cert.signature.raw_bytes();
+        let pk = self.get_public_key()?;
 
         let result = pk
             .verify(&msg, sig)
-            .map_err(|_| CertificateError::InvalidCertificate)?;
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
 
         Ok(result)
     }

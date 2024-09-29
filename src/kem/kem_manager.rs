@@ -7,11 +7,10 @@ use crate::kem::composite_kem::CompositeKemManager;
 use crate::kem::ec_kem::EcKemManager;
 use crate::kem::ml_kem::MlKemManager;
 use crate::kem::rsa_kem::RsaKemManager;
-
-use std::error;
+use crate::QuantCryptError;
 
 // Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 const ML_KEM_TYPES: [KemType; 3] = [KemType::MlKem512, KemType::MlKem768, KemType::MlKem1024];
 
@@ -64,21 +63,23 @@ impl Kem for KemManager {
     /// # Returns
     ///
     /// A new KEM manager
-    fn new(kem_type: KemType) -> Self
+    fn new(kem_type: KemType) -> Result<Self>
     where
         Self: Sized,
     {
-        match kem_type {
-            _ if ML_KEM_TYPES.contains(&kem_type) => KemManager::Ml(MlKemManager::new(kem_type)),
-            _ if RSA_KEM_TYPES.contains(&kem_type) => KemManager::Rsa(RsaKemManager::new(kem_type)),
-            _ if EC_KEM_TYPES.contains(&kem_type) => KemManager::Ec(EcKemManager::new(kem_type)),
+        Ok(match kem_type {
+            _ if ML_KEM_TYPES.contains(&kem_type) => KemManager::Ml(MlKemManager::new(kem_type)?),
+            _ if RSA_KEM_TYPES.contains(&kem_type) => {
+                KemManager::Rsa(RsaKemManager::new(kem_type)?)
+            }
+            _ if EC_KEM_TYPES.contains(&kem_type) => KemManager::Ec(EcKemManager::new(kem_type)?),
             _ if COMPOSITE_KEM_TYPES.contains(&kem_type) => {
-                KemManager::Composite(CompositeKemManager::new(kem_type))
+                KemManager::Composite(CompositeKemManager::new(kem_type)?)
             }
             _ => {
                 panic!("Not implemented");
             }
-        }
+        })
     }
 
     //// Get the KEM info for the KEM manager. This represents
@@ -182,7 +183,7 @@ mod tests {
 
         // This is just to test that the factory can create all KEM types
         for kem_type in all_kems {
-            let kem = KemManager::new(kem_type.clone());
+            let kem = KemManager::new(kem_type.clone()).unwrap();
             assert_eq!(kem.get_kem_info().kem_type, kem_type);
         }
     }

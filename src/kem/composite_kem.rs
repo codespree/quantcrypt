@@ -7,14 +7,12 @@ use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::kem_manager::KemManager;
+use crate::QuantCryptError;
 use der::{Decode, Encode};
-use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
+use pkcs8::{AlgorithmIdentifierRef, ObjectIdentifier, PrivateKeyInfo};
 use rand_core::CryptoRngCore;
 
-use std::error;
-
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// A KEM manager for the composite KEM method
 pub struct CompositeKemManager {
@@ -64,9 +62,7 @@ impl CompositeKemManager {
 
         Ok(ss)
     }
-}
 
-impl CompositeKemManager {
     /// Generate a composite KEM keypair from constituent keys
     ///
     /// # Arguments
@@ -91,10 +87,16 @@ impl CompositeKemManager {
         let c_pk = CompositePublicKey::new(&self.kem_info.oid, pq_pk, t_pk);
         let pk = c_pk.to_der()?;
 
+        let oid: ObjectIdentifier = self
+            .kem_info
+            .oid
+            .parse()
+            .map_err(|_| QuantCryptError::InvalidOid)?;
+
         // Create the OneAsymmetricKey objects for the tradition secret key
         let t_sk_pkcs8 = PrivateKeyInfo {
             algorithm: AlgorithmIdentifierRef {
-                oid: self.trad_kem.get_kem_info().oid.parse().unwrap(),
+                oid,
                 parameters: None,
             },
             private_key: t_sk,
@@ -102,10 +104,17 @@ impl CompositeKemManager {
             public_key: Some(t_pk),
         };
 
+        let oid: ObjectIdentifier = self
+            .pq_kem
+            .get_kem_info()
+            .oid
+            .parse()
+            .map_err(|_| QuantCryptError::InvalidOid)?;
+
         // Create the OneAsymmetricKey objects for the post-quantum secret key
         let pq_sk_pkcs8 = PrivateKeyInfo {
             algorithm: AlgorithmIdentifierRef {
-                oid: self.pq_kem.get_kem_info().oid.parse().unwrap(),
+                oid,
                 parameters: None,
             },
             private_key: pq_sk,
@@ -130,71 +139,68 @@ impl Kem for CompositeKemManager {
     /// # Returns
     ///
     /// A new KEM instance
-    ///
-    /// # Panics
-    ///
-    /// If the KEM type is not supported (should be a composite KEM)
-    fn new(kem_type: KemType) -> Self {
+    fn new(kem_type: KemType) -> Result<Self> {
         let kem_info = KemInfo::new(kem_type.clone());
-        match kem_type {
+        let result = match kem_type {
             KemType::MlKem768Rsa2048 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa3072 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP3072)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP3072)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768Rsa4096 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP4096)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP4096)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::HkdfSha256),
             },
             KemType::MlKem768X25519 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::X25519)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::X25519)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::Sha3_256),
             },
             KemType::MlKem768P384 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::P384)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::P384)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP256r1)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem768)),
+                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP256r1)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
                 kdf: Kdf::new(KdfType::HkdfSha384),
             },
             KemType::MlKem1024P384 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::P384)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::P384)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP384r1)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP384r1)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             KemType::MlKem1024X448 => Self {
                 kem_info,
-                trad_kem: Box::new(KemManager::new(KemType::X448)),
-                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)),
+                trad_kem: Box::new(KemManager::new(KemType::X448)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
                 kdf: Kdf::new(KdfType::Sha3_512),
             },
             _ => {
-                panic!("Not implemented");
+                return Err(QuantCryptError::NotImplemented);
             }
-        }
+        };
+        Ok(result)
     }
 
     /// Generate a composite KEM keypair using the default RNGs of the
@@ -272,7 +278,7 @@ impl Kem for CompositeKemManager {
 
         // Create the composite ciphertext
         let ct = CompositeCiphertextValue::new(&pq_ct, &t_ct);
-        let ct = ct.to_der()?;
+        let ct = ct.to_der().map_err(|_| QuantCryptError::EncapFailed)?;
 
         // Get the shared secret using the combiner
         let ss = self.combiner(&pq_ss, &t_ss, &t_ct, &c_pk.get_trad_pk())?;
@@ -292,30 +298,30 @@ impl Kem for CompositeKemManager {
     /// The shared secret after applying the combiner function
     fn decap(&self, sk: &[u8], ct: &[u8]) -> Result<Vec<u8>> {
         // Deserialize the composite secret key
-        let c_sk = CompositePrivateKey::from_der(&self.kem_info.oid, sk).unwrap();
+        let c_sk = CompositePrivateKey::from_der(&self.kem_info.oid, sk)?;
 
         // Deserialize the composite ciphertext
-        let c_ct = CompositeCiphertextValue::from_der(ct).unwrap();
+        let c_ct =
+            CompositeCiphertextValue::from_der(ct).map_err(|_| QuantCryptError::DecapFailed)?;
 
         // Decapsulate the ciphertext for the traditional KEM
         let t_ss = self
             .trad_kem
-            .decap(c_sk.get_trad_sk()?.private_key, &c_ct.get_trad_ct())
-            .unwrap();
+            .decap(c_sk.get_trad_sk()?.private_key, &c_ct.get_trad_ct())?;
 
         // Decapsulate the ciphertext for the post-quantum KEM
         let pq_ss = self
             .pq_kem
-            .decap(c_sk.get_pq_sk()?.private_key, &c_ct.get_pq_ct())
-            .unwrap();
+            .decap(c_sk.get_pq_sk()?.private_key, &c_ct.get_pq_ct())?;
 
         // Get the trad PK
-        let t_pk = c_sk.get_trad_sk()?.public_key.unwrap();
+        let t_pk = c_sk
+            .get_trad_sk()?
+            .public_key
+            .ok_or(QuantCryptError::DecapFailed)?;
 
         // Get the shared secret using the combiner
-        let ss = self
-            .combiner(&pq_ss, &t_ss, &c_ct.get_trad_ct(), t_pk)
-            .unwrap();
+        let ss = self.combiner(&pq_ss, &t_ss, &c_ct.get_trad_ct(), t_pk)?;
 
         Ok(ss)
     }
@@ -339,55 +345,55 @@ mod tests {
 
     #[test]
     fn test_mlkem_768_rsa2048() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa2048);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768Rsa2048);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_768_rsa3072() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa3072);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768Rsa3072);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_768_rsa4096() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768Rsa4096);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768Rsa4096);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_768_x25519() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768X25519);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768X25519);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_768_p384() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768P384);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768P384);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_768_brainpool_p256r1() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem768BrainpoolP256r1);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem768BrainpoolP256r1);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_1024_p384() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem1024P384);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem1024P384);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_1024_brainpool_p384r1() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem1024BrainpoolP384r1);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem1024BrainpoolP384r1);
+        test_kem!(kem);
     }
 
     #[test]
     fn test_mlkem_1024_x448() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem1024X448);
-        test_kem!(&mut kem);
+        let kem = CompositeKemManager::new(KemType::MlKem1024X448);
+        test_kem!(kem);
     }
 }

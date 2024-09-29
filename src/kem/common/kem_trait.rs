@@ -2,11 +2,10 @@ use rand_core::CryptoRngCore;
 
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_type::KemType;
-
-use std::error;
+use crate::QuantCryptError;
 
 // Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// Key Encapsulation Mechanism (KEM) trait
 pub trait Kem {
@@ -15,8 +14,7 @@ pub trait Kem {
     /// # Arguments
     ///
     /// * `kem_type` - The type of KEM to create
-    /// * `seed` - A 32-byte seed
-    fn new(kem_type: KemType) -> Self
+    fn new(kem_type: KemType) -> Result<Self>
     where
         Self: Sized;
 

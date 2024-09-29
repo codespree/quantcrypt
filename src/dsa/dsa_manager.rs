@@ -1,5 +1,3 @@
-use std::error;
-
 use rand_core::CryptoRngCore;
 
 use crate::dsa::common::dsa_trait::Dsa;
@@ -8,9 +6,9 @@ use crate::dsa::composite_dsa::CompositeDsaManager;
 use crate::dsa::ec_dsa::EcDsaManager;
 use crate::dsa::ml_dsa::MlDsaManager;
 use crate::dsa::rsa_dsa::RsaDsaManager;
+use crate::QuantCryptError;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 const ML_DSA_TYPES: [DsaType; 3] = [DsaType::MlDsa44, DsaType::MlDsa65, DsaType::MlDsa87];
 
@@ -63,21 +61,24 @@ pub enum DsaManager {
 }
 
 impl Dsa for DsaManager {
-    fn new(dsa_type: DsaType) -> Self
+    fn new(dsa_type: DsaType) -> Result<Self>
     where
         Self: Sized,
     {
-        match dsa_type {
-            _ if ML_DSA_TYPES.contains(&dsa_type) => DsaManager::Ml(MlDsaManager::new(dsa_type)),
-            _ if RSA_DSA_TYPES.contains(&dsa_type) => DsaManager::Rsa(RsaDsaManager::new(dsa_type)),
-            _ if EC_DSA_TYPES.contains(&dsa_type) => DsaManager::Ec(EcDsaManager::new(dsa_type)),
+        let result = match dsa_type {
+            _ if ML_DSA_TYPES.contains(&dsa_type) => DsaManager::Ml(MlDsaManager::new(dsa_type)?),
+            _ if RSA_DSA_TYPES.contains(&dsa_type) => {
+                DsaManager::Rsa(RsaDsaManager::new(dsa_type)?)
+            }
+            _ if EC_DSA_TYPES.contains(&dsa_type) => DsaManager::Ec(EcDsaManager::new(dsa_type)?),
             _ if COMPOSITE_DSA_TYPES.contains(&dsa_type) => {
-                DsaManager::Composite(CompositeDsaManager::new(dsa_type))
+                DsaManager::Composite(CompositeDsaManager::new(dsa_type)?)
             }
             _ => {
                 panic!("Not implemented");
             }
-        }
+        };
+        Ok(result)
     }
 
     fn key_gen(&mut self) -> Result<(Vec<u8>, Vec<u8>)> {
@@ -141,7 +142,7 @@ mod tests {
 
         // This is just to test that the manager can create all DSA types
         for dsa_type in all_dsas {
-            let dsa = DsaManager::new(dsa_type.clone());
+            let dsa = DsaManager::new(dsa_type.clone()).unwrap();
             assert_eq!(dsa.get_dsa_info().dsa_type, dsa_type);
         }
     }

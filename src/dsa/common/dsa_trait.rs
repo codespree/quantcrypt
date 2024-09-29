@@ -1,14 +1,11 @@
 use rand_core::CryptoRngCore;
 
-use crate::dsa::common::dsa_type::DsaType;
-
-use std::error;
+use crate::{dsa::common::dsa_type::DsaType, QuantCryptError};
 
 use super::dsa_info::DsaInfo;
 use crate::dsa::common::config::oids::Oid;
 
-// Change the alias to use `Box<dyn error::Error>`.
-type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 pub trait Dsa {
     /// Create a new DSA instance
@@ -17,7 +14,7 @@ pub trait Dsa {
     ///
     /// * `kem_type` - The type of KEM to create
     /// * `seed` - A 32-byte seed
-    fn new(dsa_type: DsaType) -> Self
+    fn new(dsa_type: DsaType) -> Result<Self>
     where
         Self: Sized;
 
@@ -28,10 +25,11 @@ pub trait Dsa {
         let all_dsa_types = DsaType::all();
         for dsa_type in all_dsa_types {
             if dsa_type.get_oid() == oid {
-                return Ok(Self::new(dsa_type));
+                let dsa = Self::new(dsa_type)?;
+                return Ok(dsa);
             }
         }
-        Err("Invalid DSA OID".into())
+        Err(QuantCryptError::InvalidOid)
     }
 
     /// Generate a keypair using the default RNG of OpenSSL
