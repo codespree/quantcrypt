@@ -190,4 +190,18 @@ mod tests {
         let cert = Certificate::from_pem(&pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
     }
+
+    #[test]
+    fn test_dsa_kem() {
+        let pem_bytes = include_bytes!("../../test/data/2.16.840.1.101.3.4.3.17_ta.pem");
+        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+        let cert = Certificate::from_pem(&pem).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
+
+        let child_pem_bytes = include_bytes!("../../test/data/2.16.840.1.101.3.4.4.1_ee.pem");
+        let child_pem = std::str::from_utf8(child_pem_bytes).unwrap().trim();
+        let child_cert = Certificate::from_pem(&child_pem).unwrap();
+
+        assert!(cert.verify_child(&child_cert).unwrap());
+    }
 }
