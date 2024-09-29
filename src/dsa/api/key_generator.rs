@@ -7,6 +7,21 @@ use crate::errors;
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, errors::KeyGenError>;
 
+/// A key generator for DSA keys
+///
+/// # Example
+/// ```
+/// use quantcrypt::DsaKeyGenerator;
+/// use quantcrypt::DsaAlgorithm;
+///
+/// let mut key_generator = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
+/// let (pk, sk) = key_generator.generate().unwrap();
+///
+/// let msg = b"Hello, world!";
+///
+/// let sig = sk.sign(msg).unwrap();
+/// assert!(pk.verify(msg, &sig).unwrap());
+/// ```
 pub struct DsaKeyGenerator {
     /// The algorithm to use for key generation
     algorithm: DsaAlgorithm,

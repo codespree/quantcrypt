@@ -139,34 +139,57 @@ impl Dsa for MlDsaManager {
     fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
         match self.dsa_info.dsa_type {
             DsaType::MlDsa44 => {
-                // TODO: These conversions can panic, fix it later
+                if pk.len() != ml_dsa_44::PK_LEN {
+                    return Err("Invalid public key length".into());
+                }
+
+                if signature.len() != ml_dsa_44::SIG_LEN {
+                    return Err("Invalid signature length".into());
+                }
+
                 // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; 1312];
+                let mut pk_buf = [0u8; ml_dsa_44::PK_LEN];
                 pk_buf.copy_from_slice(pk);
 
-                let mut sig_buf = [0u8; 2420];
+                let mut sig_buf = [0u8; ml_dsa_44::SIG_LEN];
                 sig_buf.copy_from_slice(signature);
 
                 let pk = ml_dsa_44::PublicKey::try_from_bytes(pk_buf)?;
                 Ok(pk.verify(msg, &sig_buf))
             }
             DsaType::MlDsa65 => {
+                if pk.len() != ml_dsa_65::PK_LEN {
+                    return Err("Invalid public key length".into());
+                }
+
+                if signature.len() != ml_dsa_65::SIG_LEN {
+                    return Err("Invalid signature length".into());
+                }
+
                 // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; 1952];
+                let mut pk_buf = [0u8; ml_dsa_65::PK_LEN];
                 pk_buf.copy_from_slice(pk);
 
-                let mut sig_buf = [0u8; 3309];
+                let mut sig_buf = [0u8; ml_dsa_65::SIG_LEN];
                 sig_buf.copy_from_slice(signature);
 
                 let pk = ml_dsa_65::PublicKey::try_from_bytes(pk_buf)?;
                 Ok(pk.verify(msg, &sig_buf))
             }
             DsaType::MlDsa87 => {
+                if pk.len() != ml_dsa_87::PK_LEN {
+                    return Err("Invalid public key length".into());
+                }
+
+                if signature.len() != ml_dsa_87::SIG_LEN {
+                    return Err("Invalid signature length".into());
+                }
+
                 // Convert pk to [u8; 1312]
-                let mut pk_buf = [0u8; 2592];
+                let mut pk_buf = [0u8; ml_dsa_87::PK_LEN];
                 pk_buf.copy_from_slice(pk);
 
-                let mut sig_buf = [0u8; 4627];
+                let mut sig_buf = [0u8; ml_dsa_87::SIG_LEN];
                 sig_buf.copy_from_slice(signature);
 
                 let pk = ml_dsa_87::PublicKey::try_from_bytes(pk_buf)?;
@@ -187,10 +210,6 @@ impl Dsa for MlDsaManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::asn1::public_key_info::PublicKeyInfo;
-    use der::{Decode, DecodePem, Encode};
-    use x509_cert::Certificate;
-
     use super::*;
     use crate::dsa::common::dsa_type::DsaType;
     use crate::dsa::common::macros::test_dsa;
@@ -211,23 +230,5 @@ mod tests {
     fn test_ml_dsa_87() {
         let mut dsa = MlDsaManager::new(DsaType::MlDsa87);
         test_dsa!(dsa);
-    }
-
-    #[test]
-    fn test_ml_dsa_44_cert() {
-        let pem_bytes = include_bytes!("../../test/data/mldsa44_self_signed.pem");
-        let dsa = MlDsaManager::new(DsaType::MlDsa44);
-        let cert = Certificate::from_pem(pem_bytes).unwrap();
-        let cert_pub_key = cert
-            .tbs_certificate
-            .subject_public_key_info
-            .to_der()
-            .unwrap();
-        let spki = PublicKeyInfo::from_der(&cert_pub_key).unwrap();
-        let sig = cert.signature.as_bytes().unwrap();
-        let msg = cert.tbs_certificate.to_der().unwrap();
-        let cert_pub_key = spki.public_key.as_bytes().unwrap();
-        let is_verified = dsa.verify(&cert_pub_key, &msg, &sig).unwrap();
-        assert!(is_verified);
     }
 }

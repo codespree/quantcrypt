@@ -11,7 +11,7 @@ keywords = ["crypto", "pqc", "post quantum", "ML-KEM", "FIPS 203"]
 
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
-name = "uniffi_quantcrypt"
+name = "quantcrypt"
 
 [dependencies]
 ml-kem = "0.2.1"
