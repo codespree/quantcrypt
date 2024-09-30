@@ -50,7 +50,7 @@ impl KemKeyGenerator {
         let oid = kem_type.get_oid();
         let pk = PublicKey::new(&oid, &pk)
             .map_err(|_| errors::QuantCryptError::KeyPairGenerationFailed)?;
-        let sk = PrivateKey::new(&oid, &sk)
+        let sk = PrivateKey::new(&oid, &sk, Some(pk.clone()))
             .map_err(|_| errors::QuantCryptError::KeyPairGenerationFailed)?;
         Ok((pk, sk))
     }

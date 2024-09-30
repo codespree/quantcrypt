@@ -123,7 +123,19 @@ impl PublicKey {
         Ok(pem::encode_config(&pem_obj, encode_conf))
     }
 
-    /// Convert the public key to a DER-encoded byte array
+    /// Get's the raw public key as a BitString such that it can be used in a OneAsymmetricKey structure
+    ///
+    /// # Returns
+    ///
+    /// The public key as a BitString
+    pub fn to_bitstring(&self) -> Result<BitString> {
+        let pk_bs = BitString::from_bytes(&self.key)
+            .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
+        Ok(pk_bs)
+    }
+
+    /// Convert the public key to a DER-encoded byte array. The raw public key is wrapped in a
+    /// SubjectPublicKeyInfo structure.
     ///
     /// # Returns
     ///
@@ -133,8 +145,7 @@ impl PublicKey {
     ///
     /// `KeyError::InvalidPublicKey` will be returned if the public key is invalid
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let pk_bs = BitString::from_bytes(&self.key)
-            .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
+        let pk_bs = self.to_bitstring()?;
         let pub_key_info = PublicKeyInfo {
             algorithm: AlgorithmIdentifierWithOid {
                 oid: self.oid.parse().unwrap(),
@@ -203,6 +214,27 @@ impl PublicKey {
 
         let is_composite = is_composite_oid(&oid);
 
+        Ok(Self {
+            oid,
+            key: pk_bytes.to_vec(),
+            is_composite,
+        })
+    }
+
+    /// Create a new public key from a BitString
+    ///
+    /// # Arguments
+    ///
+    /// * `oid` - The OID for the DSA / KEM
+    /// * `pk_bs` - The public key as a BitString (usually obtained from a OneAsymmetricKey structure)
+    pub fn from_bitstring(oid: &str, pk_bs: &BitString) -> Result<Self> {
+        let oid = oid.to_string();
+        let pk_bytes = if let Some(pk_bytes) = pk_bs.as_bytes() {
+            pk_bytes
+        } else {
+            return Err(errors::QuantCryptError::InvalidPublicKey);
+        };
+        let is_composite = is_composite_oid(&oid);
         Ok(Self {
             oid,
             key: pk_bytes.to_vec(),

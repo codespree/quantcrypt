@@ -27,6 +27,7 @@ der_derive = "0.7.3"
 sha3 = "0.10.8"
 hkdf = "0.12.4"
 hex = "0.4.3"
+# TODO: Upgrade to v0.4.0 after clarifying on ctx parameters in IETF LAMPS group.
 fips204 = "0.2.2"
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
 ed448-rust = "0.1.1"
@@ -38,4 +39,5 @@ strum_macros = "0.26.4"
 zeroize = "1.8.1"
 chrono = "0.4.38"
 thiserror = "1.0.64"
+no-panic = "0.1.30"
 

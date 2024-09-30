@@ -21,7 +21,7 @@ impl Oid for DsaType {
             DsaType::Rsa2048PssSHA256 | DsaType::Rsa3072PssSHA512 => "1.2.840.113549.1.1.10",
             DsaType::Rsa2048Pkcs15SHA256 => "1.2.840.113549.1.1.11",
             DsaType::Rsa3072Pkcs15SHA512 => "1.2.840.113549.1.1.13",
-            DsaType::EcdsaBrainpoolP256r1SHA256 | DsaType::EcdsaP256SHA256 => "1.2.840.10045.4.2",
+            DsaType::EcdsaBrainpoolP256r1SHA256 | DsaType::EcdsaP256SHA256 => "1.2.840.10045.4.3.2",
             DsaType::EcdsaBrainpoolP256r1SHA512
             | DsaType::EcdsaBrainpoolP384r1SHA512
             | DsaType::EcdsaP256SHA512
