@@ -27,7 +27,7 @@ macro_rules! sign_ml {
 
         // Try signing the message
         let sig = sk
-            .try_sign($msg)
+            .try_sign($msg, &[])
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
@@ -55,7 +55,7 @@ macro_rules! verify_ml {
 
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
-        Ok(pk.verify($msg, &sig_buf))
+        Ok(pk.verify($msg, &sig_buf, &[]))
     }};
 }
 

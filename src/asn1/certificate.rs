@@ -10,7 +10,7 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 /// # Example
 /// ```
 /// use quantcrypt::Certificate;
-/// let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_self_signed.pem");
+/// let pem_bytes = include_bytes!("../../test/data/2.16.840.1.114027.80.8.1.4_ta.pem");
 /// let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
 /// let cert = Certificate::from_pem(pem).unwrap();
 /// assert!(cert.verify_self_signed().unwrap());
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_self_signed.pem");
+        let pem_bytes = include_bytes!("../../test/data/2.16.840.1.114027.80.8.1.4_ta.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
@@ -175,8 +175,7 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
-        let pem_bytes =
-            include_bytes!("../../test/data/mldsa44_rsa2048_pss_sha256_self_signed.pem");
+        let pem_bytes = include_bytes!("../../test/data/2.16.840.1.114027.80.8.1.1_ta.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(&pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
@@ -184,8 +183,7 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-        let pem_bytes =
-            include_bytes!("../../test/data/mldsa44_rsa2048_pkcs15_sha256_self_signed.pem");
+        let pem_bytes = include_bytes!("../../test/data/2.16.840.1.114027.80.8.1.2_ta.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(&pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
