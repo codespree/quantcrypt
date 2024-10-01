@@ -5,6 +5,7 @@ use crate::errors;
 use der::{asn1::BitString, Document};
 use der::{Decode, Encode};
 use pem::EncodeConfig;
+use pkcs8::ObjectIdentifier;
 use pkcs8::{spki::AlgorithmIdentifierWithOid, EncodePublicKey};
 
 use crate::asn1::composite_public_key::CompositePublicKey;
@@ -12,8 +13,9 @@ use crate::asn1::composite_public_key::CompositePublicKey;
 use crate::asn1::public_key_info::PublicKeyInfo;
 
 use super::asn_util::is_dsa_oid;
+use errors::QuantCryptError;
 
-type Result<T> = std::result::Result<T, errors::QuantCryptError>;
+type Result<T> = std::result::Result<T, QuantCryptError>;
 
 // Implement clone
 #[derive(Clone)]
@@ -146,9 +148,15 @@ impl PublicKey {
     /// `KeyError::InvalidPublicKey` will be returned if the public key is invalid
     pub fn to_der(&self) -> Result<Vec<u8>> {
         let pk_bs = self.to_bitstring()?;
+
+        let oid: ObjectIdentifier = self
+            .oid
+            .parse()
+            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
+
         let pub_key_info = PublicKeyInfo {
             algorithm: AlgorithmIdentifierWithOid {
-                oid: self.oid.parse().unwrap(),
+                oid,
                 parameters: None,
             },
             public_key: pk_bs,

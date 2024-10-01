@@ -6,3 +6,4 @@ pub mod composite_public_key;
 pub mod private_key;
 pub mod public_key;
 pub mod public_key_info;
+pub mod signature;

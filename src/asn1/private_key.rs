@@ -1,12 +1,16 @@
 use der::{Decode, Encode};
 use pem::EncodeConfig;
+use pkcs8::spki::{self, AlgorithmIdentifierOwned, DynSignatureAlgorithmIdentifier};
+use pkcs8::ObjectIdentifier;
 use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
 
 use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
+use crate::asn1::signature::DsaSignature;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
 use crate::{PublicKey, QuantCryptError};
+use signature::{Keypair, Signer};
 
 use crate::asn1::asn_util::is_dsa_oid;
 
@@ -21,6 +25,35 @@ pub struct PrivateKey {
     is_composite: bool,
     /// The public key.
     public_key: Option<PublicKey>,
+}
+
+impl Signer<DsaSignature> for PrivateKey {
+    fn try_sign(&self, tbs: &[u8]) -> core::result::Result<DsaSignature, signature::Error> {
+        let sm = self.sign(tbs).map_err(|_| signature::Error::new())?;
+        Ok(DsaSignature(sm))
+    }
+}
+
+impl Keypair for PrivateKey {
+    type VerifyingKey = PublicKey;
+
+    fn verifying_key(&self) -> <Self as Keypair>::VerifyingKey {
+        // TODO: This can panic if public key is not set
+        self.public_key.clone().unwrap()
+    }
+}
+
+impl DynSignatureAlgorithmIdentifier for PrivateKey {
+    fn signature_algorithm_identifier(
+        &self,
+    ) -> core::result::Result<AlgorithmIdentifier<der::Any>, spki::Error> {
+        let oid: ObjectIdentifier = self.oid.parse().map_err(|_| spki::Error::KeyMalformed)?;
+        let spki_algorithm = AlgorithmIdentifierOwned {
+            oid,
+            parameters: None,
+        };
+        Ok(spki_algorithm)
+    }
 }
 
 impl PrivateKey {
@@ -126,9 +159,14 @@ impl PrivateKey {
     pub fn to_der(&self) -> Result<Vec<u8>> {
         let pub_key = self.public_key.as_ref().map(|pk| pk.get_key());
 
+        let oid: ObjectIdentifier = self
+            .oid
+            .parse()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+
         let priv_key_info = PrivateKeyInfo {
             algorithm: AlgorithmIdentifier {
-                oid: self.oid.parse().unwrap(),
+                oid,
                 parameters: None,
             },
             private_key: &self.private_key,

@@ -18,8 +18,6 @@ pub enum QuantCryptError {
     InvalidSignature,
     #[error("Key pair generation failed")]
     KeyPairGenerationFailed,
-    #[error("Missing serial number")]
-    MissingSerialNumber,
     #[error("Missing not_after")]
     MissingNotAfter,
     #[error("Missing subject")]
@@ -36,6 +34,8 @@ pub enum QuantCryptError {
     BadIssuersPublicKey,
     #[error("Bad serial number key")]
     BadSerialNumber,
+    #[error("Bad extension")]
+    BadExtension,
     #[error("Invalid not_before. Please use an ISO 8601 date string and ensure that not_before is before not_after")]
     InvalidNotBefore,
     #[error("Invalid not after. Please use an ISO 8601 date string and ensure that not_after is after not_before. Also, ensure that not_after is not in the past")]
