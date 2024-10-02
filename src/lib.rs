@@ -4,6 +4,7 @@ mod errors;
 mod kdf;
 mod kem;
 mod utils;
+mod wrap;
 
 pub use errors::QuantCryptError;
 
@@ -25,3 +26,7 @@ pub use kem::api::key_generator::KemKeyGenerator;
 // KDF
 pub use kdf::api::KdfManager;
 pub use kdf::api::KdfType;
+
+// Wrap
+pub use wrap::api::WrapManager;
+pub use wrap::api::WrapType;

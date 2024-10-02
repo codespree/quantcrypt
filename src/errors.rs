@@ -2,6 +2,10 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum QuantCryptError {
+    #[error("Key wrap failed")]
+    KeyWrapFailed,
+    #[error("Key unwrap failed")]
+    KeyUnwrapFailed,
     #[error("Invalid OID")]
     InvalidOid,
     #[error("Invalid public key")]
