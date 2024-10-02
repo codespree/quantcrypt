@@ -9,7 +9,6 @@ use crate::kem::ml_kem::MlKemManager;
 use crate::kem::rsa_kem::RsaKemManager;
 use crate::QuantCryptError;
 
-// Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 const ML_KEM_TYPES: [KemType; 3] = [KemType::MlKem512, KemType::MlKem768, KemType::MlKem1024];

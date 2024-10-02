@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum QuantCryptError {
     #[error("Invalid OID")]
     InvalidOid,
@@ -30,6 +30,8 @@ pub enum QuantCryptError {
     BadPublicKey,
     #[error("Bad subject")]
     BadSubject,
+    #[error("Invalid HKDF length")]
+    InvalidHkdfLength,
     #[error("Bad issuers public key")]
     BadIssuersPublicKey,
     #[error("Bad serial number key")]

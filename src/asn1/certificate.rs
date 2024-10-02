@@ -1,5 +1,6 @@
 use crate::PublicKey;
 use der::{Decode, DecodePem, Encode, EncodePem};
+use x509_cert::name::RdnSequence;
 
 use crate::errors::QuantCryptError;
 
@@ -102,8 +103,8 @@ impl Certificate {
     /// # Returns
     ///
     /// The subject name
-    pub fn get_subject_name(&self) -> String {
-        self.cert.tbs_certificate.subject.to_string()
+    pub fn get_subject(&self) -> RdnSequence {
+        self.cert.tbs_certificate.subject.clone()
     }
 
     /// Verify that the certificate is self-signed

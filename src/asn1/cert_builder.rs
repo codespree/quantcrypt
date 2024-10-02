@@ -126,7 +126,7 @@ impl CertValidity {
 /// // Create a leaf (EE) key pair for KEM
 /// let (pk_kem, sk_kem) = KemKeyGenerator::new(KemAlgorithm::MlKem512).generate().unwrap();
 /// let builder = CertificateBuilder::new(Profile::Leaf {
-///   issuer: "CN=example.com".parse().unwrap(),
+///   issuer: cert_root.get_subject(),
 ///   enable_key_agreement: false,
 ///   enable_key_encipherment: true,
 /// }, serial_no,

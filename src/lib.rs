@@ -1,6 +1,7 @@
 mod asn1;
 mod dsa;
 mod errors;
+mod kdf;
 mod kem;
 mod utils;
 
@@ -20,3 +21,7 @@ pub use dsa::api::key_generator::DsaKeyGenerator;
 // KEM
 pub use kem::api::algorithm::KemAlgorithm;
 pub use kem::api::key_generator::KemKeyGenerator;
+
+// KDF
+pub use kdf::api::KdfManager;
+pub use kdf::api::KdfType;
