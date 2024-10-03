@@ -19,15 +19,22 @@ use rand::SeedableRng;
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 pub type Aes192Gcm = AesGcm<Aes192, U12>;
+
+use aes_gcm::aes::cipher::generic_array::GenericArray;
 pub use aes_gcm::Aes128Gcm;
 pub use aes_gcm::Aes256Gcm;
 
 macro_rules! aes_encrypt {
-    ($self: expr, $alg: ident, $key: expr, $plaintext: expr, $aad: expr, $content_type_oid: expr) => {{
+    ($self: expr, $alg: ident, $key: expr, $nonce: expr, $plaintext: expr, $aad: expr, $content_type_oid: expr) => {{
         let cipher = $alg::new($key.into());
         let rng = rand_chacha::ChaCha20Rng::from_entropy();
 
-        let nonce = $alg::generate_nonce(rng);
+        let nonce: GenericArray<u8, _> = if let Some(nonce) = $nonce {
+            *aes_gcm::Nonce::from_slice(nonce)
+        } else {
+            let nonce = $alg::generate_nonce(rng);
+            nonce
+        };
 
         let ct = if let Some(aad) = $aad {
             let payload = aes_gcm::aead::Payload {
@@ -155,19 +162,44 @@ impl Cea for Aes {
     fn encrypt(
         &self,
         key: &[u8],
+        nonce: Option<&[u8]>,
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.cea_type {
             CeaType::Aes128Gcm => {
-                aes_encrypt!(self, Aes128Gcm, key, plaintext, aad, content_type_oid)
+                aes_encrypt!(
+                    self,
+                    Aes128Gcm,
+                    key,
+                    nonce,
+                    plaintext,
+                    aad,
+                    content_type_oid
+                )
             }
             CeaType::Aes192Gcm => {
-                aes_encrypt!(self, Aes192Gcm, key, plaintext, aad, content_type_oid)
+                aes_encrypt!(
+                    self,
+                    Aes192Gcm,
+                    key,
+                    nonce,
+                    plaintext,
+                    aad,
+                    content_type_oid
+                )
             }
             CeaType::Aes256Gcm => {
-                aes_encrypt!(self, Aes256Gcm, key, plaintext, aad, content_type_oid)
+                aes_encrypt!(
+                    self,
+                    Aes256Gcm,
+                    key,
+                    nonce,
+                    plaintext,
+                    aad,
+                    content_type_oid
+                )
             }
         }
     }

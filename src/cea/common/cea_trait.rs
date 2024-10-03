@@ -1,3 +1,5 @@
+// https://datatracker.ietf.org/doc/html/rfc5084#ref-CCM
+
 use crate::{cea::common::cea_type::CeaType, QuantCryptError};
 
 use crate::cea::common::cea_info::CeaInfo;
@@ -49,6 +51,7 @@ pub trait Cea {
     /// # Arguments
     ///
     /// * `key` - The key to use for encryption
+    /// * `nonce` - The nonce to use for encryption. If None, a random nonce will be generated
     /// * `plaintext` - The plaintext to encrypt
     /// * `aad` - The additional authenticated data to use
     /// * `content_type_oid` - The OID of the content type to use (optional), defaults to 1.2.840.113549.1.7.1.6
@@ -56,6 +59,7 @@ pub trait Cea {
     fn encrypt(
         &self,
         key: &[u8],
+        nonce: Option<&[u8]>,
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,

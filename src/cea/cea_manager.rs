@@ -46,12 +46,13 @@ impl Cea for CaeManager {
     fn encrypt(
         &self,
         key: &[u8],
+        nonce: Option<&[u8]>,
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self {
-            CaeManager::Aes(aes) => aes.encrypt(key, plaintext, aad, content_type_oid),
+            CaeManager::Aes(aes) => aes.encrypt(key, nonce, plaintext, aad, content_type_oid),
         }
     }
 
