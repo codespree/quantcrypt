@@ -1,4 +1,5 @@
 mod asn1;
+mod cea;
 mod dsa;
 mod errors;
 mod kdf;
@@ -30,3 +31,7 @@ pub use kdf::api::KdfType;
 // Wrap
 pub use wrap::api::WrapManager;
 pub use wrap::api::WrapType;
+
+// CEA
+pub use cea::api::CaeManager;
+pub use cea::api::CeaType;

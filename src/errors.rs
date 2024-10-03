@@ -2,6 +2,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum QuantCryptError {
+    #[error("Invalid Nonce")]
+    InvalidAesNonce,
     #[error("Key wrap failed")]
     KeyWrapFailed,
     #[error("Key unwrap failed")]
@@ -60,6 +62,8 @@ pub enum QuantCryptError {
     EncapFailed,
     #[error("Decap failed")]
     DecapFailed,
+    #[error("Invalid ciphertext")]
+    InvalidCipherText,
     #[error("Unknown error")]
     Unknown,
 }

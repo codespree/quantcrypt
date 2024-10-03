@@ -27,7 +27,7 @@ der_derive = "0.7.3"
 sha3 = "0.10.8"
 hkdf = "0.12.4"
 hex = "0.4.3"
-fips204 = "0.4.0"
+fips204 = "0.4.1"
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
 ed448-rust = "0.1.1"
 pem = "3.0.4"
@@ -42,7 +42,11 @@ signature = "2.2.0"
 tiny-keccak = {version="2.0.2", features=["kmac"]}
 cms = "0.2.3"
 spki = "0.7.3"
-aes = "0.8.4"
 aes-kw = "0.2.1"
+aes-gcm = "0.10.3"
+const-oid = "0.9.6"
+ccm = "0.5.0"
+aes = "0.8.4"
+
 
 

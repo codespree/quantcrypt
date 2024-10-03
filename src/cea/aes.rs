@@ -1,0 +1,214 @@
+use crate::cea::asn1::aes_parameters::AesParameters;
+use crate::cea::common::cea_info::CeaInfo;
+use crate::cea::common::cea_trait::Cea;
+use crate::cea::common::cea_type::CeaType;
+use crate::cea::common::config::oids::Oid;
+use crate::QuantCryptError;
+use aes::cipher::generic_array::typenum::U12;
+use aes_gcm::aead::Aead;
+use aes_gcm::aes::Aes192;
+use aes_gcm::{AeadCore, AesGcm, KeyInit};
+use cms::enveloped_data::EncryptedContentInfo;
+use const_oid::db::rfc5911::ID_DATA;
+use der::asn1::{ObjectIdentifier, OctetString};
+use der::Decode;
+use der::Encode;
+use pkcs8::spki::AlgorithmIdentifierOwned;
+use rand::SeedableRng;
+
+type Result<T> = std::result::Result<T, QuantCryptError>;
+
+pub type Aes192Gcm = AesGcm<Aes192, U12>;
+pub use aes_gcm::Aes128Gcm;
+pub use aes_gcm::Aes256Gcm;
+
+macro_rules! aes_encrypt {
+    ($self: expr, $alg: ident, $key: expr, $plaintext: expr, $aad: expr, $content_type_oid: expr) => {{
+        let cipher = $alg::new($key.into());
+        let rng = rand_chacha::ChaCha20Rng::from_entropy();
+
+        let nonce = $alg::generate_nonce(rng);
+
+        let ct = if let Some(aad) = $aad {
+            let payload = aes_gcm::aead::Payload {
+                aad: aad.into(),
+                msg: $plaintext.into(),
+            };
+            let ct = cipher
+                .encrypt(&nonce, payload)
+                .map_err(|_| QuantCryptError::Unknown)?;
+            ct
+        } else {
+            let ct = cipher
+                .encrypt(&nonce, $plaintext)
+                .map_err(|_| QuantCryptError::Unknown)?;
+            ct
+        };
+        let oid: ObjectIdentifier = $self
+            .cea_type
+            .get_oid()
+            .parse()
+            .map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters =
+            AesParameters::new(&nonce, nonce.len() as i8).map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters = parameters.to_der().map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters = der::Any::from_der(&parameters).map_err(|_| QuantCryptError::Unknown)?;
+
+        let enc_algorithm = AlgorithmIdentifierOwned {
+            oid,
+            parameters: Some(parameters),
+        };
+
+        let cid = if let Some(cid) = $content_type_oid {
+            cid.parse().map_err(|_| QuantCryptError::InvalidOid)?
+        } else {
+            ID_DATA
+        };
+
+        let ct_oct_str = OctetString::new(ct.to_vec()).map_err(|_| QuantCryptError::Unknown)?;
+
+        let enc = EncryptedContentInfo {
+            content_type: cid,
+            content_enc_alg: enc_algorithm,
+            encrypted_content: Some(ct_oct_str),
+        };
+
+        Ok(enc.to_der().map_err(|_| QuantCryptError::Unknown)?)
+    }};
+}
+
+macro_rules! aes_decrypt {
+    ($alg: ident, $eci:expr, $key: expr, $aad: expr) => {{
+        let cipher = $alg::new($key.into());
+        let params = $eci
+            .content_enc_alg
+            .parameters
+            .ok_or(QuantCryptError::InvalidCipherText)?;
+        let params = params
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidCipherText)?;
+        let params =
+            AesParameters::from_der(&params).map_err(|_| QuantCryptError::InvalidCipherText)?;
+        let nonce = params.get_nonce();
+        let icv_len = params.get_icv_len();
+        if icv_len != nonce.len() as i8 {
+            return Err(QuantCryptError::InvalidCipherText);
+        }
+        let nonce = aes_gcm::Nonce::from_slice(nonce);
+        let ct = $eci
+            .encrypted_content
+            .ok_or(QuantCryptError::InvalidCipherText)?;
+        let ct = ct.as_bytes();
+        let dec = if let Some(aad) = $aad {
+            let payload = aes_gcm::aead::Payload {
+                aad: aad.into(),
+                msg: ct.into(),
+            };
+            let dec = cipher
+                .decrypt(&nonce, payload)
+                .map_err(|_| QuantCryptError::InvalidCiphertext)?;
+            dec
+        } else {
+            let dec = cipher
+                .decrypt(&nonce, ct)
+                .map_err(|_| QuantCryptError::InvalidCiphertext)?;
+            dec
+        };
+        Ok(dec)
+    }};
+}
+
+#[derive(Clone)]
+pub struct Aes {
+    cea_type: CeaType,
+}
+
+impl Cea for Aes {
+    fn new(cea_type: CeaType) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Aes { cea_type })
+    }
+
+    fn get_cea_info(&self) -> CeaInfo {
+        CeaInfo::new(self.cea_type.clone())
+    }
+
+    fn encrypt(
+        &self,
+        key: &[u8],
+        plaintext: &[u8],
+        aad: Option<&[u8]>,
+        content_type_oid: Option<&str>,
+    ) -> Result<Vec<u8>> {
+        match self.cea_type {
+            CeaType::Aes128Gcm => {
+                aes_encrypt!(self, Aes128Gcm, key, plaintext, aad, content_type_oid)
+            }
+            CeaType::Aes192Gcm => {
+                aes_encrypt!(self, Aes192Gcm, key, plaintext, aad, content_type_oid)
+            }
+            CeaType::Aes256Gcm => {
+                aes_encrypt!(self, Aes256Gcm, key, plaintext, aad, content_type_oid)
+            }
+        }
+    }
+
+    fn decrypt(key: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
+        let eci = EncryptedContentInfo::from_der(ciphertext)
+            .map_err(|_| QuantCryptError::InvalidCipherText)?;
+        let alg = eci.content_enc_alg.oid.to_string();
+        let alg = CeaType::from_oid(&alg).ok_or(QuantCryptError::InvalidCipherText)?;
+        match alg {
+            CeaType::Aes128Gcm => aes_decrypt!(Aes128Gcm, eci, key, aad),
+            CeaType::Aes192Gcm => aes_decrypt!(Aes192Gcm, eci, key, aad),
+            CeaType::Aes256Gcm => aes_decrypt!(Aes256Gcm, eci, key, aad),
+        }
+    }
+
+    fn key_gen(&mut self) -> Result<Vec<u8>> {
+        let rng = rand_chacha::ChaCha20Rng::from_entropy();
+        match self.cea_type {
+            CeaType::Aes128Gcm => {
+                let key = Aes128Gcm::generate_key(rng);
+                Ok(key.to_vec())
+            }
+            CeaType::Aes192Gcm => {
+                let key = Aes192Gcm::generate_key(rng);
+                Ok(key.to_vec())
+            }
+            CeaType::Aes256Gcm => {
+                let key = Aes256Gcm::generate_key(rng);
+                Ok(key.to_vec())
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cea::common::macros::test_cea;
+
+    #[test]
+    fn test_aes128gcm() {
+        let mut cae = Aes::new(CeaType::Aes128Gcm).unwrap();
+        test_cea!(cae);
+    }
+
+    #[test]
+    fn test_aes256gcm() {
+        let mut cae = Aes::new(CeaType::Aes256Gcm).unwrap();
+        test_cea!(cae);
+    }
+
+    #[test]
+    fn test_aes192gcm() {
+        let mut cae = Aes::new(CeaType::Aes192Gcm).unwrap();
+        test_cea!(cae);
+    }
+}
