@@ -44,6 +44,10 @@ macro_rules! aes_encrypt {
                 .map_err(|_| QuantCryptError::Unknown)?;
             ct
         };
+
+        // Extract the tag from the ciphertext
+        let (ct, tag) = ct.split_at(ct.len() - 16);
+
         let oid: ObjectIdentifier = $self
             .cea_type
             .get_oid()
@@ -51,7 +55,7 @@ macro_rules! aes_encrypt {
             .map_err(|_| QuantCryptError::Unknown)?;
 
         let parameters =
-            AesParameters::new(&nonce, nonce.len() as i8).map_err(|_| QuantCryptError::Unknown)?;
+            AesParameters::new(&nonce, tag.len() as i8).map_err(|_| QuantCryptError::Unknown)?;
 
         let parameters = parameters.to_der().map_err(|_| QuantCryptError::Unknown)?;
 
@@ -76,12 +80,15 @@ macro_rules! aes_encrypt {
             encrypted_content: Some(ct_oct_str),
         };
 
-        Ok(enc.to_der().map_err(|_| QuantCryptError::Unknown)?)
+        Ok((
+            tag.to_vec(),
+            enc.to_der().map_err(|_| QuantCryptError::Unknown)?,
+        ))
     }};
 }
 
 macro_rules! aes_decrypt {
-    ($alg: ident, $eci:expr, $key: expr, $aad: expr) => {{
+    ($alg: ident, $eci:expr, $key: expr, $tag: expr, $aad: expr) => {{
         let cipher = $alg::new($key.into());
         let params = $eci
             .content_enc_alg
@@ -94,7 +101,7 @@ macro_rules! aes_decrypt {
             AesParameters::from_der(&params).map_err(|_| QuantCryptError::InvalidCipherText)?;
         let nonce = params.get_nonce();
         let icv_len = params.get_icv_len();
-        if icv_len != nonce.len() as i8 {
+        if icv_len != $tag.len() as i8 {
             return Err(QuantCryptError::InvalidCipherText);
         }
         let nonce = aes_gcm::Nonce::from_slice(nonce);
@@ -102,6 +109,13 @@ macro_rules! aes_decrypt {
             .encrypted_content
             .ok_or(QuantCryptError::InvalidCipherText)?;
         let ct = ct.as_bytes();
+
+        // Add the tag to the end of the ciphertext
+        let mut ct = ct.to_vec();
+        ct.extend($tag);
+
+        let ct = ct.as_slice();
+
         let dec = if let Some(aad) = $aad {
             let payload = aes_gcm::aead::Payload {
                 aad: aad.into(),
@@ -144,7 +158,7 @@ impl Cea for Aes {
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,
-    ) -> Result<Vec<u8>> {
+    ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.cea_type {
             CeaType::Aes128Gcm => {
                 aes_encrypt!(self, Aes128Gcm, key, plaintext, aad, content_type_oid)
@@ -158,15 +172,15 @@ impl Cea for Aes {
         }
     }
 
-    fn decrypt(key: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
+    fn decrypt(key: &[u8], tag: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
         let eci = EncryptedContentInfo::from_der(ciphertext)
             .map_err(|_| QuantCryptError::InvalidCipherText)?;
         let alg = eci.content_enc_alg.oid.to_string();
         let alg = CeaType::from_oid(&alg).ok_or(QuantCryptError::InvalidCipherText)?;
         match alg {
-            CeaType::Aes128Gcm => aes_decrypt!(Aes128Gcm, eci, key, aad),
-            CeaType::Aes192Gcm => aes_decrypt!(Aes192Gcm, eci, key, aad),
-            CeaType::Aes256Gcm => aes_decrypt!(Aes256Gcm, eci, key, aad),
+            CeaType::Aes128Gcm => aes_decrypt!(Aes128Gcm, eci, key, tag, aad),
+            CeaType::Aes192Gcm => aes_decrypt!(Aes192Gcm, eci, key, tag, aad),
+            CeaType::Aes256Gcm => aes_decrypt!(Aes256Gcm, eci, key, tag, aad),
         }
     }
 

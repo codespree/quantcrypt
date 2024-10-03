@@ -59,7 +59,7 @@ pub trait Cea {
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,
-    ) -> Result<Vec<u8>>;
+    ) -> Result<(Vec<u8>, Vec<u8>)>;
 
     /// Decrypt a message and return the plaintext. The message should be in the
     /// format of a EncryptedContentInfo object as DER bytes.
@@ -67,11 +67,12 @@ pub trait Cea {
     /// # Arguments
     ///
     /// * `key` - The key to use for decryption
+    /// * `tag` - The tag to use for decryption
     /// * `ciphertext` - The ciphertext to decrypt
     /// * `aad` - The additional authenticated data to use
     ///
     /// # Returns
     ///
     /// The decrypted plaintext
-    fn decrypt(key: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>>;
+    fn decrypt(key: &[u8], tag: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>>;
 }

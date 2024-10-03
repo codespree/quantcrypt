@@ -49,15 +49,15 @@ impl Cea for CaeManager {
         plaintext: &[u8],
         aad: Option<&[u8]>,
         content_type_oid: Option<&str>,
-    ) -> Result<Vec<u8>> {
+    ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self {
             CaeManager::Aes(aes) => aes.encrypt(key, plaintext, aad, content_type_oid),
         }
     }
 
-    fn decrypt(key: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
+    fn decrypt(key: &[u8], tag: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
         // TODO: Figure out how to handle multiple CEA types
-        Aes::decrypt(key, ciphertext, aad)
+        Aes::decrypt(key, tag, ciphertext, aad)
     }
 }
 
