@@ -8,6 +8,9 @@ use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
 use crate::asn1::signature::DsaSignature;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::kem_manager::KemManager;
+use crate::oid_mapper::map_to_new_oid;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
 use crate::{PublicKey, QuantCryptError};
 use signature::{Keypair, Signer};
@@ -236,26 +239,25 @@ impl PrivateKey {
         let priv_key_info = PrivateKeyInfo::from_der(der)
             .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?;
 
+        let oid = map_to_new_oid(&priv_key_info.algorithm.oid.to_string());
+
         // Check if the OID is valid
-        if !is_valid_oid(&priv_key_info.algorithm.oid.to_string()) {
+        if !is_valid_oid(&oid) {
             return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
 
         // Check if the OID is a composite key
-        let is_composite = is_composite_oid(&priv_key_info.algorithm.oid.to_string());
+        let is_composite = is_composite_oid(&oid);
 
         // Check if the public key is present
         let public_key = if let Some(pk) = priv_key_info.public_key {
-            Some(PublicKey::new(
-                &priv_key_info.algorithm.oid.to_string(),
-                pk,
-            )?)
+            Some(PublicKey::new(&oid, pk)?)
         } else {
             None
         };
 
         Ok(Self {
-            oid: priv_key_info.algorithm.oid.to_string(),
+            oid: oid.to_string(),
             private_key: priv_key_info.private_key.to_vec(),
             is_composite,
             public_key,
@@ -282,6 +284,15 @@ impl PrivateKey {
         let sig = dsa.sign(&self.private_key, data)?;
 
         Ok(sig)
+    }
+
+    pub fn decap(&self, ct: &[u8]) -> Result<Vec<u8>> {
+        if is_dsa_oid(&self.oid) {
+            return Err(errors::QuantCryptError::UnsupportedOperation);
+        }
+        let kem = KemManager::new_from_oid(&self.oid)?;
+        let ss = kem.decap(&self.private_key, ct)?;
+        Ok(ss)
     }
 }
 

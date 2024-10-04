@@ -1,3 +1,4 @@
+//https://datatracker.ietf.org/doc/html/rfc3394#section-2.2.1
 use aes::cipher::generic_array::GenericArray;
 use aes::cipher::KeySizeUser;
 use aes::Aes128;
@@ -13,11 +14,11 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// Macro for encrypting data using Aes128Wrap, Aes192Wrap or Aes256Wrap
 macro_rules! encrypt_wrap {
-    ($cek:expr, $alg:ty, $key:ident) => {{
-        let kek_buf = GenericArray::from_slice($key);
+    ($alg:ty, $kek:expr, $key_to_wrap:ident) => {{
+        let kek_buf = GenericArray::from_slice($kek);
         let kek = Kek::<$alg>::from(*kek_buf);
         let mut wrapped_key = vec![0u8; <$alg>::key_size() + 8];
-        kek.wrap($cek, &mut wrapped_key)
+        kek.wrap($key_to_wrap, &mut wrapped_key)
             .map_err(|_| QuantCryptError::KeyWrapFailed)?;
         Ok(wrapped_key.to_vec())
     }};
@@ -25,12 +26,15 @@ macro_rules! encrypt_wrap {
 
 /// Macro for decrypting data using Aes128Wrap, Aes192Wrap or Aes256Wrap
 macro_rules! decrypt_wrap {
-    ($cek:expr, $alg:ty, $key:ident) => {{
-        let kek_buf = GenericArray::from_slice($key);
+    ($alg:ty, $kek:ident, $key_to_unwrap:expr) => {{
+        let kek_buf = GenericArray::from_slice($kek);
         let kek = Kek::<$alg>::from(*kek_buf);
         let mut unwrapped_key = vec![0u8; <$alg>::key_size()];
-        kek.unwrap($cek, &mut unwrapped_key)
-            .map_err(|_| QuantCryptError::KeyUnwrapFailed)?;
+        kek.unwrap($key_to_unwrap, &mut unwrapped_key)
+            .map_err(|err| {
+                println!("Error: {:?}", err);
+                QuantCryptError::KeyUnwrapFailed
+            })?;
         Ok(unwrapped_key.to_vec())
     }};
 }
@@ -54,31 +58,36 @@ impl Wrap for Aes {
                 if wrapping_key.len() != 16 || key_to_wrap.len() != 16 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-
-                encrypt_wrap!(wrapping_key, Aes128, key_to_wrap)
+                encrypt_wrap!(Aes128, wrapping_key, key_to_wrap)
             }
             WrapType::Aes256 => {
                 if wrapping_key.len() != 32 || key_to_wrap.len() != 32 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-                encrypt_wrap!(wrapping_key, Aes256, key_to_wrap)
+                encrypt_wrap!(Aes256, wrapping_key, key_to_wrap)
             }
         }
     }
 
-    fn unwrap(&self, wrapping_key: &[u8], wrapped_key: &[u8]) -> Result<Vec<u8>> {
+    fn unwrap(&self, wrapping_key: &[u8], key_to_unwrap: &[u8]) -> Result<Vec<u8>> {
         match self.wrap_type {
             WrapType::Aes128 => {
                 if wrapping_key.len() != 16 {
                     return Err(QuantCryptError::KeyUnwrapFailed);
                 }
-                decrypt_wrap!(wrapped_key, Aes128, wrapping_key)
+                if key_to_unwrap.len() != 16 + 8 {
+                    return Err(QuantCryptError::KeyUnwrapFailed);
+                }
+                decrypt_wrap!(Aes128, wrapping_key, key_to_unwrap)
             }
             WrapType::Aes256 => {
                 if wrapping_key.len() != 32 {
                     return Err(QuantCryptError::KeyUnwrapFailed);
                 }
-                decrypt_wrap!(wrapped_key, Aes256, wrapping_key)
+                if key_to_unwrap.len() != 32 + 8 {
+                    return Err(QuantCryptError::KeyUnwrapFailed);
+                }
+                decrypt_wrap!(Aes256, wrapping_key, key_to_unwrap)
             }
         }
     }
@@ -99,6 +108,7 @@ mod tests {
         let wrapping_key = vec![0u8; 16];
         let key_to_wrap = vec![0u8; 16];
         let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap).unwrap();
+        assert!(wrapped_key.len() == 24);
         let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
         assert_eq!(key_to_wrap, unwrapped_key);
     }
@@ -131,6 +141,7 @@ mod tests {
         let wrapping_key = vec![0u8; 32];
         let key_to_wrap = vec![0u8; 32];
         let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap).unwrap();
+        assert!(wrapped_key.len() == 40);
         let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
         assert_eq!(key_to_wrap, unwrapped_key);
     }

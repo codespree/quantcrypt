@@ -50,6 +50,8 @@ pub enum QuantCryptError {
     InvalidNotAfter,
     #[error("Certificate is invalid")]
     InvalidCertificate,
+    #[error("Invalid enveloped data")]
+    InvalidEnvelopedData,
     #[error(
         "Unsupported operation. Only DSA keys can be used for signing and KEM keys for encap/decap"
     )]

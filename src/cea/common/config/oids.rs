@@ -21,10 +21,9 @@ impl Oid for CeaType {
             CeaType::Aes128Gcm => "2.16.840.1.101.3.4.1.6",
             CeaType::Aes192Gcm => "2.16.840.1.101.3.4.1.26",
             CeaType::Aes256Gcm => "2.16.840.1.101.3.4.1.46",
-            //TODO: Enable CBC
-            //CeaType::Aes128Cbc => "2.16.840.1.101.3.4.1.7",
-            //CeaType::Aes192Cbc => "2.16.840.1.101.3.4.1.27",
-            //CeaType::Aes256Cbc => "2.16.840.1.101.3.4.1.47",
+            CeaType::Aes128CbcPad => "2.16.840.1.101.3.4.1.2",
+            CeaType::Aes192CbcPad => "2.16.840.1.101.3.4.1.22",
+            CeaType::Aes256CbcPad => "2.16.840.1.101.3.4.1.42",
         }
         .to_string()
     }

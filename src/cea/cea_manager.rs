@@ -7,23 +7,30 @@ use crate::cea::common::cea_info::CeaInfo;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const CAE_TYPES: [CeaType; 3] = [CeaType::Aes128Gcm, CeaType::Aes192Gcm, CeaType::Aes256Gcm];
+const CAE_TYPES: [CeaType; 6] = [
+    CeaType::Aes128Gcm,
+    CeaType::Aes192Gcm,
+    CeaType::Aes256Gcm,
+    CeaType::Aes128CbcPad,
+    CeaType::Aes192CbcPad,
+    CeaType::Aes256CbcPad,
+];
 
 // Implement clone
 #[derive(Clone)]
 /// Enum to representthe different types of KEM managers
-pub enum CaeManager {
+pub enum CeaManager {
     /// AES CEA implementation
     Aes(Aes),
 }
 
-impl Cea for CaeManager {
+impl Cea for CeaManager {
     fn new(cae_type: CeaType) -> Result<Self>
     where
         Self: Sized,
     {
         let result = match cae_type {
-            _ if CAE_TYPES.contains(&cae_type) => CaeManager::Aes(Aes::new(cae_type)?),
+            _ if CAE_TYPES.contains(&cae_type) => CeaManager::Aes(Aes::new(cae_type)?),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -33,13 +40,13 @@ impl Cea for CaeManager {
 
     fn key_gen(&mut self) -> Result<Vec<u8>> {
         match self {
-            CaeManager::Aes(aes) => aes.key_gen(),
+            CeaManager::Aes(aes) => aes.key_gen(),
         }
     }
 
     fn get_cea_info(&self) -> CeaInfo {
         match self {
-            CaeManager::Aes(aes) => aes.get_cea_info(),
+            CeaManager::Aes(aes) => aes.get_cea_info(),
         }
     }
 
@@ -52,7 +59,7 @@ impl Cea for CaeManager {
         content_type_oid: Option<&str>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self {
-            CaeManager::Aes(aes) => aes.encrypt(key, nonce, plaintext, aad, content_type_oid),
+            CeaManager::Aes(aes) => aes.encrypt(key, nonce, plaintext, aad, content_type_oid),
         }
     }
 
@@ -70,7 +77,7 @@ mod tests {
     #[test]
     fn test_aes() {
         for cae_type in CAE_TYPES.iter() {
-            let mut cae = CaeManager::new(cae_type.clone()).unwrap();
+            let mut cae = CeaManager::new(cae_type.clone()).unwrap();
             test_cea!(cae);
         }
     }

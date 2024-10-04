@@ -30,15 +30,15 @@ impl Wrap for WrapManager {
         Ok(result)
     }
 
-    fn wrap(&self, key_to_wrap: &[u8], wrapping_key: &[u8]) -> Result<Vec<u8>> {
+    fn wrap(&self, wrapping_key: &[u8], key_to_wrap: &[u8]) -> Result<Vec<u8>> {
         match self {
-            WrapManager::Aes(aes) => aes.wrap(key_to_wrap, wrapping_key),
+            WrapManager::Aes(aes) => aes.wrap(wrapping_key, key_to_wrap),
         }
     }
 
-    fn unwrap(&self, wrapped_key: &[u8], wrapping_key: &[u8]) -> Result<Vec<u8>> {
+    fn unwrap(&self, wrapping_key: &[u8], key_to_unwrap: &[u8]) -> Result<Vec<u8>> {
         match self {
-            WrapManager::Aes(aes) => aes.unwrap(wrapped_key, wrapping_key),
+            WrapManager::Aes(aes) => aes.unwrap(wrapping_key, key_to_unwrap),
         }
     }
 

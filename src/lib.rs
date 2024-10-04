@@ -4,6 +4,7 @@ mod dsa;
 mod errors;
 mod kdf;
 mod kem;
+mod oid_mapper;
 mod utils;
 mod wrap;
 
@@ -33,5 +34,8 @@ pub use wrap::api::WrapManager;
 pub use wrap::api::WrapType;
 
 // CEA
-pub use cea::api::CaeManager;
+pub use cea::api::CeaManager;
 pub use cea::api::CeaType;
+
+// CMS
+pub use kem::cms::cms_manager::CmsManager;

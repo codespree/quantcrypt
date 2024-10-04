@@ -2,6 +2,7 @@ use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
 use crate::errors;
+use crate::oid_mapper::map_to_new_oid;
 use der::{asn1::BitString, Document};
 use der::{Decode, Encode};
 use pem::EncodeConfig;
@@ -214,6 +215,8 @@ impl PublicKey {
         };
 
         let oid = pub_key_info.algorithm.oid.to_string();
+
+        let oid = map_to_new_oid(oid.as_str());
 
         // Check if oid is valid
         if !is_valid_oid(&oid) {

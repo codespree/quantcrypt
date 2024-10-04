@@ -8,10 +8,9 @@ pub enum CeaType {
     Aes128Gcm,
     Aes192Gcm,
     Aes256Gcm,
-    //TODO: Enable CBC
-    //Aes128Cbc,
-    //Aes192Cbc,
-    //Aes256Cbc,
+    Aes128CbcPad,
+    Aes192CbcPad,
+    Aes256CbcPad,
 }
 
 impl CeaType {

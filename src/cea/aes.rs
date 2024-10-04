@@ -5,9 +5,12 @@ use crate::cea::common::cea_type::CeaType;
 use crate::cea::common::config::oids::Oid;
 use crate::QuantCryptError;
 use aes::cipher::generic_array::typenum::U12;
+use aes::cipher::KeyIvInit;
+use aes::{Aes128, Aes256};
 use aes_gcm::aead::Aead;
 use aes_gcm::aes::Aes192;
 use aes_gcm::{AeadCore, AesGcm, KeyInit};
+use cipher::{BlockDecryptMut, BlockEncryptMut};
 use cms::enveloped_data::EncryptedContentInfo;
 use const_oid::db::rfc5911::ID_DATA;
 use der::asn1::{ObjectIdentifier, OctetString};
@@ -18,7 +21,15 @@ use rand::SeedableRng;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-pub type Aes192Gcm = AesGcm<Aes192, U12>;
+type Aes192Gcm = AesGcm<Aes192, U12>;
+
+type Aes128CbcPadDecryptor = cbc::Decryptor<Aes128>;
+type Aes192CbcPadDecryptor = cbc::Decryptor<Aes192>;
+type Aes256CbcPadDecryptor = cbc::Decryptor<Aes256>;
+
+type Aes128CbcPadEncryptor = cbc::Encryptor<Aes128>;
+type Aes192CbcPadEncryptor = cbc::Encryptor<Aes192>;
+type Aes256CbcPadEncryptor = cbc::Encryptor<Aes256>;
 
 use aes_gcm::aes::cipher::generic_array::GenericArray;
 pub use aes_gcm::Aes128Gcm;
@@ -142,6 +153,93 @@ macro_rules! aes_decrypt {
     }};
 }
 
+macro_rules! aes_cbc_encrypt {
+    ($self: expr, $alg: ident, $key: expr, $nonce: expr, $plaintext: expr, $content_type_oid: expr) => {{
+        let rng = rand_chacha::ChaCha20Rng::from_entropy();
+
+        let nonce = if let Some(nonce) = $nonce {
+            nonce.to_vec()
+        } else {
+            let nonce = $alg::generate_iv(rng);
+            let nonce = nonce.to_vec();
+            nonce
+        };
+
+        let cipher = $alg::new_from_slices($key, &nonce).map_err(|_| QuantCryptError::Unknown)?;
+
+        let ct = cipher.encrypt_padded_vec_mut::<cipher::block_padding::Pkcs7>($plaintext);
+
+        let oid: ObjectIdentifier = $self
+            .cea_type
+            .get_oid()
+            .parse()
+            .map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters = OctetString::new(nonce.to_vec()).map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters = parameters.to_der().map_err(|_| QuantCryptError::Unknown)?;
+
+        let parameters = der::Any::from_der(&parameters).map_err(|_| QuantCryptError::Unknown)?;
+
+        let enc_algorithm = AlgorithmIdentifierOwned {
+            oid,
+            parameters: Some(parameters),
+        };
+
+        let cid = if let Some(cid) = $content_type_oid {
+            cid.parse().map_err(|_| QuantCryptError::InvalidOid)?
+        } else {
+            ID_DATA
+        };
+
+        let ct_oct_str = OctetString::new(ct.to_vec()).map_err(|_| QuantCryptError::Unknown)?;
+
+        let enc = EncryptedContentInfo {
+            content_type: cid,
+            content_enc_alg: enc_algorithm,
+            encrypted_content: Some(ct_oct_str),
+        };
+
+        Ok((
+            nonce.to_vec(),
+            enc.to_der().map_err(|_| QuantCryptError::Unknown)?,
+        ))
+    }};
+}
+
+macro_rules! aes_cbc_decrypt {
+    ($alg: ident, $eci:expr, $key: expr, $tag: expr) => {{
+        let key = GenericArray::from_slice(&$key);
+        let cipher = <$alg>::new(key, $tag.into());
+
+        let params = $eci
+            .content_enc_alg
+            .parameters
+            .ok_or(QuantCryptError::InvalidCipherText)?;
+
+        let params = params
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidCipherText)?;
+
+        let os_iv =
+            OctetString::from_der(&params).map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
+        let iv: &[u8] = os_iv.as_bytes();
+
+        if iv != $tag {
+            return Err(QuantCryptError::InvalidCipherText);
+        }
+
+        let ct = $eci
+            .encrypted_content
+            .ok_or(QuantCryptError::InvalidCipherText)?;
+        let ct = ct.as_bytes();
+
+        cipher
+            .decrypt_padded_vec_mut::<cipher::block_padding::Pkcs7>(ct)
+            .map_err(|_| QuantCryptError::InvalidCipherText)
+    }};
+}
+
 #[derive(Clone)]
 pub struct Aes {
     cea_type: CeaType,
@@ -201,6 +299,36 @@ impl Cea for Aes {
                     content_type_oid
                 )
             }
+            CeaType::Aes128CbcPad => {
+                aes_cbc_encrypt!(
+                    self,
+                    Aes128CbcPadEncryptor,
+                    key,
+                    nonce,
+                    plaintext,
+                    content_type_oid
+                )
+            }
+            CeaType::Aes192CbcPad => {
+                aes_cbc_encrypt!(
+                    self,
+                    Aes192CbcPadEncryptor,
+                    key,
+                    nonce,
+                    plaintext,
+                    content_type_oid
+                )
+            }
+            CeaType::Aes256CbcPad => {
+                aes_cbc_encrypt!(
+                    self,
+                    Aes256CbcPadEncryptor,
+                    key,
+                    nonce,
+                    plaintext,
+                    content_type_oid
+                )
+            }
         }
     }
 
@@ -213,6 +341,15 @@ impl Cea for Aes {
             CeaType::Aes128Gcm => aes_decrypt!(Aes128Gcm, eci, key, tag, aad),
             CeaType::Aes192Gcm => aes_decrypt!(Aes192Gcm, eci, key, tag, aad),
             CeaType::Aes256Gcm => aes_decrypt!(Aes256Gcm, eci, key, tag, aad),
+            CeaType::Aes128CbcPad => {
+                aes_cbc_decrypt!(Aes128CbcPadDecryptor, eci, key, tag)
+            }
+            CeaType::Aes192CbcPad => {
+                aes_cbc_decrypt!(Aes192CbcPadDecryptor, eci, key, tag)
+            }
+            CeaType::Aes256CbcPad => {
+                aes_cbc_decrypt!(Aes256CbcPadDecryptor, eci, key, tag)
+            }
         }
     }
 
@@ -229,6 +366,18 @@ impl Cea for Aes {
             }
             CeaType::Aes256Gcm => {
                 let key = Aes256Gcm::generate_key(rng);
+                Ok(key.to_vec())
+            }
+            CeaType::Aes128CbcPad => {
+                let key = Aes128::generate_key(rng);
+                Ok(key.to_vec())
+            }
+            CeaType::Aes192CbcPad => {
+                let key = Aes192::generate_key(rng);
+                Ok(key.to_vec())
+            }
+            CeaType::Aes256CbcPad => {
+                let key = Aes256::generate_key(rng);
                 Ok(key.to_vec())
             }
         }

@@ -4,6 +4,8 @@ use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_type::KemType;
 use crate::QuantCryptError;
 
+use crate::kem::common::config::oids::Oid;
+
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -74,4 +76,18 @@ pub trait Kem {
     ///
     /// A structure containing metadata about the KEM
     fn get_kem_info(&self) -> KemInfo;
+
+    fn new_from_oid(oid: &str) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let all_kem_types = KemType::all();
+        for kem_type in all_kem_types {
+            if kem_type.get_oid() == oid {
+                let kem = Self::new(kem_type)?;
+                return Ok(kem);
+            }
+        }
+        Err(QuantCryptError::InvalidOid)
+    }
 }
