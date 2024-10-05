@@ -21,7 +21,7 @@ macro_rules! test_cea {
         let decrypted = CeaManager::decrypt(&key, &tag, &ciphertext, Some(aad)).unwrap();
         assert_eq!(plaintext, decrypted.as_slice());
 
-        // Test decryption with wrong auth data
+        // // Test decryption with wrong auth data
         let decrypted =
             CeaManager::decrypt(&key, &tag, &ciphertext, Some(b"Wrong AAD")).unwrap_err();
         assert_eq!(QuantCryptError::InvalidCiphertext, decrypted);

@@ -1,44 +1,9 @@
 //https://datatracker.ietf.org/doc/html/rfc3394#section-2.2.1
-use aes::cipher::generic_array::GenericArray;
-use aes::cipher::KeySizeUser;
-use aes::Aes128;
-use aes::Aes256;
-
+use super::common::wrap_info::WrapInfo;
 use crate::wrap::common::wrap_trait::Wrap;
 use crate::{wrap::common::wrap_type::WrapType, QuantCryptError};
-use aes_kw::Kek;
-
-use super::common::wrap_info::WrapInfo;
-
 type Result<T> = std::result::Result<T, QuantCryptError>;
-
-/// Macro for encrypting data using Aes128Wrap, Aes192Wrap or Aes256Wrap
-macro_rules! encrypt_wrap {
-    ($alg:ty, $kek:expr, $key_to_wrap:ident) => {{
-        let kek_buf = GenericArray::from_slice($kek);
-        let kek = Kek::<$alg>::from(*kek_buf);
-        let mut wrapped_key = vec![0u8; <$alg>::key_size() + 8];
-        kek.wrap($key_to_wrap, &mut wrapped_key)
-            .map_err(|_| QuantCryptError::KeyWrapFailed)?;
-        Ok(wrapped_key.to_vec())
-    }};
-}
-
-/// Macro for decrypting data using Aes128Wrap, Aes192Wrap or Aes256Wrap
-macro_rules! decrypt_wrap {
-    ($alg:ty, $kek:ident, $key_to_unwrap:expr) => {{
-        let kek_buf = GenericArray::from_slice($kek);
-        let kek = Kek::<$alg>::from(*kek_buf);
-        let mut unwrapped_key = vec![0u8; <$alg>::key_size()];
-        kek.unwrap($key_to_unwrap, &mut unwrapped_key)
-            .map_err(|err| {
-                println!("Error: {:?}", err);
-                QuantCryptError::KeyUnwrapFailed
-            })?;
-        Ok(unwrapped_key.to_vec())
-    }};
-}
-
+use openssl::aes::{unwrap_key, wrap_key};
 #[derive(Clone)]
 pub struct Aes {
     wrap_type: WrapType,
@@ -53,24 +18,32 @@ impl Wrap for Aes {
     }
 
     fn wrap(&self, wrapping_key: &[u8], key_to_wrap: &[u8]) -> Result<Vec<u8>> {
-        match self.wrap_type {
+        let key_size = match self.wrap_type {
             WrapType::Aes128 => {
                 if wrapping_key.len() != 16 || key_to_wrap.len() != 16 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-                encrypt_wrap!(Aes128, wrapping_key, key_to_wrap)
+                16
             }
             WrapType::Aes256 => {
                 if wrapping_key.len() != 32 || key_to_wrap.len() != 32 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-                encrypt_wrap!(Aes256, wrapping_key, key_to_wrap)
+                32
             }
-        }
+        };
+
+        let wrapping_key = openssl::aes::AesKey::new_encrypt(wrapping_key)
+            .map_err(|_| QuantCryptError::KeyWrapFailed)?;
+        let mut out_buf = vec![0u8; key_size + 8];
+        wrap_key(&wrapping_key, None, &mut out_buf, key_to_wrap)
+            .map_err(|_| QuantCryptError::KeyWrapFailed)?;
+        //encrypt_wrap!(Aes128, wrapping_key, key_to_wrap)
+        Ok(out_buf)
     }
 
     fn unwrap(&self, wrapping_key: &[u8], key_to_unwrap: &[u8]) -> Result<Vec<u8>> {
-        match self.wrap_type {
+        let key_size = match self.wrap_type {
             WrapType::Aes128 => {
                 if wrapping_key.len() != 16 {
                     return Err(QuantCryptError::KeyUnwrapFailed);
@@ -78,7 +51,7 @@ impl Wrap for Aes {
                 if key_to_unwrap.len() != 16 + 8 {
                     return Err(QuantCryptError::KeyUnwrapFailed);
                 }
-                decrypt_wrap!(Aes128, wrapping_key, key_to_unwrap)
+                16
             }
             WrapType::Aes256 => {
                 if wrapping_key.len() != 32 {
@@ -87,9 +60,16 @@ impl Wrap for Aes {
                 if key_to_unwrap.len() != 32 + 8 {
                     return Err(QuantCryptError::KeyUnwrapFailed);
                 }
-                decrypt_wrap!(Aes256, wrapping_key, key_to_unwrap)
+                32
             }
-        }
+        };
+        let key = openssl::aes::AesKey::new_decrypt(wrapping_key)
+            .map_err(|_| QuantCryptError::KeyUnwrapFailed)?;
+        let mut out_buf = vec![0u8; key_size];
+        unwrap_key(&key, None, &mut out_buf, key_to_unwrap)
+            .map_err(|_| QuantCryptError::KeyUnwrapFailed)?;
+
+        Ok(out_buf)
     }
 
     fn get_wrap_info(&self) -> WrapInfo {

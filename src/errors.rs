@@ -64,8 +64,6 @@ pub enum QuantCryptError {
     EncapFailed,
     #[error("Decap failed")]
     DecapFailed,
-    #[error("Invalid ciphertext")]
-    InvalidCipherText,
     #[error("Unknown error")]
     Unknown,
 }
