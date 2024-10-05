@@ -38,4 +38,7 @@ pub use cea::api::CeaManager;
 pub use cea::api::CeaType;
 
 // CMS
+pub use kem::cms::cert_store_trait::CertificateStore;
 pub use kem::cms::cms_manager::CmsManager;
+pub use kem::cms::directory_cert_store::DirectoryCertificateStore;
+pub use kem::cms::dummy_cert_store::DummyCertificateStore;
