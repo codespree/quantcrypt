@@ -406,7 +406,7 @@ mod tests {
         // Get now plus 2 secs as UTC String
         let now = chrono::Utc::now();
         let not_before = now + chrono::Duration::seconds(2);
-        let not_after = now + chrono::Duration::seconds(3);
+        let not_after = now + chrono::Duration::seconds(5);
 
         let validity =
             CertValidity::new(Some(&not_before.to_rfc3339()), &not_after.to_rfc3339()).unwrap();
@@ -427,10 +427,10 @@ mod tests {
         .unwrap();
         assert!(!cert.is_valid());
         // sleep for 1 second
-        std::thread::sleep(std::time::Duration::from_secs(2));
+        std::thread::sleep(std::time::Duration::from_secs(3));
         assert!(cert.is_valid());
         // sleep for 3 seconds
-        std::thread::sleep(std::time::Duration::from_secs(3));
+        std::thread::sleep(std::time::Duration::from_secs(5));
         assert!(!cert.is_valid());
     }
 }
