@@ -4,6 +4,7 @@ use crate::{
     PublicKey,
 };
 use chrono::{DateTime, Utc};
+use cms::enveloped_data::RecipientIdentifier;
 use der::{Decode, DecodePem, Encode, EncodePem};
 use x509_cert::{
     ext::pkix::{AuthorityKeyIdentifier, KeyUsage, SubjectKeyIdentifier},
@@ -129,7 +130,9 @@ impl Certificate {
         if let Some(exts) = self.cert.tbs_certificate.extensions.clone() {
             for ext in exts {
                 if ext.extn_id == const_oid::db::rfc5280::ID_CE_SUBJECT_KEY_IDENTIFIER {
-                    let ski = SubjectKeyIdentifier(ext.extn_value.clone());
+                    let ski_raw_bytes = ext.extn_value.as_bytes();
+                    let ski = SubjectKeyIdentifier::from_der(ski_raw_bytes)
+                        .map_err(|_| QuantCryptError::InvalidCertificate)?;
                     return Ok(ski);
                 }
             }
@@ -271,7 +274,27 @@ impl Certificate {
         Ok(())
     }
 
-    pub fn is_valid(&self) -> Result<bool> {
+    pub fn is_identified_by(&self, rid: &RecipientIdentifier) -> bool {
+        match rid {
+            cms::enveloped_data::RecipientIdentifier::IssuerAndSerialNumber(issuer) => {
+                if self.get_issuer() == issuer.issuer
+                    && self.get_serial_number() == issuer.serial_number
+                {
+                    return true;
+                }
+            }
+            cms::enveloped_data::RecipientIdentifier::SubjectKeyIdentifier(ski) => {
+                if let Ok(cert_ski) = self.get_subject_key_identifier() {
+                    if cert_ski == *ski {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn is_valid(&self) -> bool {
         // Get the notBefore and notAfter fields as DateTime
         let not_before = self.cert.tbs_certificate.validity.not_before.to_date_time();
         let not_after = self.cert.tbs_certificate.validity.not_after.to_date_time();
@@ -290,10 +313,10 @@ impl Certificate {
         let oid = self.cert.signature_algorithm.oid;
         let expected_oid = self.cert.tbs_certificate.signature.oid;
         if oid != expected_oid {
-            return Ok(false);
+            return false;
         }
 
-        Ok(result)
+        result
     }
 
     pub fn is_key_encipherment_enabled(&self) -> bool {
@@ -382,7 +405,7 @@ mod tests {
     fn test_certificate_expiry() {
         // Get now plus 2 secs as UTC String
         let now = chrono::Utc::now();
-        let not_before = now + chrono::Duration::seconds(1);
+        let not_before = now + chrono::Duration::seconds(2);
         let not_after = now + chrono::Duration::seconds(3);
 
         let validity =
@@ -402,12 +425,12 @@ mod tests {
         .unwrap()
         .build()
         .unwrap();
-        assert!(!cert.is_valid().unwrap());
+        assert!(!cert.is_valid());
         // sleep for 1 second
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        assert!(cert.is_valid().unwrap());
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        assert!(cert.is_valid());
         // sleep for 3 seconds
         std::thread::sleep(std::time::Duration::from_secs(3));
-        assert!(!cert.is_valid().unwrap());
+        assert!(!cert.is_valid());
     }
 }

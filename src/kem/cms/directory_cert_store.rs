@@ -57,7 +57,7 @@ impl DirectoryCertificateStore {
                     // Check if the certificate is self-signed
                     let is_self_signed = cert.verify_self_signed().map_or(false, |result| result);
 
-                    let is_valid = cert.is_valid().map_or(false, |result| result);
+                    let is_valid = cert.is_valid();
 
                     // Add the certificate to the appropriate list
                     if is_valid {
@@ -81,18 +81,14 @@ impl DirectoryCertificateStore {
 
     fn find_parent(&self, cert: &Certificate) -> Option<Certificate> {
         // First check if the cert is valid
-        if let Ok(is_valid) = cert.is_valid() {
-            if !is_valid {
-                return None;
-            }
+        if !cert.is_valid() {
+            return None;
         }
 
         // First look in the trust anchor certificates
         for ta_cert in &self.ta_certificates {
-            if let Ok(is_valid) = ta_cert.is_valid() {
-                if !is_valid {
-                    continue;
-                }
+            if !ta_cert.is_valid() {
+                continue;
             }
             let cert = ta_cert.verify_child(cert).map_or(None, |result| {
                 if result {
@@ -107,10 +103,8 @@ impl DirectoryCertificateStore {
 
         // Then look in the end-entity certificates
         for ee_cert in &self.ee_certificates {
-            if let Ok(is_valid) = ee_cert.is_valid() {
-                if !is_valid {
-                    continue;
-                }
+            if !ee_cert.is_valid() {
+                continue;
             }
             let cert = ee_cert.verify_child(cert).map_or(None, |result| {
                 if result {

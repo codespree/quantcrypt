@@ -1,7 +1,9 @@
+//https://datatracker.ietf.org/doc/html/rfc5652
 use cms::enveloped_data::{EnvelopedData, RecipientInfo};
 use der::{asn1::OctetString, Decode, Encode};
 
 use crate::cea::common::cea_trait::Cea;
+use crate::Certificate;
 use crate::{
     kdf::common::kdf_trait::Kdf, kem::cms::asn1::kemri::KemRecipientInfo,
     wrap::common::wrap_trait::Wrap, KdfManager, PrivateKey, QuantCryptError, WrapManager,
@@ -13,7 +15,6 @@ use crate::cea::cea_manager::CeaManager;
 use crate::kem::cms::asn1::kemri::CmsOriForKemOtherInfo;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
-use crate::kem::cms::cert_store_trait::CertificateStore;
 
 pub struct CmsManager {}
 
@@ -21,7 +22,7 @@ impl CmsManager {
     fn decrypt_enveloped(
         enveloped_data_der: &[u8],
         private_key: &PrivateKey,
-        auth: &impl CertificateStore,
+        cert: &Certificate,
     ) -> Result<Vec<u8>> {
         let enveloped_data = EnvelopedData::from_der(enveloped_data_der)
             .map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
@@ -55,8 +56,7 @@ impl CmsManager {
                     let kemri = KemRecipientInfo::from_der(&ori_value)
                         .map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
 
-                    let cert = auth.find(kemri.rid.clone());
-                    if cert.is_none() {
+                    if !cert.is_identified_by(&kemri.rid) {
                         continue;
                     }
 
@@ -80,6 +80,8 @@ impl CmsManager {
                     return Ok(result);
                     //RecipientInfo::Ktri(ktri) => process_ktri(ktri, ee_sk)?,
                 }
+                // TODO: Handle normal recipient info types
+                // https://github.com/sfackler/rust-openssl/blob/master/openssl/src/cms.rs
                 _ => continue,
             }
         }
@@ -87,11 +89,7 @@ impl CmsManager {
         Err(QuantCryptError::InvalidEnvelopedData)
     }
 
-    pub fn decrypt(
-        data: &[u8],
-        private_key: &PrivateKey,
-        auth: &impl CertificateStore,
-    ) -> Result<Vec<u8>> {
+    pub fn decrypt(data: &[u8], private_key: &PrivateKey, cert: &Certificate) -> Result<Vec<u8>> {
         let content_info: ContentInfo =
             ContentInfo::from_der(data).map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
         let oid = content_info.content_type;
@@ -101,7 +99,7 @@ impl CmsManager {
             .map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
 
         if oid == ID_ENVELOPED_DATA {
-            Self::decrypt_enveloped(&enveloped_data, private_key, auth)
+            Self::decrypt_enveloped(&enveloped_data, private_key, cert)
         } else if oid == ID_CT_AUTH_ENVELOPED_DATA {
             let _ = 0;
             Err(QuantCryptError::InvalidEnvelopedData)
@@ -113,7 +111,7 @@ impl CmsManager {
 }
 #[cfg(test)]
 mod tests {
-    use crate::{kem::cms::dummy_cert_store::DummyCertificateStore, Certificate};
+    use crate::Certificate;
 
     use super::*;
 
@@ -136,16 +134,14 @@ mod tests {
         );
         let sk = PrivateKey::from_der(sk).unwrap();
 
-        let auth = DummyCertificateStore::new();
-
-        let result = CmsManager::decrypt(enveloped, &sk, &auth).unwrap();
+        let result = CmsManager::decrypt(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
         let enveloped = include_bytes!("../../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256.der");
 
-        let result = CmsManager::decrypt(enveloped, &sk, &auth).unwrap();
+        let result = CmsManager::decrypt(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
@@ -153,7 +149,7 @@ mod tests {
         //1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-kmac128_ukm.der
         let enveloped = include_bytes!("../../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-kmac128_ukm.der");
 
-        let result = CmsManager::decrypt(enveloped, &sk, &auth).unwrap();
+        let result = CmsManager::decrypt(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
