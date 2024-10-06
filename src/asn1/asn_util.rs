@@ -75,9 +75,9 @@ pub fn is_composite_oid(oid: &str) -> bool {
     is_composite_kem || is_composite_dsa
 }
 
-// pub fn is_kem_oid(oid: &str) -> bool {
-//     KemAlgorithm::from_oid(oid).is_some()
-// }
+pub fn is_kem_oid(oid: &str) -> bool {
+    KemAlgorithm::from_oid(oid).is_some()
+}
 
 pub fn is_dsa_oid(oid: &str) -> bool {
     DsaAlgorithm::from_oid(oid).is_some()

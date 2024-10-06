@@ -1,14 +1,18 @@
 use hkdf::Hkdf;
 use sha2::{Sha256, Sha384};
-use sha3::{Digest, Sha3_256, Sha3_512};
+use sha3::{Digest, Sha3_256, Sha3_384, Sha3_512};
 // Implement Copy and Debug for KemType
 #[derive(Clone, Debug)]
 /// The type of the Key Derivation Function (KDF)
+// TODO: Align KEM with internet draft
+// Ignore dead code for now
+#[allow(dead_code)]
 pub enum KdfType {
     HkdfSha256,
     Sha3_256,
     HkdfSha384,
     Sha3_512,
+    Sha3_384,
 }
 
 /// The Key Derivation Function (KDF)
@@ -58,6 +62,11 @@ impl Kdf {
                 hkdf.expand(&[0u8; 48], &mut output).unwrap();
                 output
             }
+            KdfType::Sha3_384 => {
+                let mut hasher = Sha3_384::new();
+                hasher.update(input);
+                hasher.finalize().to_vec()
+            }
             KdfType::Sha3_512 => {
                 let mut hasher = Sha3_512::new();
                 hasher.update(input);
@@ -78,6 +87,7 @@ mod tests {
             KdfType::Sha3_256,
             KdfType::HkdfSha384,
             KdfType::Sha3_512,
+            KdfType::Sha3_384,
         ];
         for kdf_type in types {
             let kdf = Kdf::new(kdf_type.clone());
@@ -90,6 +100,7 @@ mod tests {
                     KdfType::Sha3_256 => 32,
                     KdfType::HkdfSha384 => 48,
                     KdfType::Sha3_512 => 64,
+                    KdfType::Sha3_384 => 48,
                 }
             );
             let output2 = kdf.kdf(input);

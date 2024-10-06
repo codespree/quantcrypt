@@ -2,12 +2,16 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum QuantCryptError {
+    #[error("Invalid RecipientInfo")]
+    InvalidRecipientInfo,
     #[error("Certificate doesn't contain a Subject Key Identifier extension")]
     SkidNotFound,
     #[error("The path doesn't exist or is not a directory")]
     InvalidDirectoryPath,
     #[error("Invalid Nonce")]
     InvalidAesNonce,
+    #[error("Invalid attribute")]
+    InvalidAttribute,
     #[error("Key wrap failed")]
     KeyWrapFailed,
     #[error("Key unwrap failed")]

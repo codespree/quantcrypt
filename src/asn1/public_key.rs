@@ -2,6 +2,8 @@ use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
 use crate::errors;
+use crate::kem::common::kem_trait::Kem;
+use crate::kem::kem_manager::KemManager;
 use crate::oid_mapper::map_to_new_oid;
 use der::{asn1::BitString, Document};
 use der::{Decode, Encode};
@@ -13,7 +15,7 @@ use crate::asn1::composite_public_key::CompositePublicKey;
 
 use crate::asn1::public_key_info::PublicKeyInfo;
 
-use super::asn_util::is_dsa_oid;
+use super::asn_util::{is_dsa_oid, is_kem_oid};
 use errors::QuantCryptError;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
@@ -283,6 +285,20 @@ impl PublicKey {
         };
 
         Ok(verified)
+    }
+
+    pub fn encap(&self) -> Result<(Vec<u8>, Vec<u8>)> {
+        // Check if this is a KEM key
+        if !is_kem_oid(&self.oid) {
+            return Err(errors::QuantCryptError::UnsupportedOperation);
+        }
+
+        let mut kem =
+            KemManager::new_from_oid(&self.oid).map_err(|_| errors::QuantCryptError::InvalidOid)?;
+
+        let (ct, ss) = kem.encap(self.get_key())?;
+
+        Ok((ct, ss))
     }
 }
 

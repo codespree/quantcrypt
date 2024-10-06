@@ -19,6 +19,7 @@ impl Wrap for Aes {
 
     fn wrap(&self, wrapping_key: &[u8], key_to_wrap: &[u8]) -> Result<Vec<u8>> {
         let key_size = match self.wrap_type {
+            //TODO: Can KEK (wrapping key) ever be a different size than the CEK (key to wrap)?
             WrapType::Aes128 => {
                 if wrapping_key.len() != 16 || key_to_wrap.len() != 16 {
                     return Err(QuantCryptError::KeyWrapFailed);

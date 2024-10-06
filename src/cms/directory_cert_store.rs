@@ -2,7 +2,7 @@ use cms::enveloped_data::RecipientIdentifier;
 use std::fs;
 use std::path::Path;
 
-use crate::kem::cms::cert_store_trait::CertificateStore;
+use crate::cms::cert_store_trait::CertificateStore;
 use crate::{Certificate, QuantCryptError};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;

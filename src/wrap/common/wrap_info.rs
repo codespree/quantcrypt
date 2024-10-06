@@ -1,3 +1,4 @@
+use crate::wrap::common::config::key_length::KeyLength;
 use crate::wrap::common::config::oids::Oid;
 use crate::wrap::common::wrap_type::WrapType;
 
@@ -8,6 +9,8 @@ pub struct WrapInfo {
     pub wrap_type: WrapType,
     /// The OID of the KDF
     pub oid: String,
+    /// The length of the key
+    pub key_length: u16,
 }
 
 impl WrapInfo {
@@ -22,6 +25,11 @@ impl WrapInfo {
     /// A new wrap metadata structure
     pub fn new(wrap_type: WrapType) -> Self {
         let oid = wrap_type.get_oid();
-        WrapInfo { wrap_type, oid }
+        let key_length = wrap_type.get_key_length();
+        WrapInfo {
+            wrap_type,
+            oid,
+            key_length,
+        }
     }
 }

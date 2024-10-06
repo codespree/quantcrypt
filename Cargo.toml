@@ -40,7 +40,7 @@ chrono = "0.4.38"
 thiserror = "1.0.64"
 signature = "2.2.0"
 tiny-keccak = {version="2.0.2", features=["kmac"]}
-cms = "0.2.3"
+cms = {version="0.2.3", features=["builder"]}
 spki = "0.7.3"
 const-oid = "0.9.6"
 

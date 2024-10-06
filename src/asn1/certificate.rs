@@ -1,11 +1,13 @@
 use crate::{
     dsa::{common::dsa_trait::Dsa, dsa_manager::DsaManager},
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
+    oid_mapper::map_to_new_oid,
     PublicKey,
 };
 use chrono::{DateTime, Utc};
 use cms::enveloped_data::RecipientIdentifier;
 use der::{Decode, DecodePem, Encode, EncodePem};
+use spki::ObjectIdentifier;
 use x509_cert::{
     ext::pkix::{AuthorityKeyIdentifier, KeyUsage, SubjectKeyIdentifier},
     name::RdnSequence,
@@ -85,8 +87,20 @@ impl Certificate {
     ///
     /// `CertificateError::InvalidCertificate` will be returned if the certificate is invalid
     pub fn from_der(der: &[u8]) -> Result<Certificate> {
-        let cert = x509_cert::Certificate::from_der(der)
+        let mut cert = x509_cert::Certificate::from_der(der)
             .map_err(|_| QuantCryptError::InvalidCertificate)?;
+        // Map old OIDs to new OIDs
+        let original_oid = cert
+            .tbs_certificate
+            .subject_public_key_info
+            .algorithm
+            .oid
+            .to_string();
+        let mapped_oid = map_to_new_oid(&original_oid);
+        let new_oid: ObjectIdentifier = mapped_oid
+            .parse()
+            .map_err(|_| QuantCryptError::InvalidCertificate)?;
+        cert.tbs_certificate.subject_public_key_info.algorithm.oid = new_oid;
         Ok(Certificate::new(cert))
     }
 
@@ -285,6 +299,11 @@ impl Certificate {
             }
             cms::enveloped_data::RecipientIdentifier::SubjectKeyIdentifier(ski) => {
                 if let Ok(cert_ski) = self.get_subject_key_identifier() {
+                    println!(
+                        "Comparing SKI: {:?} {:?}",
+                        hex::encode(cert_ski.0.clone()),
+                        hex::encode(ski.0.clone())
+                    );
                     if cert_ski == *ski {
                         return true;
                     }

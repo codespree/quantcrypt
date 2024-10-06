@@ -1,5 +1,6 @@
 mod asn1;
 mod cea;
+mod cms;
 mod dsa;
 mod errors;
 mod kdf;
@@ -38,7 +39,8 @@ pub use cea::api::CeaManager;
 pub use cea::api::CeaType;
 
 // CMS
-pub use kem::cms::cert_store_trait::CertificateStore;
-pub use kem::cms::cms_manager::CmsManager;
-pub use kem::cms::directory_cert_store::DirectoryCertificateStore;
-pub use kem::cms::dummy_cert_store::DummyCertificateStore;
+pub use cms::cert_store_trait::CertificateStore;
+pub use cms::cms_manager::CmsManager;
+pub use cms::directory_cert_store::DirectoryCertificateStore;
+pub use cms::dummy_cert_store::DummyCertificateStore;
+pub use cms::enveloped_data_builder::EnvelopedDataBuilder;

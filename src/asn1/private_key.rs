@@ -286,7 +286,7 @@ impl PrivateKey {
         Ok(sig)
     }
 
-    pub fn decap(&self, ct: &[u8]) -> Result<Vec<u8>> {
+    pub(crate) fn decap(&self, ct: &[u8]) -> Result<Vec<u8>> {
         if is_dsa_oid(&self.oid) {
             return Err(errors::QuantCryptError::UnsupportedOperation);
         }

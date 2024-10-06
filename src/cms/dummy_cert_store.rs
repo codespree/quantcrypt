@@ -4,7 +4,7 @@ use std::str::FromStr;
 use x509_cert::{builder::Profile, name::Name};
 
 use crate::{
-    kem::cms::cert_store_trait::CertificateStore, CertValidity, Certificate, CertificateBuilder,
+    cms::cert_store_trait::CertificateStore, CertValidity, Certificate, CertificateBuilder,
     DsaAlgorithm, DsaKeyGenerator,
 };
 
