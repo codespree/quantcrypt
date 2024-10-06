@@ -299,11 +299,6 @@ impl Certificate {
             }
             cms::enveloped_data::RecipientIdentifier::SubjectKeyIdentifier(ski) => {
                 if let Ok(cert_ski) = self.get_subject_key_identifier() {
-                    println!(
-                        "Comparing SKI: {:?} {:?}",
-                        hex::encode(cert_ski.0.clone()),
-                        hex::encode(ski.0.clone())
-                    );
                     if cert_ski == *ski {
                         return true;
                     }

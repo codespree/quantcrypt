@@ -87,7 +87,6 @@ impl RecipientInfoBuilder for KemRecipientInfoBuilder {
         let skid = self.cert.get_subject_key_identifier().map_err(|_| {
             Error::Builder("Error getting subject key identifier from cert".to_string())
         })?;
-        println!("Adding SKID: {:?}", hex::encode(skid.0.as_bytes()));
         let rid = RecipientIdentifier::SubjectKeyIdentifier(skid);
 
         let kem_oid = self.kem.get_kem_info().oid;
