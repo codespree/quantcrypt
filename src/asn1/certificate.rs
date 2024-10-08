@@ -257,7 +257,7 @@ impl Certificate {
 
     pub fn from_file(path: &str) -> Result<Certificate> {
         // Read the contents of the file as bytes
-        let contents = std::fs::read(path).map_err(|_| QuantCryptError::InvalidCertificate)?;
+        let contents = std::fs::read(path).map_err(|_| QuantCryptError::FileReadError)?;
 
         // Try to interpret as DER
         let result = Certificate::from_der(&contents);

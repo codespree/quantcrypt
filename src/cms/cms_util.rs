@@ -7,8 +7,8 @@
 use crate::cea::common::cea_trait::Cea;
 use crate::Certificate;
 use crate::{
-    cms::asn1::kemri::KemRecipientInfo, kdf::common::kdf_trait::Kdf,
-    wrap::common::wrap_trait::Wrap, KdfManager, PrivateKey, QuantCryptError, WrapManager,
+    cms::asn1::kemri::KemRecipientInfo, kdf::api::KdfManager, kdf::common::kdf_trait::Kdf,
+    wrap::api::WrapManager, wrap::common::wrap_trait::Wrap, PrivateKey, QuantCryptError,
 };
 use cms::content_info::ContentInfo;
 use cms::enveloped_data::{EnvelopedData, OtherRecipientInfo, RecipientInfo, UserKeyingMaterial};
@@ -23,9 +23,9 @@ use crate::cms::asn1::auth_env_data::AuthEnvelopedData;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-pub struct CmsManager {}
+pub struct CmsUtil {}
 
-impl CmsManager {
+impl CmsUtil {
     pub fn get_kek(
         ss: &[u8],
         wrap_oid: &str,
@@ -189,28 +189,6 @@ impl CmsManager {
             Err(QuantCryptError::InvalidEnvelopedData)
         }
     }
-
-    // pub fn encrypt_enveloped_data(
-    //     cert: &Certificate,
-    //     plaintext: &[u8],
-    //     wrap_alg: WrapType,
-    //     kdf_alg: KdfType,
-    //     cea_alg: CeaType,
-    //     ukm: Option<UserKeyingMaterial>
-    // ) -> Result<Vec<u8>> {
-    //     let wrap_oid = wrap_alg.get_oid();
-    //     let kdf_oid = kdf_alg.get_oid();
-    //     let cea = CeaManager::new(cea_alg)?;
-
-    //     let (kem_ct, ss) = cert.get_public_key()?.encap()?;
-
-    //     // Generate CEK
-    //     let cek = cea.key_gen()?;
-
-    //     let kek = Self::get_kek(&ss, &wrap_oid, &kdf_oid, kemri.kek_length, ukm)?;
-
-    //     Ok(vec![])
-    // }
 }
 #[cfg(test)]
 mod tests {
@@ -236,28 +214,28 @@ mod tests {
         );
         let sk = PrivateKey::from_der(sk).unwrap();
 
-        let result = CmsManager::decrypt_kemri(enveloped, &sk, &ee).unwrap();
+        let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
         let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256.der");
 
-        let result = CmsManager::decrypt_kemri(enveloped, &sk, &ee).unwrap();
+        let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
         let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-kmac128_ukm.der");
 
-        let result = CmsManager::decrypt_kemri(enveloped, &sk, &ee).unwrap();
+        let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
         let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_auth_id-alg-hkdf-with-sha256_ukm.der");
 
-        let result = CmsManager::decrypt_kemri(enveloped, &sk, &ee).unwrap();
+        let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);

@@ -2,6 +2,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum QuantCryptError {
+    #[error("Cannot read from the specified file")]
+    FileReadError,
     #[error("Invalid RecipientInfo")]
     InvalidRecipientInfo,
     #[error("Certificate doesn't contain a Subject Key Identifier extension")]
@@ -74,4 +76,6 @@ pub enum QuantCryptError {
     DecapFailed,
     #[error("Unknown error")]
     Unknown,
+    #[error("Invalid content")]
+    InvalidContent,
 }

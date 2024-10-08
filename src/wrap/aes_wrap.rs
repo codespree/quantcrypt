@@ -18,25 +18,28 @@ impl Wrap for Aes {
     }
 
     fn wrap(&self, wrapping_key: &[u8], key_to_wrap: &[u8]) -> Result<Vec<u8>> {
-        let key_size = match self.wrap_type {
-            //TODO: Can KEK (wrapping key) ever be a different size than the CEK (key to wrap)?
+        // CEK must be a multiple of 64 bits
+        if key_to_wrap.len() % 8 != 0 {
+            return Err(QuantCryptError::KeyWrapFailed);
+        }
+
+        match self.wrap_type {
+            //For adequate security, the wrapping key (KEK) should be at least as long as the key_to_wrap (CEK)
             WrapType::Aes128 => {
-                if wrapping_key.len() != 16 || key_to_wrap.len() != 16 {
+                if wrapping_key.len() != 16 || key_to_wrap.len() > 16 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-                16
             }
             WrapType::Aes256 => {
-                if wrapping_key.len() != 32 || key_to_wrap.len() != 32 {
+                if wrapping_key.len() != 32 || key_to_wrap.len() > 32 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
-                32
             }
         };
 
         let wrapping_key = openssl::aes::AesKey::new_encrypt(wrapping_key)
             .map_err(|_| QuantCryptError::KeyWrapFailed)?;
-        let mut out_buf = vec![0u8; key_size + 8];
+        let mut out_buf = vec![0u8; key_to_wrap.len() + 8];
         wrap_key(&wrapping_key, None, &mut out_buf, key_to_wrap)
             .map_err(|_| QuantCryptError::KeyWrapFailed)?;
         //encrypt_wrap!(Aes128, wrapping_key, key_to_wrap)
@@ -44,29 +47,9 @@ impl Wrap for Aes {
     }
 
     fn unwrap(&self, wrapping_key: &[u8], key_to_unwrap: &[u8]) -> Result<Vec<u8>> {
-        let key_size = match self.wrap_type {
-            WrapType::Aes128 => {
-                if wrapping_key.len() != 16 {
-                    return Err(QuantCryptError::KeyUnwrapFailed);
-                }
-                if key_to_unwrap.len() != 16 + 8 {
-                    return Err(QuantCryptError::KeyUnwrapFailed);
-                }
-                16
-            }
-            WrapType::Aes256 => {
-                if wrapping_key.len() != 32 {
-                    return Err(QuantCryptError::KeyUnwrapFailed);
-                }
-                if key_to_unwrap.len() != 32 + 8 {
-                    return Err(QuantCryptError::KeyUnwrapFailed);
-                }
-                32
-            }
-        };
         let key = openssl::aes::AesKey::new_decrypt(wrapping_key)
             .map_err(|_| QuantCryptError::KeyUnwrapFailed)?;
-        let mut out_buf = vec![0u8; key_size];
+        let mut out_buf = vec![0u8; key_to_unwrap.len() - 8];
         unwrap_key(&key, None, &mut out_buf, key_to_unwrap)
             .map_err(|_| QuantCryptError::KeyUnwrapFailed)?;
 
@@ -92,6 +75,25 @@ mod tests {
         assert!(wrapped_key.len() == 24);
         let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
         assert_eq!(key_to_wrap, unwrapped_key);
+
+        // The wrapping key can be larger than the key to wrap
+        let aes = Aes::new(WrapType::Aes256).unwrap();
+        let wrapping_key = vec![0u8; 32];
+        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap).unwrap();
+        assert!(wrapped_key.len() == 24);
+        let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
+        assert_eq!(key_to_wrap, unwrapped_key);
+
+        // But not smaller
+        let wrapping_key = vec![0u8; 16];
+        let key_to_wrap = vec![0u8; 32];
+        let aes = Aes::new(WrapType::Aes128).unwrap();
+        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap);
+        assert!(wrapped_key.is_err());
+        assert!(matches!(
+            wrapped_key.unwrap_err(),
+            QuantCryptError::KeyWrapFailed
+        ));
     }
 
     #[test]

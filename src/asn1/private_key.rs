@@ -294,6 +294,27 @@ impl PrivateKey {
         let ss = kem.decap(&self.private_key, ct)?;
         Ok(ss)
     }
+
+    pub fn from_file(path: &str) -> Result<Self> {
+        // Read the contents of the file as bytes
+        let contents = std::fs::read(path).map_err(|_| QuantCryptError::FileReadError)?;
+
+        // Try to interpret as DER
+        let result = PrivateKey::from_der(&contents);
+
+        if let Ok(sk) = result {
+            Ok(sk)
+        } else {
+            // Try to interpret as PEM
+            let pem =
+                std::str::from_utf8(&contents).map_err(|_| QuantCryptError::InvalidCertificate)?;
+            if let Ok(sk) = PrivateKey::from_pem(pem) {
+                Ok(sk)
+            } else {
+                Err(QuantCryptError::InvalidPrivateKey)
+            }
+        }
+    }
 }
 
 #[cfg(test)]

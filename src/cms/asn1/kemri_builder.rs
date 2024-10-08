@@ -1,4 +1,4 @@
-use crate::{cms::cms_manager::CmsManager, wrap::common::wrap_trait::Wrap, WrapManager};
+use crate::{cms::cms_util::CmsUtil, wrap::api::WrapManager, wrap::common::wrap_trait::Wrap};
 use cms::{
     builder::{RecipientInfoBuilder, RecipientInfoType},
     content_info::CmsVersion,
@@ -29,14 +29,14 @@ pub struct KemRecipientInfoBuilder {
 
 impl KemRecipientInfoBuilder {
     pub fn new(
-        cert: Certificate,
+        cert: &Certificate,
         kem: KemManager,
         kdf_oid: String,
         wrap_oid: String,
         ukm: Option<UserKeyingMaterial>,
     ) -> Self {
         Self {
-            cert,
+            cert: cert.clone(),
             kem,
             kdf_oid,
             wrap_oid,
@@ -71,7 +71,7 @@ impl RecipientInfoBuilder for KemRecipientInfoBuilder {
 
         let kek_length = wrap_man.get_wrap_info().key_length;
 
-        let kek = CmsManager::get_kek(
+        let kek = CmsUtil::get_kek(
             &ss,
             &self.wrap_oid,
             &self.kdf_oid,
