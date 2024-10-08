@@ -59,7 +59,7 @@ impl DsaAlgorithm {
             DsaAlgorithm::MlDsa87EcdsaBrainpoolP384r1SHA512 => {
                 DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512
             }
-            DsaAlgorithm::MlDsa87Ed448SHA512 => DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512,
+            DsaAlgorithm::MlDsa87Ed448SHA512 => DsaType::MlDsa87Ed448SHA512,
         }
     }
 
