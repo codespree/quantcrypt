@@ -2,19 +2,202 @@
 
 ![example workflow](https://github.com/codespree/quantcrypt/actions/workflows/rust.yml/badge.svg) [![dependency status](https://deps.rs/repo/github/codespree/quantcrypt/status.svg)](https://deps.rs/repo/github/codespree/quantcrypt)
 
-A collection of post-quantum cryptographic algorithms (and emerging standards) implemented in Rust.
+The goal of this library is to provide a simple and easy-to-use 
+interface for generating key pairs, certificates, signing and verifying messages, and encrypting and decrypting messages using post-quantum cryptographic algorithms.
 
-## Composite ML-KEM for Use in the Internet X.509 Public Key Infrastructure and CMS
+A secondary goal is to provide a set of cryptographic algorithms that are compatible with existing X.509, PKIX, and CMS data structures and protocols and to support the efforts of the [LAMPS Working Group](https://datatracker.ietf.org/wg/lamps/about/) in the IETF especially the [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) and [draft-ietf-lamps-pq-composite-kem](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/) drafts.
 
-A set of [Key Encapsulation Mechanism](https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html) (KEM) schemes that use pairs of cryptographic elements such as public keys and cipher texts to combine their security properties. These schemes effectively mitigate risks associated with the adoption of post-quantum cryptography and are fully compatible with existing X.509, PKIX, and CMS data structures and protocols.
+## Generating Key Pairs and Certificates
 
-## Composite ML-DSA for use in Internet PKI
+The following snippet demonstrates how to generate a key pair and a certificate using the DSA and KEM algorithms. In addition to pure ML-DSA and ML-KEM algorithms, the library also supports composite algorithms that combine a traditional and post-quantum algorithm into a single key pair and certificate.
 
-During the transition to post-quantum cryptography, there will be uncertainty as to the strength of cryptographic algorithms; we will no longer fully trust traditional cryptography such as RSA, Diffie-Hellman, DSA and their elliptic curve variants, but we will also not fully trust their post-quantum replacements until they have had sufficient scrutiny and time to discover and fix implementation bugs. Unlike previous cryptographic algorithm migrations, the choice of when to migrate and which algorithms to migrate to, is not so clear. Even after the migration period, it may be advantageous for an entity's cryptographic identity to be composed of multiple public-key algorithms.
+```rust
+use quantcrypt::CertificateBuilder;
+use quantcrypt::DsaAlgorithm;
+use quantcrypt::KemAlgorithm;
+use quantcrypt::Profile;
+use quantcrypt::DsaKeyGenerator;
+use quantcrypt::KemKeyGenerator;
+use quantcrypt::CertValidity;
 
-The [composite DSA](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) schemes follow the draft standard for Composite Digital Signature Algorithms (DSA) for use in the Internet Public Key Infrastructure (PKI). These schemes are designed to be compatible with existing X.509, PKIX, and CMS data structures and protocols.
+// Create a TA key pair
+let (pk_root, sk_root) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().unwrap();
 
-# License
+let profile = Profile::Root;
+let serial_no = None; // This will generate a random serial number
+let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap(); // Not before is now
+let subject = "CN=example.com".to_string();
+let cert_public_key = pk_root.clone();
+let signer = &sk_root;
+
+// Create the TA certificate builder
+let builder = CertificateBuilder::new(
+    profile,
+    serial_no,
+    validity.clone(),
+    subject.clone(),
+    cert_public_key,
+    signer
+).unwrap();
+let cert_root = builder.build().unwrap();
+assert!(cert_root.verify_self_signed().unwrap());
+
+// Create a leaf (EE) key pair for KEM
+let (pk_kem, sk_kem) = KemKeyGenerator::new(KemAlgorithm::MlKem512).generate().unwrap();
+let builder = CertificateBuilder::new(
+    Profile::Leaf {
+        issuer: cert_root.get_subject(),
+        enable_key_agreement: false,
+        enable_key_encipherment: true,
+    },
+    serial_no,
+    validity,
+    subject,
+    pk_kem,
+    signer
+).unwrap();
+let cert_kem = builder.build().unwrap();
+
+// It's not self signed so verification so self signed should fail
+assert!(!cert_kem.verify_self_signed().unwrap());
+
+// But it should verify against the root
+assert!(cert_root.verify_child(&cert_kem).unwrap());
+```
+
+## Generating Enveloped Data CMS Message
+
+The following snippet demonstrates how to generate a CMS message using the DSA and KEM algorithms.
+
+```rust
+use quantcrypt::EnvelopedDataContent;
+use quantcrypt::ContentEncryptionAlgorithm;
+use quantcrypt::Certificate;
+use quantcrypt::PrivateKey;
+use quantcrypt::KdfType;
+use quantcrypt::WrapType;
+use quantcrypt::UserKeyingMaterial;
+use quantcrypt::ObjectIdentifier;
+use quantcrypt::Attribute;
+use quantcrypt::Tag;
+use quantcrypt::AttributeValue;
+use quantcrypt::SetOfVec;
+
+let recipient_cert = Certificate::from_file(
+    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
+).unwrap();
+
+let private_key = PrivateKey::from_file(
+    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der",
+).unwrap();
+
+let ukm = UserKeyingMaterial::new("test".as_bytes()).unwrap();
+let data = b"abc";
+
+let attribute_oid = ObjectIdentifier::new("1.3.6.1.4.1.22554.5.6").unwrap();
+let mut attribute_vals: SetOfVec<AttributeValue> = SetOfVec::<AttributeValue>::new();
+
+let attr_val = AttributeValue::new(Tag::OctetString, data.to_vec()).unwrap();
+attribute_vals.insert(attr_val).unwrap();
+
+let attribute = Attribute {
+    oid: attribute_oid,
+    values: attribute_vals,
+};
+
+let mut builder = EnvelopedDataContent::get_builder(ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+
+builder
+    .kem_recipient(
+        &recipient_cert,
+        &KdfType::HkdfWithSha256,
+        &WrapType::Aes256,
+        Some(ukm),
+    )
+    .unwrap()
+    .content(data)
+    .unwrap()
+    .unprotected_attribute(&attribute)
+    .unwrap();
+
+let content = builder.build().unwrap();
+
+// Now use this content to create a new EnvelopedDataContent
+let edc = EnvelopedDataContent::from_bytes_for_kem_recipient(
+    &content,
+    &recipient_cert,
+    &private_key,
+).unwrap();
+assert_eq!(edc.get_content(), data);
+```
+
+## Generating Auth Enveloped Data CMS Message
+
+Auth Enveloped Data is much like the above snippet but using `AuthEnvelopedDataContent` instead of `EnvelopedDataContent`.
+
+```rust
+use quantcrypt::AuthEnvelopedDataContent;
+use quantcrypt::ContentEncryptionAlgorithmAead;
+use quantcrypt::Certificate;
+use quantcrypt::PrivateKey;
+use quantcrypt::KdfType;
+use quantcrypt::WrapType;
+use quantcrypt::UserKeyingMaterial;
+use quantcrypt::ObjectIdentifier;
+use quantcrypt::Attribute;
+use quantcrypt::Tag;
+use quantcrypt::AttributeValue;
+use quantcrypt::SetOfVec;
+
+let recipient_cert = Certificate::from_file(
+    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
+).unwrap();
+
+let private_key = PrivateKey::from_file(
+    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der",
+).unwrap();
+
+let ukm = UserKeyingMaterial::new("test".as_bytes()).unwrap();
+let data = b"abc";
+
+let attribute_oid = ObjectIdentifier::new("1.3.6.1.4.1.22554.5.6").unwrap();
+let mut attribute_vals: SetOfVec<AttributeValue> = SetOfVec::<AttributeValue>::new();
+
+let attr_val = AttributeValue::new(Tag::OctetString, data.to_vec()).unwrap();
+attribute_vals.insert(attr_val).unwrap();
+
+let attribute = Attribute {
+    oid: attribute_oid,
+    values: attribute_vals,
+};
+
+let mut builder = AuthEnvelopedDataContent::get_builder(ContentEncryptionAlgorithmAead::Aes256Gcm).unwrap();
+
+builder
+    .kem_recipient(
+        &recipient_cert,
+        &KdfType::HkdfWithSha256,
+        &WrapType::Aes256,
+        Some(ukm),
+    )
+    .unwrap()
+    .content(data)
+    .unwrap()
+    .auth_attribute(&attribute)
+    .unwrap();
+
+let content = builder.build().unwrap();
+
+// Now use this content to create a new AuthEnvelopedDataContent
+let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
+    &content,
+    &recipient_cert,
+    &private_key,
+).unwrap();
+assert_eq!(edc.get_content(), data);
+```
+
+## License
 
 All crates licensed under either of
 - [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
@@ -22,7 +205,6 @@ All crates licensed under either of
 
 at your option.
 
-# Contribution
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
-
