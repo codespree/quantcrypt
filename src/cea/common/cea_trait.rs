@@ -24,6 +24,14 @@ pub trait Cea {
     /// The generated symmetric key
     fn key_gen(&mut self) -> Result<Vec<u8>>;
 
+    /// Generate a nonce using the default RNG
+    ///
+    /// # Returns
+    ///
+    /// The generated nonce
+    fn nonce_gen(&mut self) -> Result<Vec<u8>>;
+
+    #[allow(dead_code)]
     fn new_from_oid(oid: &str) -> Result<Self>
     where
         Self: Sized,

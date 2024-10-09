@@ -8,6 +8,7 @@ use crate::dsa::common::dsa_type::DsaType;
 ///
 /// This is also used to test the correctness of the DSA
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct DsaInfo {
     /// The type of DSA
     pub dsa_type: DsaType,

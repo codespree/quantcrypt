@@ -24,14 +24,13 @@ impl Wrap for Aes {
         }
 
         match self.wrap_type {
-            //For adequate security, the wrapping key (KEK) should be at least as long as the key_to_wrap (CEK)
             WrapType::Aes128 => {
-                if wrapping_key.len() != 16 || key_to_wrap.len() > 16 {
+                if wrapping_key.len() != 16 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
             }
             WrapType::Aes256 => {
-                if wrapping_key.len() != 32 || key_to_wrap.len() > 32 {
+                if wrapping_key.len() != 32 {
                     return Err(QuantCryptError::KeyWrapFailed);
                 }
             }
@@ -84,38 +83,14 @@ mod tests {
         let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
         assert_eq!(key_to_wrap, unwrapped_key);
 
-        // But not smaller
+        // And can be smaller too
         let wrapping_key = vec![0u8; 16];
         let key_to_wrap = vec![0u8; 32];
         let aes = Aes::new(WrapType::Aes128).unwrap();
-        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap);
-        assert!(wrapped_key.is_err());
-        assert!(matches!(
-            wrapped_key.unwrap_err(),
-            QuantCryptError::KeyWrapFailed
-        ));
-    }
-
-    #[test]
-    fn test_aes_128_wrap_unwrap_failure() {
-        let aes = Aes::new(WrapType::Aes128).unwrap();
-        let wrapping_key = vec![0u8; 16];
-        let key_to_wrap = vec![0u8; 32];
-        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap);
-        assert!(wrapped_key.is_err());
-        assert!(matches!(
-            wrapped_key.unwrap_err(),
-            QuantCryptError::KeyWrapFailed
-        ));
-
-        let wrapping_key = vec![0u8; 32];
-        let key_to_wrap = vec![0u8; 16];
-        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap);
-        assert!(wrapped_key.is_err());
-        assert!(matches!(
-            wrapped_key.unwrap_err(),
-            QuantCryptError::KeyWrapFailed
-        ));
+        let wrapped_key = aes.wrap(&wrapping_key, &key_to_wrap).unwrap();
+        assert!(wrapped_key.len() == 40);
+        let unwrapped_key = aes.unwrap(&wrapping_key, &wrapped_key).unwrap();
+        assert_eq!(key_to_wrap, unwrapped_key);
     }
 
     #[test]

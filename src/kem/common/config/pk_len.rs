@@ -25,7 +25,7 @@ impl PKLen for KemType {
             KemType::MlKem512 => Some(800),
             KemType::MlKem768 => Some(1184),
             KemType::MlKem1024 => Some(1568),
-            // TODO: Confirm if RSA key format is correct
+            // RSA Key public key sizes
             KemType::RsaOAEP2048 => None,
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,

@@ -2,6 +2,7 @@ use crate::cea::common::cea_type::CeaType;
 use crate::cea::common::config::oids::Oid;
 
 /// A structure to represent metadata about a KDF
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct CeaInfo {
     /// The type of KDF

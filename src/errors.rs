@@ -78,4 +78,6 @@ pub enum QuantCryptError {
     Unknown,
     #[error("Invalid content")]
     InvalidContent,
+    #[error("Unsupported Content Encryption Algorithm")]
+    UnsupportedContentEncryptionAlgorithm,
 }

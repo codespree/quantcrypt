@@ -192,11 +192,7 @@ impl Certificate {
 
         let pk = self.get_public_key()?;
 
-        let result = if let Ok(result) = pk.verify(&msg, sig) {
-            result
-        } else {
-            false
-        };
+        let result = pk.verify(&msg, sig).unwrap_or(false);
 
         Ok(result)
     }

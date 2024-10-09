@@ -278,11 +278,9 @@ impl PublicKey {
         let dsa =
             DsaManager::new_from_oid(&self.oid).map_err(|_| errors::QuantCryptError::InvalidOid)?;
 
-        let verified = if let Ok(sig) = dsa.verify(self.get_key(), message, signature) {
-            sig
-        } else {
-            false
-        };
+        let verified = dsa
+            .verify(self.get_key(), message, signature)
+            .unwrap_or(false);
 
         Ok(verified)
     }

@@ -13,8 +13,11 @@ use crate::{
 use cms::content_info::ContentInfo;
 use cms::enveloped_data::{EnvelopedData, OtherRecipientInfo, RecipientInfo, UserKeyingMaterial};
 use const_oid::db::rfc5911::{ID_CT_AUTH_ENVELOPED_DATA, ID_ENVELOPED_DATA};
+use der::asn1::{OctetStringRef, SetOfVec};
+use der::Tag;
 use der::{asn1::OctetString, Decode, Encode};
 use spki::{AlgorithmIdentifierOwned, ObjectIdentifier};
+use x509_cert::attr::{Attribute, AttributeValue};
 
 use crate::cea::cea_manager::CeaManager;
 use crate::cms::asn1::kemri::CmsOriForKemOtherInfo;
@@ -112,9 +115,12 @@ impl CmsUtil {
         for ri in ed.recip_infos.0.iter() {
             match ri {
                 RecipientInfo::Ori(ori) => {
-                    let key = Self::get_cek(ori, private_key, cert)?;
-                    let result = CeaManager::decrypt(&key, mac, &ct, Some(&aad))?;
-                    return Ok(result);
+                    if let Ok(key) = Self::get_cek(ori, private_key, cert) {
+                        let result = CeaManager::decrypt(&key, mac, &ct, Some(&aad))?;
+                        return Ok(result);
+                    } else {
+                        continue;
+                    }
                 }
                 _ => {
                     continue;
@@ -188,6 +194,49 @@ impl CmsUtil {
         } else {
             Err(QuantCryptError::InvalidEnvelopedData)
         }
+    }
+
+    /// Create a content-type attribute according to
+    /// [RFC 5652 § 11.1](https://datatracker.ietf.org/doc/html/rfc5652#section-11.1)
+    #[allow(dead_code)]
+    pub(crate) fn create_content_type_attribute(
+        content_type: ObjectIdentifier,
+    ) -> Result<Attribute> {
+        let content_type_bytes = content_type.as_bytes();
+
+        let content_type_attribute_value =
+            AttributeValue::new(Tag::ObjectIdentifier, content_type_bytes)
+                .map_err(|_| QuantCryptError::InvalidAttribute)?;
+        let mut values = SetOfVec::new();
+        values
+            .insert(content_type_attribute_value)
+            .map_err(|_| QuantCryptError::InvalidAttribute)?;
+        let attribute = Attribute {
+            oid: const_oid::db::rfc5911::ID_CONTENT_TYPE,
+            values,
+        };
+        Ok(attribute)
+    }
+
+    /// Create a message digest attribute according to
+    /// [RFC 5652 § 11.2](https://datatracker.ietf.org/doc/html/rfc5652#section-11.2)
+    #[allow(dead_code)]
+    pub(crate) fn create_message_digest_attribute(message_digest: &[u8]) -> Result<Attribute> {
+        let message_digest_der =
+            OctetStringRef::new(message_digest).map_err(|_| QuantCryptError::InvalidAttribute)?;
+        use der::Tag::OctetString;
+        let message_digest_attribute_value =
+            AttributeValue::new(OctetString, message_digest_der.as_bytes())
+                .map_err(|_| QuantCryptError::InvalidAttribute)?;
+        let mut values = SetOfVec::new();
+        values
+            .insert(message_digest_attribute_value)
+            .map_err(|_| QuantCryptError::InvalidAttribute)?;
+        let attribute = Attribute {
+            oid: const_oid::db::rfc5911::ID_MESSAGE_DIGEST,
+            values,
+        };
+        Ok(attribute)
     }
 }
 #[cfg(test)]

@@ -28,7 +28,7 @@ impl Kdf for Kmac {
         length: usize,
         salt: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
-        let salt = if let Some(salt) = salt { salt } else { &[] };
+        let salt = salt.unwrap_or(&[]);
         match self.kdf_type {
             KdfType::Kmac128 => {
                 let mut kmac = KmacKeccak::v128(ikm, salt);

@@ -64,8 +64,13 @@ impl Cea for CeaManager {
     }
 
     fn decrypt(key: &[u8], tag: &[u8], ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
-        // TODO: Figure out how to handle multiple CEA types
         Aes::decrypt(key, tag, ciphertext, aad)
+    }
+
+    fn nonce_gen(&mut self) -> Result<Vec<u8>> {
+        match self {
+            CeaManager::Aes(aes) => aes.nonce_gen(),
+        }
     }
 }
 

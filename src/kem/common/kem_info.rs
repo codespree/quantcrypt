@@ -9,6 +9,7 @@ use crate::kem::common::kem_type::KemType;
 ///
 /// This is also used to test the correctness of the KEM
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct KemInfo {
     /// The type of KEM
     pub kem_type: KemType,

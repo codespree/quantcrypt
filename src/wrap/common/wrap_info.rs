@@ -4,6 +4,7 @@ use crate::wrap::common::wrap_type::WrapType;
 
 /// A structure to represent metadata about a KDF
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct WrapInfo {
     /// The type of KDF
     pub wrap_type: WrapType,

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod asn1;
 mod cea;
 mod cms;
@@ -31,9 +33,11 @@ pub use crate::kem::api::key_generator::KemKeyGenerator;
 pub use cms::api::Attribute;
 pub use cms::api::AttributeType;
 pub use cms::api::AttributeValue;
+pub use cms::api::AuthEnvelopedDataContent;
 pub use cms::api::CertificateStore;
 pub use cms::api::CmsVersion;
 pub use cms::api::ContentEncryptionAlgorithm;
+pub use cms::api::ContentEncryptionAlgorithmAead;
 pub use cms::api::DirectoryCertificateStore;
 pub use cms::api::DummyCertificateStore;
 pub use cms::api::EnvelopedDataContent;

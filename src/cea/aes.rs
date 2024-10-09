@@ -216,6 +216,12 @@ impl Cea for Aes {
         openssl::rand::rand_bytes(&mut key).map_err(|_| QuantCryptError::Unknown)?;
         Ok(key)
     }
+
+    fn nonce_gen(&mut self) -> Result<Vec<u8>> {
+        let cipher = self.get_cipher();
+        let nonce = self.get_nonce(&cipher, None)?;
+        Ok(nonce)
+    }
 }
 
 #[cfg(test)]

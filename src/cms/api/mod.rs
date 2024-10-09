@@ -1,3 +1,5 @@
+pub use crate::cms::asn1::auth_enveloped_data_builder::ContentEncryptionAlgorithmAead;
+pub use crate::cms::asn1::auth_enveloped_data_content::AuthEnvelopedDataContent;
 pub use crate::cms::asn1::enveloped_data_content::ContentEncryptionAlgorithm;
 pub use crate::cms::asn1::enveloped_data_content::EnvelopedDataContent;
 pub use crate::cms::cert_store_trait::CertificateStore;

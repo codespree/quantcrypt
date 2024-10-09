@@ -1,7 +1,7 @@
 use crate::cea::common::cea_type::CeaType;
 use cms::{
     content_info::{CmsVersion, ContentInfo},
-    enveloped_data::{EnvelopedData, OriginatorInfo, RecipientInfos},
+    enveloped_data::{OriginatorInfo, RecipientInfos},
 };
 use der::{Decode, Encode};
 use x509_cert::attr::Attributes;
@@ -11,25 +11,21 @@ use crate::{Certificate, PrivateKey, QuantCryptError};
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 use crate::cms::cms_util::CmsUtil;
-use const_oid::db::rfc5911::ID_ENVELOPED_DATA;
+use const_oid::db::rfc5911::ID_CT_AUTH_ENVELOPED_DATA;
 
+use crate::cms::asn1::auth_enveloped_data_builder::ContentEncryptionAlgorithmAead;
 use crate::cms::enveloped_data_builder::EnvelopedDataBuilder;
 
-/// The content encryption algorithm used to encrypt the content
-pub enum ContentEncryptionAlgorithm {
-    Aes128Cbc,
-    Aes192Cbc,
-    Aes256Cbc,
-}
+use super::auth_env_data::AuthEnvelopedData;
 
-/// Main interaction point for the EnvelopedData content
+/// Main interaction point for the AuthEnvelopedData content
 ///
-/// This struct is used to create, read and manipulate EnvelopedData content
+/// This struct is used to create, read and manipulate AuthEnvelopedData content
 ///
 /// # Example
 /// ```
-/// use quantcrypt::EnvelopedDataContent;
-/// use quantcrypt::ContentEncryptionAlgorithm;
+/// use quantcrypt::AuthEnvelopedDataContent;
+/// use quantcrypt::ContentEncryptionAlgorithmAead;
 /// use quantcrypt::Certificate;
 /// use quantcrypt::PrivateKey;
 /// use quantcrypt::KdfType;
@@ -66,7 +62,7 @@ pub enum ContentEncryptionAlgorithm {
 /// };
 ///
 /// let mut builder =
-///     EnvelopedDataContent::get_builder(ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+///     AuthEnvelopedDataContent::get_builder(ContentEncryptionAlgorithmAead::Aes256Gcm).unwrap();
 ///
 /// builder
 ///     .kem_recipient(
@@ -78,12 +74,13 @@ pub enum ContentEncryptionAlgorithm {
 ///     .unwrap()
 ///     .content(data)
 ///     .unwrap()
-///     .unprotected_attribute(&attribute)
+///     .auth_attribute(&attribute)
 ///     .unwrap();
+///     
 ///
 /// let content = builder.build().unwrap();
 /// // Now use this content to create a new EnvelopedDataContent
-/// let edc = EnvelopedDataContent::from_bytes_for_kem_recipient(
+/// let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
 ///     &content,
 ///     &recipient_cert,
 ///     &private_key,
@@ -92,22 +89,23 @@ pub enum ContentEncryptionAlgorithm {
 /// assert_eq!(edc.get_content(), data);
 /// ```
 
-pub struct EnvelopedDataContent {
+pub struct AuthEnvelopedDataContent {
     version: CmsVersion,
     originator_info: Option<OriginatorInfo>,
     recip_infos: RecipientInfos,
     content: Vec<u8>,
     unprotected_attrs: Option<Attributes>,
+    auth_attrs: Option<Attributes>,
 }
 
-impl EnvelopedDataContent {
+impl AuthEnvelopedDataContent {
     pub fn from_file_for_kem_recipient(
         file: &str,
         recipient_cert: &Certificate,
         recipient_private_key: &PrivateKey,
-    ) -> Result<EnvelopedDataContent> {
+    ) -> Result<AuthEnvelopedDataContent> {
         let data = std::fs::read(file).map_err(|_| QuantCryptError::FileReadError)?;
-        EnvelopedDataContent::from_bytes_for_kem_recipient(
+        AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
             &data,
             recipient_cert,
             recipient_private_key,
@@ -118,7 +116,7 @@ impl EnvelopedDataContent {
         data: &[u8],
         recipient_cert: &Certificate,
         recipient_private_key: &PrivateKey,
-    ) -> Result<EnvelopedDataContent> {
+    ) -> Result<AuthEnvelopedDataContent> {
         // First try to read it as a der encoded ContentInfo
         let ci = if let Ok(content_info) = ContentInfo::from_der(data) {
             content_info
@@ -129,7 +127,7 @@ impl EnvelopedDataContent {
         };
 
         // Check if the cotent type is EnvelopedData
-        if ci.content_type != ID_ENVELOPED_DATA {
+        if ci.content_type != ID_CT_AUTH_ENVELOPED_DATA {
             return Err(QuantCryptError::InvalidContent);
         }
 
@@ -138,18 +136,19 @@ impl EnvelopedDataContent {
             .to_der()
             .map_err(|_| QuantCryptError::InvalidEnvelopedData)?;
 
-        let ed = EnvelopedData::from_der(&enveloped_data)
+        let ed = AuthEnvelopedData::from_der(&enveloped_data)
             .map_err(|_| QuantCryptError::InvalidContent)?;
 
         // try to decrypt the content
         let pt = CmsUtil::decrypt_kemri(data, recipient_private_key, recipient_cert)?;
 
-        Ok(EnvelopedDataContent {
+        Ok(AuthEnvelopedDataContent {
             version: ed.version,
             originator_info: ed.originator_info,
             recip_infos: ed.recip_infos,
             content: pt,
-            unprotected_attrs: ed.unprotected_attrs,
+            unprotected_attrs: ed.unauth_attrs,
+            auth_attrs: ed.auth_attrs,
         })
     }
 
@@ -169,19 +168,23 @@ impl EnvelopedDataContent {
         self.unprotected_attrs.clone()
     }
 
+    pub fn get_auth_attrs(&self) -> Option<Attributes> {
+        self.auth_attrs.clone()
+    }
+
     pub fn get_recipient_infos(&self) -> RecipientInfos {
         self.recip_infos.clone()
     }
 
     pub fn get_builder(
-        content_encryption_alg: ContentEncryptionAlgorithm,
+        content_encryption_alg: ContentEncryptionAlgorithmAead,
     ) -> Result<EnvelopedDataBuilder<'static>> {
         let cae = match content_encryption_alg {
-            ContentEncryptionAlgorithm::Aes128Cbc => CeaType::Aes128CbcPad,
-            ContentEncryptionAlgorithm::Aes192Cbc => CeaType::Aes192CbcPad,
-            ContentEncryptionAlgorithm::Aes256Cbc => CeaType::Aes256CbcPad,
+            ContentEncryptionAlgorithmAead::Aes128Gcm => CeaType::Aes128Gcm,
+            ContentEncryptionAlgorithmAead::Aes192Gcm => CeaType::Aes192Gcm,
+            ContentEncryptionAlgorithmAead::Aes256Gcm => CeaType::Aes256Gcm,
         };
-        EnvelopedDataBuilder::new(cae, false)
+        EnvelopedDataBuilder::new(cae, true)
     }
 }
 
@@ -195,7 +198,7 @@ mod tests {
     use crate::{KdfType, UserKeyingMaterial, WrapType};
 
     #[test]
-    fn test_enveloped_data_content() {
+    fn test_auth_enveloped_data_content() {
         let recipient_cert = Certificate::from_file(
             "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
         )
@@ -221,7 +224,8 @@ mod tests {
         };
 
         let mut builder =
-            EnvelopedDataContent::get_builder(ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+            AuthEnvelopedDataContent::get_builder(ContentEncryptionAlgorithmAead::Aes256Gcm)
+                .unwrap();
 
         builder
             .kem_recipient(
@@ -234,12 +238,14 @@ mod tests {
             .content(data)
             .unwrap()
             .unprotected_attribute(&attribute)
+            .unwrap()
+            .auth_attribute(&attribute)
             .unwrap();
 
         let content = builder.build().unwrap();
 
-        // Now use this content to create a new EnvelopedDataContent
-        let edc = EnvelopedDataContent::from_bytes_for_kem_recipient(
+        // Now use this content to create a new AuthEnvelopedDataContent
+        let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
             &content,
             &recipient_cert,
             &private_key,
@@ -259,8 +265,17 @@ mod tests {
         assert_eq!(val.tag(), Tag::OctetString);
         assert_eq!(val.value(), data);
 
+        // Check the auth attribute
+        let attrs = edc.get_auth_attrs().unwrap();
+        let attr = attrs.get(0).unwrap();
+        assert_eq!(attr.oid.to_string(), "1.3.6.1.4.1.22554.5.6");
+        assert_eq!(attr.values.len(), 1);
+        let val: AttributeValue = attr.values.get(0).unwrap().clone();
+        assert_eq!(val.tag(), Tag::OctetString);
+        assert_eq!(val.value(), data);
+
         // Check the version
-        assert_eq!(edc.get_version(), CmsVersion::V3);
+        assert_eq!(edc.get_version(), CmsVersion::V0);
 
         // Check the originator info
         assert_eq!(edc.get_originator_info(), None);

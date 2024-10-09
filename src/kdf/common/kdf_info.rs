@@ -3,6 +3,7 @@ use crate::kdf::common::kdf_type::KdfType;
 
 /// A structure to represent metadata about a KDF
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct KdfInfo {
     /// The type of KDF
     pub kdf_type: KdfType,

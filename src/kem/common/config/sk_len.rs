@@ -31,7 +31,7 @@ impl SKLen for KemType {
             KemType::MlKem512 => Some(1632),
             KemType::MlKem768 => Some(2400),
             KemType::MlKem1024 => Some(3168),
-            // TODO: Confirm if RSA key format is correct
+            // RSA Key secret key sizes
             KemType::RsaOAEP2048 => None,
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
