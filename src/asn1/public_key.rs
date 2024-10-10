@@ -1,4 +1,4 @@
-use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
+use crate::asn1::asn_util::{is_composite_kem_or_dsa_oid, is_valid_kem_or_dsa_oid};
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
 use crate::errors;
@@ -49,10 +49,10 @@ impl PublicKey {
     /// `KeyError::InvalidPublicKey` will be returned if the OID is invalid
     /// or the key is invalid
     pub fn new(oid: &str, key: &[u8]) -> Result<Self> {
-        if !is_valid_oid(&oid.to_string()) {
+        if !is_valid_kem_or_dsa_oid(&oid.to_string()) {
             return Err(errors::QuantCryptError::InvalidPublicKey);
         }
-        let is_composite = is_composite_oid(oid);
+        let is_composite = is_composite_kem_or_dsa_oid(oid);
         Ok(Self {
             oid: oid.to_string(),
             key: key.to_vec(),
@@ -221,11 +221,11 @@ impl PublicKey {
         let oid = map_to_new_oid(oid.as_str());
 
         // Check if oid is valid
-        if !is_valid_oid(&oid) {
+        if !is_valid_kem_or_dsa_oid(&oid) {
             return Err(errors::QuantCryptError::InvalidPublicKey);
         }
 
-        let is_composite = is_composite_oid(&oid);
+        let is_composite = is_composite_kem_or_dsa_oid(&oid);
 
         Ok(Self {
             oid,
@@ -247,7 +247,7 @@ impl PublicKey {
         } else {
             return Err(errors::QuantCryptError::InvalidPublicKey);
         };
-        let is_composite = is_composite_oid(&oid);
+        let is_composite = is_composite_kem_or_dsa_oid(&oid);
         Ok(Self {
             oid,
             key: pk_bytes.to_vec(),

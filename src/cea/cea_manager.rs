@@ -7,7 +7,7 @@ use crate::cea::common::cea_info::CeaInfo;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const CAE_TYPES: [CeaType; 6] = [
+const CEA_TYPES: [CeaType; 6] = [
     CeaType::Aes128Gcm,
     CeaType::Aes192Gcm,
     CeaType::Aes256Gcm,
@@ -25,12 +25,12 @@ pub enum CeaManager {
 }
 
 impl Cea for CeaManager {
-    fn new(cae_type: CeaType) -> Result<Self>
+    fn new(cea_type: CeaType) -> Result<Self>
     where
         Self: Sized,
     {
-        let result = match cae_type {
-            _ if CAE_TYPES.contains(&cae_type) => CeaManager::Aes(Aes::new(cae_type)?),
+        let result = match cea_type {
+            _ if CEA_TYPES.contains(&cea_type) => CeaManager::Aes(Aes::new(cea_type)?),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -81,9 +81,9 @@ mod tests {
 
     #[test]
     fn test_aes() {
-        for cae_type in CAE_TYPES.iter() {
-            let mut cae = CeaManager::new(cae_type.clone()).unwrap();
-            test_cea!(cae);
+        for cea_type in CEA_TYPES.iter() {
+            let mut cea = CeaManager::new(cea_type.clone()).unwrap();
+            test_cea!(cea);
         }
     }
 }

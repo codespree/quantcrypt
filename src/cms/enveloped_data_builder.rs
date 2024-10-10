@@ -25,19 +25,19 @@ use super::asn1::auth_enveloped_data_builder::{
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const ALLOWED_CAE_TYPES_ENVELOPED: [CeaType; 3] = [
+const ALLOWED_CEA_TYPES_ENVELOPED: [CeaType; 3] = [
     CeaType::Aes128CbcPad,
     CeaType::Aes192CbcPad,
     CeaType::Aes256CbcPad,
 ];
 
-const ALLOWED_CAE_TYPES_AUTH_ENVELOPED: [CeaType; 3] =
+const ALLOWED_CEA_TYPES_AUTH_ENVELOPED: [CeaType; 3] =
     [CeaType::Aes128Gcm, CeaType::Aes192Gcm, CeaType::Aes256Gcm];
 
 pub struct EnvelopedDataBuilder<'a> {
     originator_info: Option<OriginatorInfo>,
     plaintext: Vec<u8>,
-    cae_type: CeaType,
+    cea_type: CeaType,
     unprotected_attributes: Option<Attributes>,
     auth_attributes: Option<Attributes>,
     kemri_builders: Vec<KemRecipientInfoBuilder>,
@@ -50,19 +50,19 @@ pub struct EnvelopedDataBuilder<'a> {
 }
 
 impl<'a> EnvelopedDataBuilder<'a> {
-    pub fn new(cae_type: CeaType, is_auth_enveloped: bool) -> Result<Self> {
-        if !is_auth_enveloped && !ALLOWED_CAE_TYPES_ENVELOPED.contains(&cae_type) {
+    pub fn new(cea_type: CeaType, is_auth_enveloped: bool) -> Result<Self> {
+        if !is_auth_enveloped && !ALLOWED_CEA_TYPES_ENVELOPED.contains(&cea_type) {
             return Err(QuantCryptError::UnsupportedContentEncryptionAlgorithm);
         }
 
-        if is_auth_enveloped && !ALLOWED_CAE_TYPES_AUTH_ENVELOPED.contains(&cae_type) {
+        if is_auth_enveloped && !ALLOWED_CEA_TYPES_AUTH_ENVELOPED.contains(&cea_type) {
             return Err(QuantCryptError::UnsupportedContentEncryptionAlgorithm);
         }
 
         Ok(Self {
             originator_info: None,
             plaintext: Vec::new(),
-            cae_type,
+            cea_type,
             unprotected_attributes: None,
             auth_attributes: None,
             kemri_builders: Vec::new(),
@@ -170,7 +170,7 @@ impl<'a> EnvelopedDataBuilder<'a> {
     }
 
     fn build_enveloped(self) -> Result<Vec<u8>> {
-        let cea = match self.cae_type {
+        let cea = match self.cea_type {
             CeaType::Aes128CbcPad => ContentEncryptionAlgorithm::Aes128Cbc,
             CeaType::Aes192CbcPad => ContentEncryptionAlgorithm::Aes192Cbc,
             CeaType::Aes256CbcPad => ContentEncryptionAlgorithm::Aes256Cbc,
@@ -234,7 +234,7 @@ impl<'a> EnvelopedDataBuilder<'a> {
     }
 
     pub fn build_auth_enveloped(self) -> Result<Vec<u8>> {
-        let cea = match self.cae_type {
+        let cea = match self.cea_type {
             CeaType::Aes128Gcm => ContentEncryptionAlgorithmAead::Aes128Gcm,
             CeaType::Aes192Gcm => ContentEncryptionAlgorithmAead::Aes192Gcm,
             CeaType::Aes256Gcm => ContentEncryptionAlgorithmAead::Aes256Gcm,
@@ -348,8 +348,8 @@ mod tests {
     #[test]
     fn test_enveloped_data_kemri() {
         let plaintext = b"Hello, World!".to_vec();
-        let cae_type = CeaType::Aes256CbcPad;
-        let mut builder = EnvelopedDataBuilder::new(cae_type, false)
+        let cea_type = CeaType::Aes256CbcPad;
+        let mut builder = EnvelopedDataBuilder::new(cea_type, false)
             .expect("Failed to create EnvelopedDataBuilder");
 
         let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data/cms_cw/ta.der"))
@@ -458,8 +458,8 @@ mod tests {
     #[test]
     fn test_auth_enveloped_data_kemri() {
         let plaintext = b"Hello, World!".to_vec();
-        let cae_type = CeaType::Aes256Gcm;
-        let mut builder = EnvelopedDataBuilder::new(cae_type, true)
+        let cea_type = CeaType::Aes256Gcm;
+        let mut builder = EnvelopedDataBuilder::new(cea_type, true)
             .expect("Failed to create EnvelopedDataBuilder");
 
         let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data/cms_cw/ta.der"))

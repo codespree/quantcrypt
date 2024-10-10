@@ -37,10 +37,10 @@ pub trait Cea {
         Self: Sized,
     {
         let all_cea_types = CeaType::all();
-        for cae_type in all_cea_types {
-            if cae_type.get_oid() == oid {
-                let cae = Self::new(cae_type)?;
-                return Ok(cae);
+        for cea_type in all_cea_types {
+            if cea_type.get_oid() == oid {
+                let cea = Self::new(cea_type)?;
+                return Ok(cea);
             }
         }
         Err(QuantCryptError::InvalidOid)

@@ -132,14 +132,29 @@ impl Certificate {
         self.cert.tbs_certificate.subject.clone()
     }
 
+    /// Get the issuer name
+    ///
+    /// # Returns
+    ///
+    /// The issuer name
     pub fn get_issuer(&self) -> RdnSequence {
         self.cert.tbs_certificate.issuer.clone()
     }
 
+    /// Get the serial number
+    ///
+    /// # Returns
+    ///
+    /// The serial number
     pub fn get_serial_number(&self) -> SerialNumber {
         self.cert.tbs_certificate.serial_number.clone()
     }
 
+    /// Get the subject key identifier
+    ///
+    /// # Returns
+    ///
+    /// The subject key identifier
     pub fn get_subject_key_identifier(&self) -> Result<SubjectKeyIdentifier> {
         if let Some(exts) = self.cert.tbs_certificate.extensions.clone() {
             for ext in exts {
@@ -197,6 +212,11 @@ impl Certificate {
         Ok(result)
     }
 
+    /// Get the public key
+    ///
+    /// # Returns
+    ///
+    /// The public key
     pub fn get_public_key(&self) -> Result<PublicKey> {
         let pk_der = self
             .cert
@@ -210,25 +230,39 @@ impl Certificate {
         Ok(pk)
     }
 
+    /// Verify that the specified certificate is a child of this certificate.
+    ///
+    /// This checks that the specified child certificate has the same issuer as this certificate's subject,
+    /// that the child's Subject Key Identifier matches the Authority Key Identifier of this certificate,
+    /// and that the child's signature is valid.
+    ///
+    /// # Arguments
+    ///
+    /// * `child` - The child certificate
+    ///
+    /// # Returns
+    ///
+    /// True if the child certificate is a child of this certificate, false otherwise
     pub fn verify_child(&self, child: &Certificate) -> Result<bool> {
         // If the child has a different issuer than the parent's subject, it cannot be a child
         if self.get_subject() != child.get_issuer() {
             return Ok(false);
         }
 
-        // If SKI is present in the child, it must match the authority key identifier of the parent
-        if let Ok(child_ski) = child.get_subject_key_identifier() {
-            if let Some(exts) = self.cert.tbs_certificate.extensions.clone() {
+        // If AKID is present in child, it should match the SKID of the parent
+        if let Ok(parent_skid) = self.get_subject_key_identifier() {
+            if let Some(exts) = child.cert.tbs_certificate.extensions.clone() {
                 for ext in exts {
                     if ext.extn_id == const_oid::db::rfc5280::ID_CE_AUTHORITY_KEY_IDENTIFIER {
-                        if let Ok(akin) = ext.to_der() {
-                            if let Ok(akin) = AuthorityKeyIdentifier::from_der(&akin) {
-                                if let Some(aki) = akin.key_identifier {
-                                    if aki != child_ski.0 {
-                                        return Ok(false);
-                                    }
-                                }
-                            }
+                        let akid = AuthorityKeyIdentifier::from_der(ext.extn_value.as_bytes())
+                            .map_err(|_| QuantCryptError::InvalidCertificate)?;
+                        let akid = if let Some(akid) = akid.key_identifier {
+                            akid
+                        } else {
+                            return Ok(false);
+                        };
+                        if akid != parent_skid.0 {
+                            return Ok(false);
                         }
                     }
                 }
@@ -251,6 +285,15 @@ impl Certificate {
         Ok(result)
     }
 
+    /// Load a certificate from the specified file. The file can be in either DER or PEM format.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Returns
+    ///
+    /// The certificate
     pub fn from_file(path: &str) -> Result<Certificate> {
         // Read the contents of the file as bytes
         let contents = std::fs::read(path).map_err(|_| QuantCryptError::FileReadError)?;
@@ -272,18 +315,39 @@ impl Certificate {
         }
     }
 
+    /// Save the certificate to the specified file in DER format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
     pub fn to_der_file(&self, path: &str) -> Result<()> {
         let der = self.to_der()?;
         std::fs::write(path, der).map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(())
     }
 
+    /// Save the certificate to the specified file in PEM format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
     pub fn to_pem_file(&self, path: &str) -> Result<()> {
         let pem = self.to_pem()?;
         std::fs::write(path, pem).map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(())
     }
 
+    /// Check if this certificate is identified by the specified recipient identifier
+    ///
+    /// This could match by either issuer and serial number or subject key identifier
+    ///
+    /// # Arguments
+    ///
+    /// * `rid` - The recipient identifier
+    ///
+    /// # Returns
+    ///
+    /// True if the certificate is identified by the recipient identifier, false otherwise
     pub fn is_identified_by(&self, rid: &RecipientIdentifier) -> bool {
         match rid {
             cms::enveloped_data::RecipientIdentifier::IssuerAndSerialNumber(issuer) => {
@@ -304,6 +368,11 @@ impl Certificate {
         false
     }
 
+    /// Check if this certificate is valid
+    ///
+    /// # Returns
+    ///
+    /// True if the certificate is valid, false otherwise
     pub fn is_valid(&self) -> bool {
         // Get the notBefore and notAfter fields as DateTime
         let not_before = self.cert.tbs_certificate.validity.not_before.to_date_time();
@@ -329,6 +398,11 @@ impl Certificate {
         result
     }
 
+    /// Check if key encipherment is enabled
+    ///
+    /// # Returns
+    ///
+    /// True if key encipherment is enabled, false otherwise
     pub fn is_key_encipherment_enabled(&self) -> bool {
         if let Some(exts) = self.cert.tbs_certificate.extensions.clone() {
             for ext in exts {
@@ -342,6 +416,11 @@ impl Certificate {
         false
     }
 
+    /// Get the OID of algorithm used for the public key
+    ///
+    /// # Returns
+    ///
+    /// The OID of the algorithm used for the public key
     pub fn get_public_key_oid(&self) -> String {
         self.cert
             .tbs_certificate
@@ -351,10 +430,20 @@ impl Certificate {
             .to_string()
     }
 
+    /// Get the OID of algorithm used for the signature
+    ///
+    /// # Returns
+    ///
+    /// The OID of the algorithm used for the signature
     pub fn get_signature_oid(&self) -> String {
         self.cert.tbs_certificate.signature.oid.to_string()
     }
 
+    /// Get the friendly name of the algorithm used for the public key
+    ///
+    /// # Returns
+    ///
+    /// The friendly name of the algorithm used for the public key
     pub fn get_public_key_oid_friendly_name(&self) -> String {
         let oid = self.get_public_key_oid();
         if let Ok(man) = DsaManager::new_from_oid(&oid) {
@@ -409,6 +498,54 @@ mod tests {
         let child_cert = Certificate::from_pem(&child_pem).unwrap();
 
         assert!(cert.verify_child(&child_cert).unwrap());
+    }
+
+    #[test]
+    fn test_akid_skid() {
+        // First generate a TA cert
+        let (pk, sk) = crate::DsaKeyGenerator::new(crate::DsaAlgorithm::MlDsa44)
+            .generate()
+            .unwrap();
+
+        let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
+
+        let cert = crate::CertificateBuilder::new(
+            crate::Profile::Root,
+            None,
+            validity,
+            "CN=example.com".to_string(),
+            pk,
+            &sk,
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+
+        // Next generate a leaf KEM cert
+        let (pk_kem, _) = crate::KemKeyGenerator::new(crate::KemAlgorithm::MlKem512)
+            .generate()
+            .unwrap();
+
+        let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
+
+        let cert_kem = crate::CertificateBuilder::new(
+            crate::Profile::Leaf {
+                issuer: cert.get_subject(),
+                enable_key_agreement: false,
+                enable_key_encipherment: true,
+            },
+            None,
+            validity,
+            "CN=example.com".to_string(),
+            pk_kem,
+            &sk,
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+
+        assert!(!cert_kem.verify_self_signed().unwrap());
+        assert!(cert.verify_child(&cert_kem).unwrap());
     }
 
     #[test]

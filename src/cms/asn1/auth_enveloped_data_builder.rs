@@ -110,16 +110,16 @@ impl<'c> AuthEnvelopedDataBuilder<'c> {
             return Err(QuantCryptError::Unknown);
         };
 
-        // Create an instance of CAE
-        let mut cae = CeaManager::new(cea_type)?;
+        // Create an instance of CEA
+        let mut cea = CeaManager::new(cea_type)?;
         // Generate a symmetric key
-        let mut cek = cae.key_gen()?;
-        let nonce = cae.nonce_gen()?;
+        let mut cek = cea.key_gen()?;
+        let nonce = cea.nonce_gen()?;
 
         // Convert content id to string
         let content_id = self.content_id.map(|oid| oid.to_string());
 
-        let (tag, eci) = cae.encrypt(
+        let (tag, eci) = cea.encrypt(
             &cek,
             Some(&nonce),
             self.unencrypted_content,

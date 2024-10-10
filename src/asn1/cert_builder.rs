@@ -17,9 +17,12 @@ use crate::asn1::certificate::Certificate;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
+/// A struct to hold the validity period of a certificate
 #[derive(Clone)]
 pub struct CertValidity {
+    /// The not before date of the certificate
     pub not_before: der::asn1::UtcTime,
+    /// The not after date of the certificate
     pub not_after: der::asn1::UtcTime,
 }
 
@@ -39,6 +42,21 @@ impl CertValidity {
         Ok(result)
     }
 
+    /// Create a new CertValidity struct
+    ///
+    /// # Arguments
+    ///
+    /// * `not_before` - The not before date of the certificate. If None, the current time is used. The date should be in RFC3339 format.
+    /// * `not_after` - The not after date of the certificate. The date should be in RFC3339 format.
+    ///
+    /// # Returns
+    ///
+    /// A new CertValidity struct
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::InvalidNotBefore` if the not before date is in the future
+    /// `QuantCryptError::InvalidNotAfter` if the not after date is in the past
     pub fn new(not_before: Option<&str>, not_after: &str) -> Result<CertValidity> {
         let not_after = DateTime::parse_from_rfc3339(not_after)
             .map_err(|_| QuantCryptError::InvalidNotAfter)?;

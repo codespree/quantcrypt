@@ -4,7 +4,7 @@ use pkcs8::spki::{self, AlgorithmIdentifierOwned, DynSignatureAlgorithmIdentifie
 use pkcs8::ObjectIdentifier;
 use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
 
-use crate::asn1::asn_util::{is_composite_oid, is_valid_oid};
+use crate::asn1::asn_util::{is_composite_kem_or_dsa_oid, is_valid_kem_or_dsa_oid};
 use crate::asn1::signature::DsaSignature;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
@@ -75,10 +75,10 @@ impl PrivateKey {
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the OID is invalid
     pub fn new(oid: &str, key: &[u8], public_key: Option<PublicKey>) -> Result<Self> {
-        if !is_valid_oid(&oid.to_string()) {
+        if !is_valid_kem_or_dsa_oid(&oid.to_string()) {
             return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
-        let is_composite = is_composite_oid(oid);
+        let is_composite = is_composite_kem_or_dsa_oid(oid);
         Ok(Self {
             oid: oid.to_string(),
             private_key: key.to_vec(),
@@ -242,12 +242,12 @@ impl PrivateKey {
         let oid = map_to_new_oid(&priv_key_info.algorithm.oid.to_string());
 
         // Check if the OID is valid
-        if !is_valid_oid(&oid) {
+        if !is_valid_kem_or_dsa_oid(&oid) {
             return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
 
         // Check if the OID is a composite key
-        let is_composite = is_composite_oid(&oid);
+        let is_composite = is_composite_kem_or_dsa_oid(&oid);
 
         // Check if the public key is present
         let public_key = if let Some(pk) = priv_key_info.public_key {

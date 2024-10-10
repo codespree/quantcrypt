@@ -176,12 +176,12 @@ impl EnvelopedDataContent {
     pub fn get_builder(
         content_encryption_alg: ContentEncryptionAlgorithm,
     ) -> Result<EnvelopedDataBuilder<'static>> {
-        let cae = match content_encryption_alg {
+        let cea = match content_encryption_alg {
             ContentEncryptionAlgorithm::Aes128Cbc => CeaType::Aes128CbcPad,
             ContentEncryptionAlgorithm::Aes192Cbc => CeaType::Aes192CbcPad,
             ContentEncryptionAlgorithm::Aes256Cbc => CeaType::Aes256CbcPad,
         };
-        EnvelopedDataBuilder::new(cae, false)
+        EnvelopedDataBuilder::new(cea, false)
     }
 }
 

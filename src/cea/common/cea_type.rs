@@ -19,9 +19,9 @@ impl CeaType {
     }
 
     pub fn from_oid(oid: &str) -> Option<CeaType> {
-        let all_cae_types = CeaType::all();
-        all_cae_types
+        let all_cea_types = CeaType::all();
+        all_cea_types
             .into_iter()
-            .find(|cae_type| cae_type.get_oid() == oid)
+            .find(|cea_type| cea_type.get_oid() == oid)
     }
 }

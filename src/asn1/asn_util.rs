@@ -29,7 +29,7 @@ pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
     Ok(oid.to_vec())
 }
 
-/// Check if an OID is valid
+/// Check if an OID is a valid KEM / DSA OID
 ///
 /// # Arguments
 ///
@@ -38,7 +38,7 @@ pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
 /// # Returns
 ///
 /// True if the OID is valid, false otherwise
-pub fn is_valid_oid(oid: &String) -> bool {
+pub fn is_valid_kem_or_dsa_oid(oid: &String) -> bool {
     // Get all oids based on dsa and kem types as a string array
     let dsa_oids = DsaAlgorithm::all();
     let kem_oids = KemAlgorithm::all();
@@ -50,7 +50,7 @@ pub fn is_valid_oid(oid: &String) -> bool {
     all_dsa_oids.contains(oid) || all_kem_oids.contains(oid)
 }
 
-/// Check if an OID is a composite OID
+/// Check if an OID is a composite KEM / DSA OID
 ///
 /// # Arguments
 ///
@@ -59,7 +59,7 @@ pub fn is_valid_oid(oid: &String) -> bool {
 /// # Returns
 ///
 /// True if the OID is a composite OID, false otherwise
-pub fn is_composite_oid(oid: &str) -> bool {
+pub fn is_composite_kem_or_dsa_oid(oid: &str) -> bool {
     let is_composite_kem = if let Some(k_type) = KemType::from_oid(oid) {
         k_type.is_composite()
     } else {
@@ -75,10 +75,28 @@ pub fn is_composite_oid(oid: &str) -> bool {
     is_composite_kem || is_composite_dsa
 }
 
+/// Check if an OID is a KEM OID
+///
+/// # Arguments
+///
+/// * `oid` - The OID to check
+///
+/// # Returns
+///
+/// True if the OID is a KEM OID, false otherwise
 pub fn is_kem_oid(oid: &str) -> bool {
     KemAlgorithm::from_oid(oid).is_some()
 }
 
+/// Check if an OID is a DSA OID
+///
+/// # Arguments
+///
+/// * `oid` - The OID to check
+///
+/// # Returns
+///
+/// True if the OID is a DSA OID, false otherwise
 pub fn is_dsa_oid(oid: &str) -> bool {
     DsaAlgorithm::from_oid(oid).is_some()
 }
