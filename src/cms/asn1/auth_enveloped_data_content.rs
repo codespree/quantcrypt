@@ -90,15 +90,33 @@ use super::auth_env_data::AuthEnvelopedData;
 /// ```
 
 pub struct AuthEnvelopedDataContent {
+    /// The CmsVersion
     version: CmsVersion,
+    /// The OriginatorInfo if present
     originator_info: Option<OriginatorInfo>,
+    /// The RecipientInfos
     recip_infos: RecipientInfos,
+    /// The content
     content: Vec<u8>,
+    /// The unprotected attributes
     unprotected_attrs: Option<Attributes>,
+    /// The authenticated attributes
     auth_attrs: Option<Attributes>,
 }
 
 impl AuthEnvelopedDataContent {
+    /// Load a AuthEnvelopedDataContent from a file. The content is wrapped in a ContentInfo
+    /// object. The content is decrypted using the provided recipient certificate and private key.
+    ///
+    /// # Arguments
+    ///
+    /// * `file` - The file to read the content from
+    /// * `recipient_cert` - The recipient certificate
+    /// * `recipient_private_key` - The recipient private key
+    ///
+    /// # Returns
+    ///
+    /// The AuthEnvelopedDataContent object
     pub fn from_file_for_kem_recipient(
         file: &str,
         recipient_cert: &Certificate,
@@ -112,6 +130,18 @@ impl AuthEnvelopedDataContent {
         )
     }
 
+    /// Load a AuthEnvelopedDataContent from a byte array. The content is wrapped in a ContentInfo
+    /// object. The content is decrypted using the provided recipient certificate and private key.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The byte array to read the content from
+    /// * `recipient_cert` - The recipient certificate
+    /// * `recipient_private_key` - The recipient private key
+    ///
+    /// # Returns
+    ///
+    /// The AuthEnvelopedDataContent object
     pub fn from_bytes_for_kem_recipient(
         data: &[u8],
         recipient_cert: &Certificate,
@@ -152,30 +182,45 @@ impl AuthEnvelopedDataContent {
         })
     }
 
+    /// Get the CmsVersion
     pub fn get_version(&self) -> CmsVersion {
         self.version
     }
 
+    /// Get the OriginatorInfo
     pub fn get_originator_info(&self) -> Option<OriginatorInfo> {
         self.originator_info.clone()
     }
 
+    /// Get the content
     pub fn get_content(&self) -> Vec<u8> {
         self.content.clone()
     }
 
+    /// Get the unprotected attributes
     pub fn get_unprotected_attrs(&self) -> Option<Attributes> {
         self.unprotected_attrs.clone()
     }
 
+    /// Get the authenticated attributes
     pub fn get_auth_attrs(&self) -> Option<Attributes> {
         self.auth_attrs.clone()
     }
 
+    /// Get the RecipientInfos
     pub fn get_recipient_infos(&self) -> RecipientInfos {
         self.recip_infos.clone()
     }
 
+    /// Get a builder for the AuthEnvelopedDataContent. This is used to create new AuthEnvelopedDataContent objects
+    ///
+    /// # Arguments
+    ///
+    /// * `content_encryption_alg` - The content encryption algorithm
+    ///
+    /// # Returns
+    ///
+    /// The AuthEnvelopedDataContent builder
     pub fn get_builder(
         content_encryption_alg: ContentEncryptionAlgorithmAead,
     ) -> Result<EnvelopedDataBuilder<'static>> {

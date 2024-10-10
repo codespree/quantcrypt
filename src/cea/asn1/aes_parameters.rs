@@ -7,7 +7,10 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 
 #[derive(Sequence)]
 pub struct AesParameters {
+    /// AES nonce
     aes_nonce: OctetString,
+
+    /// AES ICV length
     aes_icv_len: i8,
 }
 

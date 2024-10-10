@@ -17,8 +17,11 @@ use crate::cms::enveloped_data_builder::EnvelopedDataBuilder;
 
 /// The content encryption algorithm used to encrypt the content
 pub enum ContentEncryptionAlgorithm {
+    /// AES 128 bit encryption in CBC mode
     Aes128Cbc,
+    /// AES 192 bit encryption in CBC mode
     Aes192Cbc,
+    /// AES 256 bit encryption in CBC mode
     Aes256Cbc,
 }
 
@@ -93,14 +96,32 @@ pub enum ContentEncryptionAlgorithm {
 /// ```
 
 pub struct EnvelopedDataContent {
+    /// The version of the EnvelopedData content
     version: CmsVersion,
+    /// The originator info
     originator_info: Option<OriginatorInfo>,
+    /// The recipient infos
     recip_infos: RecipientInfos,
+    /// The content
     content: Vec<u8>,
+    /// The unprotected attributes
     unprotected_attrs: Option<Attributes>,
 }
 
 impl EnvelopedDataContent {
+    /// Create a new EnvelopedDataContent object from a file. The encrypted content is
+    /// wrapped in a ContentInfo object and the file contains the DER encoded bytes of the
+    /// ContentInfo object.
+    ///
+    /// # Arguments
+    ///
+    /// * `file` - The file path to read the EnvelopedData content from
+    /// * `recipient_cert` - The recipient certificate
+    /// * `recipient_private_key` - The recipient private key
+    ///
+    /// # Returns
+    ///
+    /// A new EnvelopedDataContent object
     pub fn from_file_for_kem_recipient(
         file: &str,
         recipient_cert: &Certificate,
@@ -114,6 +135,19 @@ impl EnvelopedDataContent {
         )
     }
 
+    /// Create a new EnvelopedDataContent object from bytes. The encrypted content is
+    /// wrapped in a ContentInfo object and the data is the DER encoded bytes of the
+    /// ContentInfo object.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The bytes to read the EnvelopedData content from
+    /// * `recipient_cert` - The recipient certificate
+    /// * `recipient_private_key` - The recipient private key
+    ///
+    /// # Returns
+    ///
+    /// A new EnvelopedDataContent object
     pub fn from_bytes_for_kem_recipient(
         data: &[u8],
         recipient_cert: &Certificate,
@@ -153,26 +187,40 @@ impl EnvelopedDataContent {
         })
     }
 
+    /// Get the version of the EnvelopedData Cms content
     pub fn get_version(&self) -> CmsVersion {
         self.version
     }
 
+    /// Get the originator info
     pub fn get_originator_info(&self) -> Option<OriginatorInfo> {
         self.originator_info.clone()
     }
 
+    /// Get the content
     pub fn get_content(&self) -> Vec<u8> {
         self.content.clone()
     }
 
+    /// Get the unprotected attributes
     pub fn get_unprotected_attrs(&self) -> Option<Attributes> {
         self.unprotected_attrs.clone()
     }
 
+    /// Get the recipient infos
     pub fn get_recipient_infos(&self) -> RecipientInfos {
         self.recip_infos.clone()
     }
 
+    /// Get a new EnvelopedDataContentBuilder
+    ///
+    /// # Arguments
+    ///
+    /// * `content_encryption_alg` - The content encryption algorithm to use
+    ///
+    /// # Returns
+    ///
+    /// A new EnvelopedDataContentBuilder which can be used to create a new EnvelopedDataContent object
     pub fn get_builder(
         content_encryption_alg: ContentEncryptionAlgorithm,
     ) -> Result<EnvelopedDataBuilder<'static>> {

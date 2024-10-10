@@ -16,10 +16,10 @@ use super::common::{dsa_trait::Dsa, dsa_type::DsaType};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-/// A DSA manager for the composite KEM method
+/// A DSA manager for the composite DSA method
 #[derive(Clone)]
 pub struct CompositeDsaManager {
-    /// The KEM metadata information
+    /// The DSA metadata information
     dsa_info: DsaInfo,
     /// The traditional DSA manager
     trad_dsa: Box<DsaManager>,

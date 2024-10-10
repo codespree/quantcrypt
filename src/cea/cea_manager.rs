@@ -18,7 +18,7 @@ const CEA_TYPES: [CeaType; 6] = [
 
 // Implement clone
 #[derive(Clone)]
-/// Enum to representthe different types of KEM managers
+/// Enum to represent the different types of CEA managers
 pub enum CeaManager {
     /// AES CEA implementation
     Aes(Aes),

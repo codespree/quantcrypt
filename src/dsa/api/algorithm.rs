@@ -28,6 +28,7 @@ pub enum DsaAlgorithm {
 }
 
 impl DsaAlgorithm {
+    /// Get all DSA algorithms
     pub(crate) fn all() -> Vec<DsaAlgorithm> {
         DsaAlgorithm::iter().collect()
     }
@@ -64,6 +65,10 @@ impl DsaAlgorithm {
     }
 
     /// Check if the algorithm is a composite or pure algorithm
+    ///
+    /// # Returns
+    ///
+    /// True if the algorithm is a composite algorithm, false otherwise
     pub fn is_composite(&self) -> bool {
         !matches!(
             self,
@@ -80,6 +85,15 @@ impl DsaAlgorithm {
         self.get_dsa_type().get_oid()
     }
 
+    /// Get the DSA algorithm from an OID
+    ///
+    /// # Arguments
+    ///
+    /// * `oid` - The OID of the DSA algorithm
+    ///
+    /// # Returns
+    ///
+    /// The DSA algorithm or None if the OID is not found
     pub fn from_oid(oid: &str) -> Option<DsaAlgorithm> {
         DsaAlgorithm::all()
             .iter()

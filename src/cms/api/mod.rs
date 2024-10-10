@@ -4,7 +4,6 @@ pub use crate::cms::asn1::enveloped_data_content::ContentEncryptionAlgorithm;
 pub use crate::cms::asn1::enveloped_data_content::EnvelopedDataContent;
 pub use crate::cms::cert_store_trait::CertificateStore;
 pub use crate::cms::directory_cert_store::DirectoryCertificateStore;
-pub use crate::cms::dummy_cert_store::DummyCertificateStore;
 pub use crate::kdf::api::KdfType;
 pub use crate::wrap::api::WrapType;
 pub use cms::content_info::CmsVersion;

@@ -21,6 +21,7 @@ pub struct Aes {
 }
 
 impl Aes {
+    /// Get the OpenSSL cipher for the CEA type
     fn get_cipher(&self) -> Cipher {
         match self.cea_type {
             CeaType::Aes128Gcm => Cipher::aes_128_gcm(),
@@ -32,6 +33,16 @@ impl Aes {
         }
     }
 
+    /// Get the nonce for the CEA type, or the provided nonce if it is valid
+    ///
+    /// # Arguments
+    ///
+    /// * `cipher` - The OpenSSL cipher to use
+    /// * `nonce` - The nonce to use, or None to generate a random nonce
+    ///
+    /// # Returns
+    ///
+    /// The nonce to use
     fn get_nonce(&self, cipher: &Cipher, nonce: Option<&[u8]>) -> Result<Vec<u8>> {
         let nonce_len = cipher.iv_len().unwrap_or(0);
         let nonce = if let Some(nonce) = nonce {
@@ -47,6 +58,17 @@ impl Aes {
         Ok(nonce)
     }
 
+    /// Convert the ciphertext to a EncryptedContentInfo object
+    ///
+    /// # Arguments
+    ///
+    /// * `ct` - The ciphertext
+    /// * `nonce` - The nonce
+    /// * `cid` - The content type OID
+    ///
+    /// # Returns
+    ///
+    /// The EncryptedContentInfo object as DER bytes
     fn to_content_info(&self, ct: &[u8], nonce: &[u8], cid: Option<&str>) -> Result<Vec<u8>> {
         let oid: ObjectIdentifier = self
             .cea_type
@@ -91,6 +113,16 @@ impl Aes {
         Ok(enc)
     }
 
+    /// Get the CEA type, nonce, and ciphertext from the EncryptedContentInfo object
+    ///
+    /// # Arguments
+    ///
+    /// * `tag` - The tag
+    /// * `ct` - The ciphertext. This should be the EncryptedContentInfo object as DER bytes
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the CEA type, nonce, and ciphertext
     fn from_content_info(tag: &[u8], ct: &[u8]) -> Result<(CeaType, Vec<u8>, Vec<u8>)> {
         let eci =
             EncryptedContentInfo::from_der(ct).map_err(|_| QuantCryptError::InvalidCiphertext)?;

@@ -34,23 +34,46 @@ const ALLOWED_CEA_TYPES_ENVELOPED: [CeaType; 3] = [
 const ALLOWED_CEA_TYPES_AUTH_ENVELOPED: [CeaType; 3] =
     [CeaType::Aes128Gcm, CeaType::Aes192Gcm, CeaType::Aes256Gcm];
 
+/// A builder for creating an EnvelopedData or AuthEnvelopedData
 pub struct EnvelopedDataBuilder<'a> {
+    /// The originator info
     originator_info: Option<OriginatorInfo>,
+    /// The plaintext content
     plaintext: Vec<u8>,
+    /// The content encryption algorithm type
     cea_type: CeaType,
+    /// The unprotected attributes
     unprotected_attributes: Option<Attributes>,
+    /// The authenticated attributes
     auth_attributes: Option<Attributes>,
+    /// The KEM recipient info builders
     kemri_builders: Vec<KemRecipientInfoBuilder>,
+    /// The KEK recipient info builders
     kek_builders: Vec<KekRecipientInfoBuilder>,
+    /// The KeyTrans recipient info builders
     ktri_builders: Vec<KeyTransRecipientInfoBuilder<'a, ChaCha20Rng>>,
+    /// The KeyAgree recipient info builders
     kari_builders: Vec<KeyAgreeRecipientInfoBuilder>,
+    /// The Password recipient info builders
     pwri_builders: Vec<PasswordRecipientInfoBuilder>,
+    /// The Other recipient info builders (other than Kem Recipient Info, and other types)
     ori_builders: Vec<OtherRecipientInfoBuilder>,
+    /// Whether this is an AuthEnvelopedData
     is_auth_enveloped: bool,
 }
 
 impl<'a> EnvelopedDataBuilder<'a> {
-    pub fn new(cea_type: CeaType, is_auth_enveloped: bool) -> Result<Self> {
+    /// Create a new EnvelopedDataBuilder
+    ///
+    /// # Arguments
+    ///
+    /// * `cea_type` - The type of content encryption algorithm to use
+    /// * `is_auth_enveloped` - Whether this is an AuthEnvelopedData
+    ///
+    /// # Returns
+    ///
+    /// A new EnvelopedDataBuilder
+    pub(crate) fn new(cea_type: CeaType, is_auth_enveloped: bool) -> Result<Self> {
         if !is_auth_enveloped && !ALLOWED_CEA_TYPES_ENVELOPED.contains(&cea_type) {
             return Err(QuantCryptError::UnsupportedContentEncryptionAlgorithm);
         }
@@ -75,6 +98,15 @@ impl<'a> EnvelopedDataBuilder<'a> {
         })
     }
 
+    /// Add an unprotected attribute
+    ///
+    /// # Arguments
+    ///
+    /// * `attribute` - The attribute to add
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn unprotected_attribute(&mut self, attribute: &Attribute) -> Result<&mut Self> {
         if let Some(attributes) = &mut self.unprotected_attributes {
             attributes
@@ -91,6 +123,19 @@ impl<'a> EnvelopedDataBuilder<'a> {
         }
     }
 
+    /// Add an authenticated attribute
+    ///
+    /// # Arguments
+    ///
+    /// * `attribute` - The attribute to add
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::UnsupportedOperation` if this is not a builder for AuthEnvelopedData
     pub fn auth_attribute(&mut self, attribute: &Attribute) -> Result<&mut Self> {
         if !self.is_auth_enveloped {
             return Err(QuantCryptError::UnsupportedOperation);
@@ -111,11 +156,32 @@ impl<'a> EnvelopedDataBuilder<'a> {
         }
     }
 
+    /// Set the content of the EnvelopedData / AuthEnvelopedData
+    ///
+    /// # Arguments
+    ///
+    /// * `content` - The content to set
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn content(&mut self, content: &[u8]) -> Result<&mut Self> {
         self.plaintext = content.to_vec();
         Ok(self)
     }
 
+    /// Add a KEM recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `cert` - The certificate of the recipient
+    /// * `kdf` - The key derivation function to use
+    /// * `wrap_type` - The key wrap type to use
+    /// * `ukm` - The user keying material to use
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn kem_recipient(
         &mut self,
         cert: &Certificate,
@@ -136,11 +202,29 @@ impl<'a> EnvelopedDataBuilder<'a> {
         Ok(self)
     }
 
+    /// Add a KEK recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `builder` - The KEK recipient info builder
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn kek_recipient(&mut self, builder: KekRecipientInfoBuilder) -> Result<&mut Self> {
         self.kek_builders.push(builder);
         Ok(self)
     }
 
+    /// Add a KeyTrans recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `builder` - The KeyTrans recipient
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn ktri_recipient(
         &mut self,
         builder: KeyTransRecipientInfoBuilder<'a, ChaCha20Rng>,
@@ -149,26 +233,63 @@ impl<'a> EnvelopedDataBuilder<'a> {
         Ok(self)
     }
 
+    /// Add a KeyAgree recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `builder` - The KeyAgree recipient
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn kari_recipient(&mut self, builder: KeyAgreeRecipientInfoBuilder) -> Result<&mut Self> {
         self.kari_builders.push(builder);
         Ok(self)
     }
 
+    /// Add a Password recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `builder` - The Password recipient
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn pwri_recipient(&mut self, builder: PasswordRecipientInfoBuilder) -> Result<&mut Self> {
         self.pwri_builders.push(builder);
         Ok(self)
     }
 
+    /// Add an Other recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `builder` - The Other recipient
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn ori_recipient(&mut self, builder: OtherRecipientInfoBuilder) -> Result<&mut Self> {
         self.ori_builders.push(builder);
         Ok(self)
     }
 
+    /// Set the originator info
+    ///
+    /// # Arguments
+    ///
+    /// * `originator_info` - The originator info to set
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the builder
     pub fn originator_info(&mut self, originator_info: OriginatorInfo) -> Result<&mut Self> {
         self.originator_info = Some(originator_info);
         Ok(self)
     }
 
+    /// Build the EnvelopedData
     fn build_enveloped(self) -> Result<Vec<u8>> {
         let cea = match self.cea_type {
             CeaType::Aes128CbcPad => ContentEncryptionAlgorithm::Aes128Cbc,
@@ -233,6 +354,7 @@ impl<'a> EnvelopedDataBuilder<'a> {
             .map_err(|_| QuantCryptError::Unknown)
     }
 
+    /// Build the AuthEnvelopedData
     pub fn build_auth_enveloped(self) -> Result<Vec<u8>> {
         let cea = match self.cea_type {
             CeaType::Aes128Gcm => ContentEncryptionAlgorithmAead::Aes128Gcm,
@@ -298,6 +420,11 @@ impl<'a> EnvelopedDataBuilder<'a> {
             .map_err(|_| QuantCryptError::Unknown)
     }
 
+    /// Build the EnvelopedData or AuthEnvelopedData and returns the DER bytes
+    ///
+    /// # Returns
+    ///
+    /// The DER bytes of the EnvelopedData or AuthEnvelopedData
     pub fn build(self) -> Result<Vec<u8>> {
         let is_auth_enveloped = self.is_auth_enveloped;
 

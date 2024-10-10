@@ -74,7 +74,7 @@ impl PrivateKey {
     /// # Errors
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the OID is invalid
-    pub fn new(oid: &str, key: &[u8], public_key: Option<PublicKey>) -> Result<Self> {
+    pub(crate) fn new(oid: &str, key: &[u8], public_key: Option<PublicKey>) -> Result<Self> {
         if !is_valid_kem_or_dsa_oid(&oid.to_string()) {
             return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
@@ -91,6 +91,7 @@ impl PrivateKey {
     ///
     /// # Arguments
     ///
+    /// * `public_key` - The public key (if available)
     /// * `composite_sk` - The composite private key
     ///
     /// # Returns
@@ -128,7 +129,8 @@ impl PrivateKey {
     /// # Returns
     ///
     /// The key material
-    pub fn get_key(&self) -> &[u8] {
+    #[cfg(test)]
+    fn get_key(&self) -> &[u8] {
         &self.private_key
     }
 
@@ -136,7 +138,7 @@ impl PrivateKey {
     ///
     /// # Returns
     ///
-    /// The public key
+    /// The public key (if available)
     pub fn get_public_key(&self) -> Option<&PublicKey> {
         self.public_key.as_ref()
     }
@@ -286,6 +288,19 @@ impl PrivateKey {
         Ok(sig)
     }
 
+    /// Use the private key to decapsulate a shared secret from a ciphertext
+    ///
+    /// # Arguments
+    ///
+    /// * `ct` - The ciphertext
+    ///
+    /// # Returns
+    ///
+    /// The shared secret
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::UnsupportedOperation` will be returned if this private key is not a KEM key
     pub(crate) fn decap(&self, ct: &[u8]) -> Result<Vec<u8>> {
         if is_dsa_oid(&self.oid) {
             return Err(errors::QuantCryptError::UnsupportedOperation);
@@ -295,6 +310,15 @@ impl PrivateKey {
         Ok(ss)
     }
 
+    /// Load a private key from a file. The file can be in either DER or PEM format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Returns
+    ///
+    /// The private key
     pub fn from_file(path: &str) -> Result<Self> {
         // Read the contents of the file as bytes
         let contents = std::fs::read(path).map_err(|_| QuantCryptError::FileReadError)?;

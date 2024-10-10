@@ -1,3 +1,6 @@
+// Thanks to Carl Wallace for this code (it is adapted from his code):
+// https://github.com/carl-wallace/kemri_toy/blob/main/src/asn1/auth_env_data_builder.rs
+
 use crate::cea::common::cea_trait::Cea;
 use cms::authenticated_data::MessageAuthenticationCode;
 use cms::builder::Error;
@@ -18,6 +21,7 @@ use crate::cms::asn1::auth_env_data::AuthEnvelopedData;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
+/// Content encryption algorithm for AuthEnvelopedData
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ContentEncryptionAlgorithmAead {
     /// AES-128 GCM

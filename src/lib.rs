@@ -39,7 +39,6 @@ pub use cms::api::CmsVersion;
 pub use cms::api::ContentEncryptionAlgorithm;
 pub use cms::api::ContentEncryptionAlgorithmAead;
 pub use cms::api::DirectoryCertificateStore;
-pub use cms::api::DummyCertificateStore;
 pub use cms::api::EnvelopedDataContent;
 pub use cms::api::KdfType;
 pub use cms::api::ObjectIdentifier;

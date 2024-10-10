@@ -7,17 +7,30 @@ use crate::dsa::common::config::oids::Oid;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
+/// A trait for DSA. All DSA implementations should implement this trait.
 pub trait Dsa {
     /// Create a new DSA instance
     ///
     /// # Arguments
     ///
-    /// * `kem_type` - The type of KEM to create
-    /// * `seed` - A 32-byte seed
+    /// * `dsa_type` - The type of DSA to create
+    ///
+    /// # Returns
+    ///
+    /// A new DSA instance
     fn new(dsa_type: DsaType) -> Result<Self>
     where
         Self: Sized;
 
+    /// Create a new DSA instance from an OID
+    ///
+    /// # Arguments
+    ///
+    /// * `oid` - The OID of the DSA
+    ///
+    /// # Returns
+    ///
+    /// A new DSA instance
     fn new_from_oid(oid: &str) -> Result<Self>
     where
         Self: Sized,

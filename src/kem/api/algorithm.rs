@@ -24,6 +24,7 @@ pub enum KemAlgorithm {
 }
 
 impl KemAlgorithm {
+    /// Get all KEM algorithms
     pub(crate) fn all() -> Vec<KemAlgorithm> {
         KemAlgorithm::iter().collect()
     }
@@ -51,6 +52,10 @@ impl KemAlgorithm {
     }
 
     /// Check if the algorithm is a composite or pure algorithm
+    ///
+    /// # Returns
+    ///
+    /// True if the algorithm is a composite algorithm, false otherwise
     pub fn is_composite(&self) -> bool {
         !matches!(
             self,
@@ -67,6 +72,15 @@ impl KemAlgorithm {
         self.get_kem_type().get_oid()
     }
 
+    /// Get the KEM algorithm from an OID
+    ///
+    /// # Arguments
+    ///
+    /// * `oid` - The OID of the KEM algorithm
+    ///
+    /// # Returns
+    ///
+    /// The KEM algorithm corresponding to the OID, or None if the OID is not recognized
     pub fn from_oid(oid: &str) -> Option<KemAlgorithm> {
         KemAlgorithm::all()
             .iter()

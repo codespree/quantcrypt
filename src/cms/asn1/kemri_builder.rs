@@ -1,3 +1,5 @@
+// Adapted from Carl Wallace's code:
+// https://github.com/carl-wallace/kemri_toy/blob/main/src/asn1/kemri_builder.rs
 use crate::{cms::cms_util::CmsUtil, wrap::api::WrapManager, wrap::common::wrap_trait::Wrap};
 use cms::{
     builder::{RecipientInfoBuilder, RecipientInfoType},

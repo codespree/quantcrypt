@@ -26,9 +26,23 @@ use crate::cms::asn1::auth_env_data::AuthEnvelopedData;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-pub struct CmsUtil {}
+/// A utility class for CMS operations
+pub(crate) struct CmsUtil {}
 
 impl CmsUtil {
+    /// Get the key encryption key (KEK) for a shared secret
+    ///
+    /// # Arguments
+    ///
+    /// * `ss` - The shared secret
+    /// * `wrap_oid` - The OID of the key wrap algorithm
+    /// * `kdf_oid` - The OID of the key derivation function
+    /// * `kek_length` - The length of the KEK
+    /// * `ukm` - The user keying material
+    ///
+    /// # Returns
+    ///
+    /// The KEK as bytes
     pub fn get_kek(
         ss: &[u8],
         wrap_oid: &str,
@@ -57,6 +71,17 @@ impl CmsUtil {
         Ok(kek)
     }
 
+    /// Get the content encryption key (CEK) for a recipient
+    ///
+    /// # Arguments
+    ///
+    /// * `ori` - The OtherRecipientInfo. The value of this field should be a KemRecipientInfo as DER bytes
+    /// * `private_key` - The private key of the recipient
+    /// * `cert` - The certificate of the recipient
+    ///
+    /// # Returns
+    ///
+    /// The CEK as bytes
     fn get_cek(
         ori: &OtherRecipientInfo,
         private_key: &PrivateKey,

@@ -27,7 +27,7 @@ pub struct DsaKeyGenerator {
 }
 
 impl DsaKeyGenerator {
-    /// Create a new `KeyGenerator` with the specified algorithm
+    /// Create a new `DsaKeyGenerator` with the specified algorithm
     ///
     /// # Arguments
     ///

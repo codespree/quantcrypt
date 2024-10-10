@@ -12,7 +12,7 @@ pub trait Cea {
     ///
     /// # Arguments
     ///
-    /// * `kdf_type` - The type of KDF to create
+    /// * `cea_type` - The type of CEA to create
     fn new(cea_type: CeaType) -> Result<Self>
     where
         Self: Sized;
@@ -64,6 +64,9 @@ pub trait Cea {
     /// * `aad` - The additional authenticated data to use
     /// * `content_type_oid` - The OID of the content type to use (optional), defaults to 1.2.840.113549.1.7.1.6
     ///
+    /// # Returns
+    ///
+    /// A tuple containing the tag and the ciphertext (DER encoded bytes of a EncryptedContentInfo object)
     fn encrypt(
         &self,
         key: &[u8],

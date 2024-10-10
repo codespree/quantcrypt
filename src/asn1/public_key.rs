@@ -20,7 +20,6 @@ use errors::QuantCryptError;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-// Implement clone
 #[derive(Clone)]
 /// A raw public key for use with the certificate builder
 pub struct PublicKey {
@@ -83,11 +82,11 @@ impl PublicKey {
         })
     }
 
-    /// Get the OID for the DSA / KEM
+    /// Get the OID for the DSA / KEM public key algorithm
     ///
     /// # Returns
     ///
-    /// The OID for the DSA / KEM
+    /// The OID for the DSA / KEM public key algorithm
     pub fn get_oid(&self) -> &str {
         &self.oid
     }
@@ -133,7 +132,7 @@ impl PublicKey {
     /// # Returns
     ///
     /// The public key as a BitString
-    pub fn to_bitstring(&self) -> Result<BitString> {
+    pub(crate) fn to_bitstring(&self) -> Result<BitString> {
         let pk_bs = BitString::from_bytes(&self.key)
             .map_err(|_| errors::QuantCryptError::InvalidPublicKey)?;
         Ok(pk_bs)
@@ -234,27 +233,6 @@ impl PublicKey {
         })
     }
 
-    /// Create a new public key from a BitString
-    ///
-    /// # Arguments
-    ///
-    /// * `oid` - The OID for the DSA / KEM
-    /// * `pk_bs` - The public key as a BitString (usually obtained from a OneAsymmetricKey structure)
-    pub fn from_bitstring(oid: &str, pk_bs: &BitString) -> Result<Self> {
-        let oid = oid.to_string();
-        let pk_bytes = if let Some(pk_bytes) = pk_bs.as_bytes() {
-            pk_bytes
-        } else {
-            return Err(errors::QuantCryptError::InvalidPublicKey);
-        };
-        let is_composite = is_composite_kem_or_dsa_oid(&oid);
-        Ok(Self {
-            oid,
-            key: pk_bytes.to_vec(),
-            is_composite,
-        })
-    }
-
     /// Verify a signature
     ///
     /// # Arguments
@@ -268,7 +246,7 @@ impl PublicKey {
     ///
     /// # Errors
     ///
-    /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
+    /// `QuantCryptError::UnsupportedOperation` will be returned if the OID is not a DSA key
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<bool> {
         // Check if this is a DSA key
         if !is_dsa_oid(&self.oid) {
@@ -285,6 +263,11 @@ impl PublicKey {
         Ok(verified)
     }
 
+    /// Encapsulate to get a shared secret and a ciphertext based on this public key
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the ciphertext and the shared secret (ct, ss)
     pub fn encap(&self) -> Result<(Vec<u8>, Vec<u8>)> {
         // Check if this is a KEM key
         if !is_kem_oid(&self.oid) {

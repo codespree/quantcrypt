@@ -77,6 +77,15 @@ pub trait Kem {
     /// A structure containing metadata about the KEM
     fn get_kem_info(&self) -> KemInfo;
 
+    /// Create a new KEM instance from an OID
+    ///
+    /// # Arguments
+    ///
+    /// * `oid` - The OID of the KEM
+    ///
+    /// # Returns
+    ///
+    /// The new KEM instance
     fn new_from_oid(oid: &str) -> Result<Self>
     where
         Self: Sized,

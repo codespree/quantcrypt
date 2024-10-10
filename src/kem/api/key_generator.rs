@@ -7,7 +7,7 @@ use crate::kem::{api::algorithm::KemAlgorithm, common::kem_trait::Kem, kem_manag
 // Change the alias to use `Box<dyn error::Error>`.
 type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 
-/// A key generator for DSA keys
+/// A key generator for KEM keys
 ///
 /// # Example
 /// ```

@@ -35,6 +35,15 @@ pub struct DirectoryCertificateStore {
 }
 
 impl DirectoryCertificateStore {
+    /// Create a new directory certificate store.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the directory containing the certificates.
+    ///
+    /// # Returns
+    ///
+    /// A new `DirectoryCertificateStore` instance.
     pub fn new(path: &str) -> Result<DirectoryCertificateStore> {
         let mut ta_certificates = vec![];
         let mut ee_certificates = vec![];
@@ -79,6 +88,7 @@ impl DirectoryCertificateStore {
         })
     }
 
+    /// Find the parent certificate of the given certificate.
     fn find_parent(&self, cert: &Certificate) -> Option<Certificate> {
         // First check if the cert is valid
         if !cert.is_valid() {
