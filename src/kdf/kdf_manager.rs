@@ -2,7 +2,6 @@ use crate::kdf::common::kdf_trait::Kdf;
 use crate::kdf::common::kdf_type::KdfType;
 use crate::kdf::hkdf::Hkdf;
 use crate::kdf::kmac::Kmac;
-use crate::kdf::sha::Sha;
 use crate::QuantCryptError;
 
 use crate::kdf::common::kdf_info::KdfInfo;
@@ -15,7 +14,6 @@ const HKDF_TYPES: [KdfType; 3] = [
     KdfType::HkdfWithSha384,
 ];
 const KMAC_TYPES: [KdfType; 2] = [KdfType::Kmac128, KdfType::Kmac256];
-const SHA_TYPES: [KdfType; 3] = [KdfType::Sha3_256, KdfType::Sha3_512, KdfType::Sha3_384];
 
 // Implement clone
 #[derive(Clone)]
@@ -25,8 +23,6 @@ pub enum KdfManager {
     Hkdf(Hkdf),
     /// Kmac implementation
     Kmac(Kmac),
-    /// SHA implementation
-    Sha(Sha),
 }
 
 impl Kdf for KdfManager {
@@ -37,7 +33,6 @@ impl Kdf for KdfManager {
         let result = match kdf_type {
             _ if HKDF_TYPES.contains(&kdf_type) => KdfManager::Hkdf(Hkdf::new(kdf_type)?),
             _ if KMAC_TYPES.contains(&kdf_type) => KdfManager::Kmac(Kmac::new(kdf_type)?),
-            _ if SHA_TYPES.contains(&kdf_type) => KdfManager::Sha(Sha::new(kdf_type)?),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -49,7 +44,6 @@ impl Kdf for KdfManager {
         match self {
             KdfManager::Hkdf(hkdf) => hkdf.get_kdf_info(),
             KdfManager::Kmac(kmac) => kmac.get_kdf_info(),
-            KdfManager::Sha(sha) => sha.get_kdf_info(),
         }
     }
 
@@ -63,7 +57,6 @@ impl Kdf for KdfManager {
         match self {
             KdfManager::Hkdf(hkdf) => hkdf.derive(ikm, info, length, salt),
             KdfManager::Kmac(kmac) => kmac.derive(ikm, info, length, salt),
-            KdfManager::Sha(sha) => sha.derive(ikm, info, length, salt),
         }
     }
 }

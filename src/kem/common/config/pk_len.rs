@@ -42,7 +42,7 @@ impl PKLen for KemType {
             KemType::MlKem1024P384 => None,
             KemType::MlKem1024BrainpoolP384r1 => None,
             KemType::MlKem1024X448 => None,
-            // Composite types from editor's draft
+            // Composite types from editor's draft. Skipped ones are also present in old version
             // TODO: If there is a fixed size, then it should be added here
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
