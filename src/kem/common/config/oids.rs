@@ -31,16 +31,16 @@ impl Oid for KemType {
             KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.1.9",
             KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.1.10",
 
-            // Composite types from editor's copy:
+            // Composite types from editor's copy, skipped ones are also in old version:
             KemType::MlKem768Rsa2048 => "2.16.840.1.114027.80.5.2.21",
             KemType::MlKem768Rsa3072 => "2.16.840.1.114027.80.5.2.22",
             KemType::MlKem768Rsa4096 => "2.16.840.1.114027.80.5.2.23",
-            // KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.24", // Present in the old version, skip
+            // KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.24",
             KemType::MlKem768P384 => "2.16.840.1.114027.80.5.2.25",
             // KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.26",
             // KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.27",
             // KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.28",
-            // KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.29", // Present in the old version, skip
+            // KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.29",
 
             // EC Types:
             KemType::P256 => "1.2.840.10045.3.1.7",

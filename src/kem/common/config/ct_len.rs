@@ -40,6 +40,7 @@ impl CTLen for KemType {
             KemType::MlKem1024P384 => None,
             KemType::MlKem1024BrainpoolP384r1 => None,
             KemType::MlKem1024X448 => None,
+            // Composite types from editor's draft. Skipped ones are also present in old version
             // Editor's copy
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
