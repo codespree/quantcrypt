@@ -1,7 +1,7 @@
 use hkdf::Hkdf;
 use sha2::{Sha256, Sha384};
-use sha3::{Digest, Sha3_256, Sha3_384, Sha3_512}; // should be kdfs not hashes
-                                                  // Implement Copy and Debug for KemType
+use sha3::{Digest, Sha3_256, Sha3_384, Sha3_512};
+// Implement Copy and Debug for KemType
 #[derive(Clone, Debug)]
 /// The type of the Key Derivation Function (KDF)
 // TODO: Align KEM with internet draft
