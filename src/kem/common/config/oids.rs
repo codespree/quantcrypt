@@ -57,7 +57,7 @@ impl Oid for KemType {
             // KemType::MlKem512 => "2.16.840.1.101.3.4.4.1",
             // KemType::MlKem768 => "2.16.840.1.101.3.4.4.2",
             // KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3",
-            
+
             // oid for old version for ipd
             KemType::MlKem512 => "1.3.6.1.4.1.22554.5.6.1",
             KemType::MlKem768 => "1.3.6.1.4.1.22554.5.6.2",
