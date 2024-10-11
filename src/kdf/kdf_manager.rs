@@ -9,7 +9,11 @@ use crate::kdf::common::kdf_info::KdfInfo;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const HKDF_TYPES: [KdfType; 3] = [KdfType::HkdfWithSha256, KdfType::HkdfWithSha512, KdfType::HkdfWithSha384];
+const HKDF_TYPES: [KdfType; 3] = [
+    KdfType::HkdfWithSha256,
+    KdfType::HkdfWithSha512,
+    KdfType::HkdfWithSha384,
+];
 const KMAC_TYPES: [KdfType; 2] = [KdfType::Kmac128, KdfType::Kmac256];
 const SHA_TYPES: [KdfType; 3] = [KdfType::Sha3_256, KdfType::Sha3_512, KdfType::Sha3_384];
 
@@ -22,7 +26,7 @@ pub enum KdfManager {
     /// Kmac implementation
     Kmac(Kmac),
     /// SHA implementation
-    Sha(Sha)
+    Sha(Sha),
 }
 
 impl Kdf for KdfManager {

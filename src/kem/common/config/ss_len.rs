@@ -45,7 +45,7 @@ impl SSLen for KemType {
             KemType::MlKem512Rsa3072 => 32,
             KemType::MlKem768P256 => 48,
             KemType::MlKem768BrainpoolP256r1 => 48,
-            KemType::MlKem768X25519 => 32,  // should be 48 given SHA3-384 in old version. In editor's copy it's SHA-256 and thus 32. Follow this to pass testcase
+            KemType::MlKem768X25519 => 32, // should be 48 given SHA3-384 in old version. In editor's copy it's SHA-256 and thus 32. Follow this to pass testcase
             KemType::MlKem1024P384 => 64,
             KemType::MlKem1024BrainpoolP384r1 => 64,
             KemType::MlKem1024X448 => 64,

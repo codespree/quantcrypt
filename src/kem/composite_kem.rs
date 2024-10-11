@@ -1,14 +1,14 @@
-use crate::{asn1::asn_util::oid_to_der, kdf::common::kdf_trait::Kdf};
 use crate::asn1::composite_private_key::CompositePrivateKey;
 use crate::asn1::composite_public_key::CompositePublicKey;
-use crate::kem::asn1::composite_kem_primitives::CompositeCiphertextValue;
-use crate::kdf::kdf_manager::KdfManager;
 use crate::kdf::common::kdf_type::KdfType;
+use crate::kdf::kdf_manager::KdfManager;
+use crate::kem::asn1::composite_kem_primitives::CompositeCiphertextValue;
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
 use crate::kem::kem_manager::KemManager;
 use crate::QuantCryptError;
+use crate::{asn1::asn_util::oid_to_der, kdf::common::kdf_trait::Kdf};
 use der::{Decode, Encode};
 use pkcs8::{AlgorithmIdentifierRef, ObjectIdentifier, PrivateKeyInfo};
 use rand_core::CryptoRngCore;
@@ -70,7 +70,9 @@ impl CompositeKemManager {
             KdfType::Sha3_512 => 0, // Length is irrelevant
         };
 
-        let ss = self.kdf_manager.derive(&combined_ss, &vec![0u8; length], length, None)?;
+        let ss = self
+            .kdf_manager
+            .derive(&combined_ss, &vec![0u8; length], length, None)?;
 
         Ok(ss)
     }

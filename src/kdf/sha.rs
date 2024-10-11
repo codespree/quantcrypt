@@ -2,7 +2,7 @@ use crate::kdf::common::kdf_trait::Kdf;
 use crate::{kdf::common::kdf_type::KdfType, QuantCryptError};
 
 use super::common::kdf_info::KdfInfo;
-use sha3::{Digest, Sha3_256, Sha3_512, Sha3_384};
+use sha3::{Digest, Sha3_256, Sha3_384, Sha3_512};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -33,19 +33,16 @@ impl Kdf for Sha {
                 let mut hasher = Sha3_256::new();
                 hasher.update(info);
                 Ok(hasher.finalize().to_vec())
-
             }
             KdfType::Sha3_512 => {
                 let mut hasher = Sha3_512::new();
                 hasher.update(info);
                 Ok(hasher.finalize().to_vec())
-
             }
             KdfType::Sha3_384 => {
                 let mut hasher = Sha3_384::new();
                 hasher.update(info);
                 Ok(hasher.finalize().to_vec())
-
             }
             _ => Err(QuantCryptError::NotImplemented),
         }
