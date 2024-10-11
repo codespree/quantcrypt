@@ -12,7 +12,6 @@ use der::{Decode, Encode};
 use pkcs8::{AlgorithmIdentifierRef, ObjectIdentifier, PrivateKeyInfo};
 use rand_core::CryptoRngCore;
 
-
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 /// A KEM manager for the composite KEM method
