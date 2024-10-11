@@ -5,10 +5,10 @@
 // https://datatracker.ietf.org/doc/rfc9629/
 
 use crate::cea::common::cea_trait::Cea;
-use crate::Certificate;
+use crate::certificates::Certificate;
 use crate::{
     cms::asn1::kemri::KemRecipientInfo, kdf::api::KdfManager, kdf::common::kdf_trait::Kdf,
-    wrap::api::WrapManager, wrap::common::wrap_trait::Wrap, PrivateKey, QuantCryptError,
+    keys::PrivateKey, wrap::api::WrapManager, wrap::common::wrap_trait::Wrap, QuantCryptError,
 };
 use cms::content_info::ContentInfo;
 use cms::enveloped_data::{EnvelopedData, OtherRecipientInfo, RecipientInfo, UserKeyingMaterial};
@@ -266,7 +266,7 @@ impl CmsUtil {
 }
 #[cfg(test)]
 mod tests {
-    use crate::Certificate;
+    use crate::certificates::Certificate;
 
     use super::*;
 

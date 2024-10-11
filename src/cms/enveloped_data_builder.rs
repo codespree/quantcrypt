@@ -15,7 +15,9 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use x509_cert::attr::{Attribute, Attributes};
 
-use crate::{cea::common::cea_type::CeaType, kem::kem_manager, Certificate, QuantCryptError};
+use crate::{
+    cea::common::cea_type::CeaType, certificates::Certificate, kem::kem_manager, QuantCryptError,
+};
 
 use crate::cms::asn1::kemri_builder::KemRecipientInfoBuilder;
 
@@ -465,7 +467,10 @@ mod tests {
     use crate::dsa::dsa_manager::DsaManager;
     use crate::kem::common::config::oids::Oid as _;
     use crate::kem::common::kem_type::KemType;
-    use crate::{CertValidity, CertificateBuilder, PrivateKey, PublicKey};
+    use crate::{
+        certificates::{CertValidity, CertificateBuilder},
+        keys::{PrivateKey, PublicKey},
+    };
     use x509_cert::builder::Profile;
 
     use crate::{kdf::common::kdf_type::KdfType, wrap::api::WrapType};

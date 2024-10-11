@@ -11,8 +11,8 @@ type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 ///
 /// # Example
 /// ```
-/// use quantcrypt::KemKeyGenerator;
-/// use quantcrypt::KemAlgorithm;
+/// use quantcrypt::kems::KemKeyGenerator;
+/// use quantcrypt::kems::KemAlgorithm;
 ///
 /// let mut key_generator = KemKeyGenerator::new(KemAlgorithm::MlKem768);
 /// let (pk, sk) = key_generator.generate().unwrap();

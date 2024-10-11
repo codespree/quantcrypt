@@ -12,13 +12,13 @@ A secondary goal is to provide a set of cryptographic algorithms that are compat
 The following snippet demonstrates how to generate a key pair and a certificate using the DSA and KEM algorithms. In addition to pure ML-DSA and ML-KEM algorithms, the library also supports composite algorithms that combine a traditional and post-quantum algorithm into a single key pair and certificate.
 
 ```rust
-use quantcrypt::CertificateBuilder;
-use quantcrypt::DsaAlgorithm;
-use quantcrypt::KemAlgorithm;
-use quantcrypt::Profile;
-use quantcrypt::DsaKeyGenerator;
-use quantcrypt::KemKeyGenerator;
-use quantcrypt::CertValidity;
+use quantcrypt::certificates::CertificateBuilder;
+use quantcrypt::dsas::DsaAlgorithm;
+use quantcrypt::kems::KemAlgorithm;
+use quantcrypt::certificates::Profile;
+use quantcrypt::dsas::DsaKeyGenerator;
+use quantcrypt::kems::KemKeyGenerator;
+use quantcrypt::certificates::CertValidity;
 
 // Create a TA key pair
 let (pk_root, sk_root) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().unwrap();
@@ -70,18 +70,18 @@ assert!(cert_root.verify_child(&cert_kem).unwrap());
 The following snippet demonstrates how to generate a CMS message using the DSA and KEM algorithms.
 
 ```rust
-use quantcrypt::EnvelopedDataContent;
-use quantcrypt::ContentEncryptionAlgorithm;
-use quantcrypt::Certificate;
-use quantcrypt::PrivateKey;
-use quantcrypt::KdfType;
-use quantcrypt::WrapType;
-use quantcrypt::UserKeyingMaterial;
-use quantcrypt::ObjectIdentifier;
-use quantcrypt::Attribute;
-use quantcrypt::Tag;
-use quantcrypt::AttributeValue;
-use quantcrypt::SetOfVec;
+use quantcrypt::content::EnvelopedDataContent;
+use quantcrypt::content::ContentEncryptionAlgorithm;
+use quantcrypt::certificates::Certificate;
+use quantcrypt::keys::PrivateKey;
+use quantcrypt::kdfs::KdfType;
+use quantcrypt::wraps::WrapType;
+use quantcrypt::content::UserKeyingMaterial;
+use quantcrypt::content::ObjectIdentifier;
+use quantcrypt::content::Attribute;
+use quantcrypt::content::Tag;
+use quantcrypt::content::AttributeValue;
+use quantcrypt::content::SetOfVec;
 
 let recipient_cert = Certificate::from_file(
     "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
@@ -136,18 +136,18 @@ assert_eq!(edc.get_content(), data);
 Auth Enveloped Data is much like the above snippet but using `AuthEnvelopedDataContent` instead of `EnvelopedDataContent`.
 
 ```rust
-use quantcrypt::AuthEnvelopedDataContent;
-use quantcrypt::ContentEncryptionAlgorithmAead;
-use quantcrypt::Certificate;
-use quantcrypt::PrivateKey;
-use quantcrypt::KdfType;
-use quantcrypt::WrapType;
-use quantcrypt::UserKeyingMaterial;
-use quantcrypt::ObjectIdentifier;
-use quantcrypt::Attribute;
-use quantcrypt::Tag;
-use quantcrypt::AttributeValue;
-use quantcrypt::SetOfVec;
+use quantcrypt::content::AuthEnvelopedDataContent;
+use quantcrypt::content::ContentEncryptionAlgorithmAead;
+use quantcrypt::certificates::Certificate;
+use quantcrypt::keys::PrivateKey;
+use quantcrypt::kdfs::KdfType;
+use quantcrypt::wraps::WrapType;
+use quantcrypt::content::UserKeyingMaterial;
+use quantcrypt::content::ObjectIdentifier;
+use quantcrypt::content::Attribute;
+use quantcrypt::content::Tag;
+use quantcrypt::content::AttributeValue;
+use quantcrypt::content::SetOfVec;
 
 let recipient_cert = Certificate::from_file(
     "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",

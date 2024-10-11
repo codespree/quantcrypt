@@ -12,13 +12,13 @@ use crate::kem::common::kem_trait::Kem;
 use crate::kem::kem_manager::KemManager;
 use crate::oid_mapper::map_to_new_oid;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
-use crate::{PublicKey, QuantCryptError};
+use crate::{keys::PublicKey, QuantCryptError};
 use signature::{Keypair, Signer};
 
 use crate::asn1::asn_util::is_dsa_oid;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
-/// A raw public key for use with the certificate builder
+/// A raw private key for use with the certificate builder
 pub struct PrivateKey {
     /// The OID for the DSA / KEM
     oid: String,
