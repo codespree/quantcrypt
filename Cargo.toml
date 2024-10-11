@@ -7,7 +7,7 @@ license = "Apache-2.0 OR MIT"
 rust-version = "1.77.1"
 readme = "README.md"
 categories = ["cryptography", "algorithms", "data structures"]
-keywords = ["crypto", "pqc", "post quantum", "ML-KEM", "ML-DSA"]
+keywords = ["crypto", "pqc", "post-quantum", "ML-KEM", "ML-DSA"]
 description = "Library for post-quantum cryptography and PKI"
 
 [lib]
