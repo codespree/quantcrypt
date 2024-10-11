@@ -507,7 +507,7 @@ mod tests {
             .generate()
             .unwrap();
 
-        let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
+        let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap();
 
         let cert = crate::certificates::CertificateBuilder::new(
             crate::certificates::Profile::Root,
@@ -526,7 +526,7 @@ mod tests {
             .generate()
             .unwrap();
 
-        let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
+        let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap();
 
         let cert_kem = crate::certificates::CertificateBuilder::new(
             crate::certificates::Profile::Leaf {

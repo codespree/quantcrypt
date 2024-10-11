@@ -25,7 +25,7 @@ let (pk_root, sk_root) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().
 
 let profile = Profile::Root;
 let serial_no = None; // This will generate a random serial number
-let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap(); // Not before is now
+let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(); // Not before is now
 let subject = "CN=example.com".to_string();
 let cert_public_key = pk_root.clone();
 let signer = &sk_root;

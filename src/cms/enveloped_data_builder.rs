@@ -527,7 +527,7 @@ mod tests {
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,
-            CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap(),
+            CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
             "CN=test.com".to_string(),
             ta_pk_2,
             &ta_sk_2,
@@ -549,7 +549,7 @@ mod tests {
         )
         .unwrap();
         //let spki = SubjectPublicKeyInfo::from_key(ee_pk2).unwrap();
-        let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap(); // Not before is now
+        let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(); // Not before is now
         let serial_no = None; // This will generate a random serial number
         let signer = ta_sk_2;
         let subject = "CN=sub.test.com".to_string();
@@ -637,7 +637,7 @@ mod tests {
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,
-            CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap(),
+            CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
             "CN=test.com".to_string(),
             ta_pk_2,
             &ta_sk_2,
