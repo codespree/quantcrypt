@@ -30,6 +30,20 @@ pub enum KemType {
     /// MlKem1024 key encapsulation mechanism
     MlKem1024,
 
+    // The composite algorithm list from the old version
+    /// id-MLKEM512-ECDH-P256
+    MlKem512P256,
+    /// id-MLKEM512-ECDH-brainpoolP256r1
+    MlKem512BrainpoolP256r1,
+    /// id-MLKEM512-X25519
+    MlKem512X25519,
+    /// id-MLKEM512-RSA2048
+    MlKem512Rsa2048,
+    /// id-MLKEM512-RSA3072
+    MlKem512Rsa3072,
+    /// id-MLKEM768-ECDH-P256
+    MlKem768P256,
+
     // The compsite algorithm list is from the latest editor's draft:
     //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
     /// id-MLKEM768-RSA2048
