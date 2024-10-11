@@ -1,8 +1,9 @@
-use crate::asn1::asn_util::oid_to_der;
+use crate::{asn1::asn_util::oid_to_der, kdf::common::kdf_trait::Kdf};
 use crate::asn1::composite_private_key::CompositePrivateKey;
 use crate::asn1::composite_public_key::CompositePublicKey;
 use crate::kem::asn1::composite_kem_primitives::CompositeCiphertextValue;
-use crate::kem::common::kdf::{Kdf, KdfType};
+use crate::kdf::kdf_manager::KdfManager;
+use crate::kdf::common::kdf_type::KdfType;
 use crate::kem::common::kem_info::KemInfo;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::common::kem_type::KemType;
@@ -23,7 +24,7 @@ pub struct CompositeKemManager {
     /// The post-quantum KEM manager
     pq_kem: Box<KemManager>,
     /// The key derivation function
-    kdf: Kdf,
+    kdf_manager: Box<KdfManager>,
 }
 
 impl CompositeKemManager {
@@ -58,7 +59,18 @@ impl CompositeKemManager {
         let dom_sep = oid_to_der(&self.kem_info.oid)?;
         combined_ss.extend_from_slice(&dom_sep);
 
-        let ss = self.kdf.kdf(&combined_ss);
+        let length = match self.kdf_manager.get_kdf_info().kdf_type {
+            KdfType::HkdfWithSha256 => 32,
+            KdfType::HkdfWithSha384 => 48,
+            KdfType::HkdfWithSha512 => 64,
+            KdfType::Kmac128 => 16,
+            KdfType::Kmac256 => 32,
+            KdfType::Sha3_256 => 0, // Length is irrelevant
+            KdfType::Sha3_384 => 0, // Length is irrelevant
+            KdfType::Sha3_512 => 0, // Length is irrelevant
+        };
+
+        let ss = self.kdf_manager.derive(&combined_ss, &vec![0u8; length], length, None)?;
 
         Ok(ss)
     }
@@ -146,55 +158,55 @@ impl Kem for CompositeKemManager {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::HkdfSha256),
+                kdf_manager: Box::new(KdfManager::new(KdfType::HkdfWithSha256)?),
             },
             KemType::MlKem768Rsa3072 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::RsaOAEP3072)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::HkdfSha256),
+                kdf_manager: Box::new(KdfManager::new(KdfType::HkdfWithSha256)?),
             },
             KemType::MlKem768Rsa4096 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::RsaOAEP4096)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::HkdfSha256),
+                kdf_manager: Box::new(KdfManager::new(KdfType::HkdfWithSha256)?),
             },
             KemType::MlKem768X25519 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::X25519)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::Sha3_256),
+                kdf_manager: Box::new(KdfManager::new(KdfType::Sha3_256)?),
             },
             KemType::MlKem768P384 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::P384)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::HkdfSha384),
+                kdf_manager: Box::new(KdfManager::new(KdfType::HkdfWithSha384)?),
             },
             KemType::MlKem768BrainpoolP256r1 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::BrainpoolP256r1)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::HkdfSha384),
+                kdf_manager: Box::new(KdfManager::new(KdfType::HkdfWithSha384)?),
             },
             KemType::MlKem1024P384 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::P384)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
-                kdf: Kdf::new(KdfType::Sha3_512),
+                kdf_manager: Box::new(KdfManager::new(KdfType::Sha3_512)?),
             },
             KemType::MlKem1024BrainpoolP384r1 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::BrainpoolP384r1)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
-                kdf: Kdf::new(KdfType::Sha3_512),
+                kdf_manager: Box::new(KdfManager::new(KdfType::Sha3_512)?),
             },
             KemType::MlKem1024X448 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::X448)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem1024)?),
-                kdf: Kdf::new(KdfType::Sha3_512),
+                kdf_manager: Box::new(KdfManager::new(KdfType::Sha3_512)?),
             },
             _ => {
                 return Err(QuantCryptError::NotImplemented);

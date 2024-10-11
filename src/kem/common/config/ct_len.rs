@@ -28,15 +28,28 @@ impl CTLen for KemType {
             KemType::MlKem768 => None,
             KemType::MlKem1024 => None,
             // Composite also varies as ML varies
-            KemType::MlKem768Rsa2048 => None,
-            KemType::MlKem768Rsa3072 => None,
-            KemType::MlKem768Rsa4096 => None,
-            KemType::MlKem768X25519 => None,
-            KemType::MlKem768P384 => None,
+            // Old version
+            KemType::MlKem512P256 => None,
+            KemType::MlKem512BrainpoolP256r1 => None,
+            KemType::MlKem512X25519 => None,
+            KemType::MlKem512Rsa2048 => None,
+            KemType::MlKem512Rsa3072 => None,
+            KemType::MlKem768P256 => None,
             KemType::MlKem768BrainpoolP256r1 => None,
+            KemType::MlKem768X25519 => None,
             KemType::MlKem1024P384 => None,
             KemType::MlKem1024BrainpoolP384r1 => None,
             KemType::MlKem1024X448 => None,
+            // Editor's copy
+            KemType::MlKem768Rsa2048 => None,
+            KemType::MlKem768Rsa3072 => None,
+            KemType::MlKem768Rsa4096 => None,
+            // KemType::MlKem768X25519 => None,
+            KemType::MlKem768P384 => None,
+            // KemType::MlKem768BrainpoolP256r1 => None,
+            // KemType::MlKem1024P384 => None,
+            // KemType::MlKem1024BrainpoolP384r1 => None,
+            // KemType::MlKem1024X448 => None,
         }
     }
 }

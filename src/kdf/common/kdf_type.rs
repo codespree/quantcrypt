@@ -2,17 +2,27 @@ use crate::kdf::common::config::oids::Oid;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+// TODO_ZPD: Wrap things like SHA3-256 in this top level module and use the kdf module implementation directly
+
 /// Define the KDF types
 #[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum KdfType {
     /// Hkdf with SHA-256
     HkdfWithSha256,
     /// Hkdf with SHA-512
+    HkdfWithSha384,
+    /// Hkdf with SHA-512
     HkdfWithSha512,
     /// Kmac with 128-bit key
     Kmac128,
     /// Kmac with 256-bit key
     Kmac256,
+    /// SHA-3 with 256-bit output
+    Sha3_256,
+    /// SHA-3 with 512-bit output
+    Sha3_512,
+    /// SHA-3 with 384-bit output
+    Sha3_384,
 }
 
 impl KdfType {

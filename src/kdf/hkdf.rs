@@ -15,7 +15,7 @@ pub struct Hkdf {
 impl Kdf for Hkdf {
     fn new(kdf_type: KdfType) -> Result<Hkdf> {
         match kdf_type {
-            KdfType::HkdfWithSha256 | KdfType::HkdfWithSha512 => Ok(Hkdf { kdf_type }),
+            KdfType::HkdfWithSha256 | KdfType::HkdfWithSha512 | KdfType::HkdfWithSha384 => Ok(Hkdf { kdf_type }),
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -37,6 +37,13 @@ impl Kdf for Hkdf {
             }
             KdfType::HkdfWithSha512 => {
                 let prk = hkdf::Hkdf::<sha2::Sha512>::new(salt, ikm);
+                let mut okm: Vec<u8> = vec![0; length];
+                prk.expand(info, &mut okm)
+                    .map_err(|_| QuantCryptError::InvalidHkdfLength)?;
+                Ok(okm)
+            }
+            KdfType::HkdfWithSha384 => {
+                let prk = hkdf::Hkdf::<sha2::Sha384>::new(salt, ikm);
                 let mut okm: Vec<u8> = vec![0; length];
                 prk.expand(info, &mut okm)
                     .map_err(|_| QuantCryptError::InvalidHkdfLength)?;

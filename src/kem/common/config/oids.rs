@@ -18,16 +18,30 @@ impl Oid for KemType {
     /// The OID for the KEM
     fn get_oid(&self) -> String {
         match self {
-            // Composite types:
+            // Composite types from old version:
+            KemType::MlKem512P256 => "2.16.840.1.114027.80.5.2.1.1",
+            KemType::MlKem512BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.1.2",
+            KemType::MlKem512X25519 => "2.16.840.1.114027.80.5.2.1.3",
+            KemType::MlKem512Rsa2048 => "2.16.840.1.114027.80.5.2.1.13",
+            KemType::MlKem512Rsa3072 => "2.16.840.1.114027.80.5.2.1.4",
+            KemType::MlKem768P256 => "2.16.840.1.114027.80.5.2.1.5",
+            KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.1.6",
+            KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.1.7",
+            KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.1.8",
+            KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.1.9",
+            KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.1.10",
+
+            // Composite types from editor's copy:
             KemType::MlKem768Rsa2048 => "2.16.840.1.114027.80.5.2.21",
             KemType::MlKem768Rsa3072 => "2.16.840.1.114027.80.5.2.22",
             KemType::MlKem768Rsa4096 => "2.16.840.1.114027.80.5.2.23",
-            KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.24",
+            // KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.24", // Present in the old version, skip
             KemType::MlKem768P384 => "2.16.840.1.114027.80.5.2.25",
-            KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.26",
-            KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.27",
-            KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.28",
-            KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.29",
+            // KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.26",
+            // KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.27",
+            // KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.28",
+            // KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.29", // Present in the old version, skip
+
             // EC Types:
             KemType::P256 => "1.2.840.10045.3.1.7",
             KemType::P384 => "1.3.132.0.34",
