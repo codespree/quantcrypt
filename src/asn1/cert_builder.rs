@@ -230,9 +230,7 @@ impl<'a> CertificateBuilder<'a> {
 #[cfg(test)]
 mod test {
 
-    use crate::{
-        dsas::DsaAlgorithm, dsas::DsaKeyGenerator,
-    };
+    use crate::{dsas::DsaAlgorithm, dsas::DsaKeyGenerator};
 
     use super::*;
 
