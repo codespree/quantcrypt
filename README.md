@@ -7,6 +7,14 @@ interface for generating key pairs, certificates, signing and verifying messages
 
 A secondary goal is to provide a set of cryptographic algorithms that are compatible with existing X.509, PKIX, and CMS data structures and protocols and to support the efforts of the [LAMPS Working Group](https://datatracker.ietf.org/wg/lamps/about/) in the IETF especially the [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) and [draft-ietf-lamps-pq-composite-kem](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/) drafts.
 
+## Including quantcrypt in your project
+
+Import quantcrypt into your project by adding the following lines to your Cargo.toml.
+```toml
+[dependencies]
+quantcrypt = "0.1.0"
+```
+
 ## Generating Key Pairs and Certificates
 
 The following snippet demonstrates how to generate a key pair and a certificate using the DSA and KEM algorithms. In addition to pure ML-DSA and ML-KEM algorithms, the library also supports composite algorithms that combine a traditional and post-quantum algorithm into a single key pair and certificate.
@@ -196,6 +204,10 @@ let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
 ).unwrap();
 assert_eq!(edc.get_content(), data);
 ```
+
+## Minimum Supported Rust Version (MSRV)
+
+The minimum supported Rust version for this library is 1.81.0
 
 ## License
 
