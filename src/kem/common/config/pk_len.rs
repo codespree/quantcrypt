@@ -29,17 +29,30 @@ impl PKLen for KemType {
             KemType::RsaOAEP2048 => None,
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
-            // Composite types
+            // Composite types from old version
+            // TODO: If there is a fixed size, then it should be added here
+            KemType::MlKem512P256 => None,
+            KemType::MlKem512BrainpoolP256r1 => None,
+            KemType::MlKem512X25519 => None,
+            KemType::MlKem512Rsa2048 => None,
+            KemType::MlKem512Rsa3072 => None,
+            KemType::MlKem768P256 => None,
+            KemType::MlKem768BrainpoolP256r1 => None,
+            KemType::MlKem768X25519 => None,
+            KemType::MlKem1024P384 => None,
+            KemType::MlKem1024BrainpoolP384r1 => None,
+            KemType::MlKem1024X448 => None,
+            // Composite types from editor's draft. Skipped ones are also present in old version
             // TODO: If there is a fixed size, then it should be added here
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
             KemType::MlKem768Rsa4096 => None,
-            KemType::MlKem768X25519 => None,
+            // KemType::MlKem768X25519 => None,
             KemType::MlKem768P384 => None,
-            KemType::MlKem768BrainpoolP256r1 => None,
-            KemType::MlKem1024P384 => None,
-            KemType::MlKem1024BrainpoolP384r1 => None,
-            KemType::MlKem1024X448 => None,
+            // KemType::MlKem768BrainpoolP256r1 => None,
+            // KemType::MlKem1024P384 => None,
+            // KemType::MlKem1024BrainpoolP384r1 => None,
+            // KemType::MlKem1024X448 => None,
         }
     }
 }

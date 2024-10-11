@@ -142,6 +142,45 @@ impl Kem for CompositeKemManager {
     fn new(kem_type: KemType) -> Result<Self> {
         let kem_info = KemInfo::new(kem_type.clone());
         let result = match kem_type {
+            // From old version
+            KemType::MlKem512P256 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::P256)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem512)?),
+                kdf: Kdf::new(KdfType::Sha3_256),
+            },
+            KemType::MlKem512BrainpoolP256r1 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::BrainpoolP256r1)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem512)?),
+                kdf: Kdf::new(KdfType::Sha3_256),
+            },
+            KemType::MlKem512X25519 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::X25519)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem512)?),
+                kdf: Kdf::new(KdfType::Sha3_256),
+            },
+            KemType::MlKem512Rsa2048 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem512)?),
+                kdf: Kdf::new(KdfType::Sha3_256),
+            },
+            KemType::MlKem512Rsa3072 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::RsaOAEP3072)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem512)?),
+                kdf: Kdf::new(KdfType::Sha3_256),
+            },
+            KemType::MlKem768P256 => Self {
+                kem_info,
+                trad_kem: Box::new(KemManager::new(KemType::P256)?),
+                pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
+                kdf: Kdf::new(KdfType::Sha3_384),
+            },
+
+            // From Editor's draft
             KemType::MlKem768Rsa2048 => Self {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::RsaOAEP2048)?),
@@ -164,7 +203,8 @@ impl Kem for CompositeKemManager {
                 kem_info,
                 trad_kem: Box::new(KemManager::new(KemType::X25519)?),
                 pq_kem: Box::new(KemManager::new(KemType::MlKem768)?),
-                kdf: Kdf::new(KdfType::Sha3_256),
+                kdf: Kdf::new(KdfType::Sha3_384),
+                // kdf: Kdf::new(KdfType::Sha3_256),  //In editor's draft
             },
             KemType::MlKem768P384 => Self {
                 kem_info,
@@ -342,7 +382,44 @@ impl Kem for CompositeKemManager {
 mod tests {
     use super::*;
     use crate::kem::common::macros::test_kem;
+    // Tests for old version
+    #[test]
+    fn test_mlkem_512_p256() {
+        let kem = CompositeKemManager::new(KemType::MlKem512P256);
+        test_kem!(kem);
+    }
 
+    #[test]
+    fn test_mlkem_512_brainpool_p256_r1() {
+        let kem = CompositeKemManager::new(KemType::MlKem512BrainpoolP256r1);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_mlkem_512_x25519() {
+        let kem = CompositeKemManager::new(KemType::MlKem512X25519);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_mlkem_512_rsa2048() {
+        let kem = CompositeKemManager::new(KemType::MlKem512Rsa2048);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_mlkem_512_rsa3072() {
+        let kem = CompositeKemManager::new(KemType::MlKem512Rsa3072);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_mlkem_768_p256() {
+        let kem = CompositeKemManager::new(KemType::MlKem768P256);
+        test_kem!(kem);
+    }
+
+    // Tests for editor's copy
     #[test]
     fn test_mlkem_768_rsa2048() {
         let kem = CompositeKemManager::new(KemType::MlKem768Rsa2048);

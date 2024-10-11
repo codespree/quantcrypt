@@ -35,16 +35,32 @@ impl SSLen for KemType {
             KemType::MlKem512 => 32,
             KemType::MlKem768 => 32,
             KemType::MlKem1024 => 32,
+
             // Composite types follow hash size
-            KemType::MlKem768Rsa2048 => 32,
-            KemType::MlKem768Rsa3072 => 32,
-            KemType::MlKem768Rsa4096 => 32,
-            KemType::MlKem768X25519 => 32,
-            KemType::MlKem768P384 => 48,
+            // Old version
+            KemType::MlKem512P256 => 32,
+            KemType::MlKem512BrainpoolP256r1 => 32,
+            KemType::MlKem512X25519 => 32,
+            KemType::MlKem512Rsa2048 => 32,
+            KemType::MlKem512Rsa3072 => 32,
+            KemType::MlKem768P256 => 48,
             KemType::MlKem768BrainpoolP256r1 => 48,
+            KemType::MlKem768X25519 => 48, // should be 48 given SHA3-384 in old version. In editor's copy it's SHA-256 and thus 32. Follow the public draft instead
             KemType::MlKem1024P384 => 64,
             KemType::MlKem1024BrainpoolP384r1 => 64,
             KemType::MlKem1024X448 => 64,
+
+            // Composite types from editor's draft. Skipped ones are also present in old version
+            // Editor's copy
+            KemType::MlKem768Rsa2048 => 32,
+            KemType::MlKem768Rsa3072 => 32,
+            KemType::MlKem768Rsa4096 => 32,
+            // KemType::MlKem768X25519 => 32,
+            KemType::MlKem768P384 => 48,
+            // KemType::MlKem768BrainpoolP256r1 => 48,
+            // KemType::MlKem1024P384 => 64,
+            // KemType::MlKem1024BrainpoolP384r1 => 64,
+            // KemType::MlKem1024X448 => 64,
         }
     }
 }

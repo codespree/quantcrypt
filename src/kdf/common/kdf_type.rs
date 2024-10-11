@@ -8,6 +8,8 @@ pub enum KdfType {
     /// Hkdf with SHA-256
     HkdfWithSha256,
     /// Hkdf with SHA-512
+    HkdfWithSha384,
+    /// Hkdf with SHA-512
     HkdfWithSha512,
     /// Kmac with 128-bit key
     Kmac128,

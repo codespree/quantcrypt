@@ -8,7 +8,11 @@ use crate::kdf::common::kdf_info::KdfInfo;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const HKDF_TYPES: [KdfType; 2] = [KdfType::HkdfWithSha256, KdfType::HkdfWithSha512];
+const HKDF_TYPES: [KdfType; 3] = [
+    KdfType::HkdfWithSha256,
+    KdfType::HkdfWithSha384,
+    KdfType::HkdfWithSha512,
+];
 const KMAC_TYPES: [KdfType; 2] = [KdfType::Kmac128, KdfType::Kmac256];
 
 // Implement clone
