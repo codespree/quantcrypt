@@ -1,8 +1,8 @@
 use crate::{
     dsa::{common::dsa_trait::Dsa, dsa_manager::DsaManager},
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
+    keys::PublicKey,
     oid_mapper::map_to_new_oid,
-    PublicKey,
 };
 use chrono::{DateTime, Utc};
 use cms::enveloped_data::RecipientIdentifier;
@@ -22,7 +22,7 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 ///
 /// # Example
 /// ```
-/// use quantcrypt::Certificate;
+/// use quantcrypt::certificates::Certificate;
 /// let pem_bytes = include_bytes!("../../test/data/2.16.840.1.114027.80.8.1.4_ta.pem");
 /// let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
 /// let cert = Certificate::from_pem(pem).unwrap();
@@ -460,7 +460,7 @@ impl Certificate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CertValidity, Certificate};
+    use crate::{certificates::CertValidity, certificates::Certificate};
 
     #[test]
     fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
@@ -503,14 +503,14 @@ mod tests {
     #[test]
     fn test_akid_skid() {
         // First generate a TA cert
-        let (pk, sk) = crate::DsaKeyGenerator::new(crate::DsaAlgorithm::MlDsa44)
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
 
         let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
 
-        let cert = crate::CertificateBuilder::new(
-            crate::Profile::Root,
+        let cert = crate::certificates::CertificateBuilder::new(
+            crate::certificates::Profile::Root,
             None,
             validity,
             "CN=example.com".to_string(),
@@ -522,14 +522,14 @@ mod tests {
         .unwrap();
 
         // Next generate a leaf KEM cert
-        let (pk_kem, _) = crate::KemKeyGenerator::new(crate::KemAlgorithm::MlKem512)
+        let (pk_kem, _) = crate::kems::KemKeyGenerator::new(crate::kems::KemAlgorithm::MlKem512)
             .generate()
             .unwrap();
 
         let validity = CertValidity::new(None, "2025-01-01T00:00:00Z").unwrap();
 
-        let cert_kem = crate::CertificateBuilder::new(
-            crate::Profile::Leaf {
+        let cert_kem = crate::certificates::CertificateBuilder::new(
+            crate::certificates::Profile::Leaf {
                 issuer: cert.get_subject(),
                 enable_key_agreement: false,
                 enable_key_encipherment: true,
@@ -558,11 +558,11 @@ mod tests {
         let validity =
             CertValidity::new(Some(&not_before.to_rfc3339()), &not_after.to_rfc3339()).unwrap();
 
-        let (pk, sk) = crate::DsaKeyGenerator::new(crate::DsaAlgorithm::MlDsa44)
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
-        let cert = crate::CertificateBuilder::new(
-            crate::Profile::Root,
+        let cert = crate::certificates::CertificateBuilder::new(
+            crate::certificates::Profile::Root,
             None,
             validity,
             "CN=example.com".to_string(),

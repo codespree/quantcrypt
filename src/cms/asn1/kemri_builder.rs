@@ -10,8 +10,8 @@ use der::{asn1::OctetString, Any, Decode, Encode};
 use spki::{AlgorithmIdentifier, ObjectIdentifier};
 
 use crate::{
+    certificates::Certificate,
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
-    Certificate,
 };
 
 const ID_ORI_KEM: &str = "1.2.840.113549.1.9.16.13.3";

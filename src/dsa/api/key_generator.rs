@@ -10,8 +10,8 @@ type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 ///
 /// # Example
 /// ```
-/// use quantcrypt::DsaKeyGenerator;
-/// use quantcrypt::DsaAlgorithm;
+/// use quantcrypt::dsas::DsaKeyGenerator;
+/// use quantcrypt::dsas::DsaAlgorithm;
 ///
 /// let mut key_generator = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
 /// let (pk, sk) = key_generator.generate().unwrap();

@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::cms::cert_store_trait::CertificateStore;
-use crate::{Certificate, QuantCryptError};
+use crate::{certificates::Certificate, QuantCryptError};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -175,8 +175,9 @@ mod tests {
     use x509_cert::builder::Profile;
 
     use crate::{
-        CertValidity, CertificateBuilder, DsaAlgorithm, DsaKeyGenerator, KemAlgorithm,
-        KemKeyGenerator,
+        certificates::{CertValidity, CertificateBuilder},
+        dsas::{DsaAlgorithm, DsaKeyGenerator},
+        kems::{KemAlgorithm, KemKeyGenerator},
     };
 
     use super::*;

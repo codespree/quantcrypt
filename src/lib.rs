@@ -13,37 +13,59 @@ mod wrap;
 
 pub use errors::QuantCryptError;
 
-// Dealing with certificates
-pub use crate::asn1::cert_builder::CertValidity;
-pub use crate::asn1::cert_builder::CertificateBuilder;
-pub use crate::asn1::cert_builder::Profile;
-pub use crate::asn1::certificate::Certificate;
-pub use crate::asn1::private_key::PrivateKey;
-pub use crate::asn1::public_key::PublicKey;
+/// Dealing with pure/composite certificates
+pub mod certificates {
+    pub use crate::asn1::cert_builder::CertValidity;
+    pub use crate::asn1::cert_builder::CertificateBuilder;
+    pub use crate::asn1::cert_builder::Profile;
+    pub use crate::asn1::certificate::Certificate;
+}
 
-// DSA APIs
-pub use crate::dsa::api::algorithm::DsaAlgorithm;
-pub use crate::dsa::api::key_generator::DsaKeyGenerator;
+/// Dealing with pure/composite keys
+pub mod keys {
+    pub use crate::asn1::private_key::PrivateKey;
+    pub use crate::asn1::public_key::PublicKey;
+}
 
-// KEM APIs
-pub use crate::kem::api::algorithm::KemAlgorithm;
-pub use crate::kem::api::key_generator::KemKeyGenerator;
+/// Defines DSA types and key generation
+pub mod dsas {
+    pub use crate::dsa::api::algorithm::DsaAlgorithm;
+    pub use crate::dsa::api::key_generator::DsaKeyGenerator;
+}
 
-// CMS
-pub use cms::api::Attribute;
-pub use cms::api::AttributeType;
-pub use cms::api::AttributeValue;
-pub use cms::api::AuthEnvelopedDataContent;
-pub use cms::api::CertificateStore;
-pub use cms::api::CmsVersion;
-pub use cms::api::ContentEncryptionAlgorithm;
-pub use cms::api::ContentEncryptionAlgorithmAead;
-pub use cms::api::DirectoryCertificateStore;
-pub use cms::api::EnvelopedDataContent;
-pub use cms::api::KdfType;
-pub use cms::api::ObjectIdentifier;
-pub use cms::api::SetOfVec;
-pub use cms::api::Tag;
-pub use cms::api::Tagged;
-pub use cms::api::UserKeyingMaterial;
-pub use cms::api::WrapType;
+/// Defines KEM types and key generation
+pub mod kems {
+    pub use crate::kem::api::algorithm::KemAlgorithm;
+    pub use crate::kem::api::key_generator::KemKeyGenerator;
+}
+
+/// Defines the types of key derivation functions
+pub mod kdfs {
+    pub use crate::kdf::api::KdfType;
+}
+
+/// Defines the types of key wrapping functions
+pub mod wraps {
+    pub use crate::wrap::api::WrapType;
+}
+
+/// Dealing with Cryptographic Message Syntax (CMS)
+pub mod content {
+    pub use crate::cms::api::Attribute;
+    pub use crate::cms::api::AttributeType;
+    pub use crate::cms::api::AttributeValue;
+    pub use crate::cms::api::AuthEnvelopedDataContent;
+    pub use crate::cms::api::CertificateStore;
+    pub use crate::cms::api::CmsVersion;
+    pub use crate::cms::api::ContentEncryptionAlgorithm;
+    pub use crate::cms::api::ContentEncryptionAlgorithmAead;
+    pub use crate::cms::api::DirectoryCertificateStore;
+    pub use crate::cms::api::EnvelopedDataContent;
+    pub use crate::cms::api::KdfType;
+    pub use crate::cms::api::ObjectIdentifier;
+    pub use crate::cms::api::SetOfVec;
+    pub use crate::cms::api::Tag;
+    pub use crate::cms::api::Tagged;
+    pub use crate::cms::api::UserKeyingMaterial;
+    pub use crate::cms::api::WrapType;
+}

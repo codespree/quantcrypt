@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
+/// Error type for the QuantCrypt library
 pub enum QuantCryptError {
     #[error("Cannot read from the specified file")]
     FileReadError,
