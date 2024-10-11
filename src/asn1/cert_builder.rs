@@ -11,7 +11,7 @@ use x509_cert::ext::AsExtension;
 use x509_cert::time::Time;
 use x509_cert::{name::Name, serial_number::SerialNumber, time::Validity};
 
-use crate::{errors::QuantCryptError, PrivateKey, PublicKey};
+use crate::{errors::QuantCryptError, keys::PrivateKey, keys::PublicKey};
 
 use crate::asn1::certificate::Certificate;
 
@@ -113,13 +113,13 @@ impl CertValidity {
 ///
 /// # Example:
 /// ```
-/// use quantcrypt::CertificateBuilder;
-/// use quantcrypt::DsaAlgorithm;
-/// use quantcrypt::KemAlgorithm;
-/// use quantcrypt::Profile;
-/// use quantcrypt::DsaKeyGenerator;
-/// use quantcrypt::KemKeyGenerator;
-/// use quantcrypt::CertValidity;
+/// use quantcrypt::certificates::CertificateBuilder;
+/// use quantcrypt::dsas::DsaAlgorithm;
+/// use quantcrypt::kems::KemAlgorithm;
+/// use quantcrypt::certificates::Profile;
+/// use quantcrypt::dsas::DsaKeyGenerator;
+/// use quantcrypt::kems::KemKeyGenerator;
+/// use quantcrypt::certificates::CertValidity;
 ///
 /// // Create a TA key pair
 /// let (pk_root, sk_root) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44).generate().unwrap();

@@ -6,7 +6,7 @@ use cms::{
 use der::{Decode, Encode};
 use x509_cert::attr::Attributes;
 
-use crate::{Certificate, PrivateKey, QuantCryptError};
+use crate::{certificates::Certificate, keys::PrivateKey, QuantCryptError};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -24,18 +24,18 @@ use super::auth_env_data::AuthEnvelopedData;
 ///
 /// # Example
 /// ```
-/// use quantcrypt::AuthEnvelopedDataContent;
-/// use quantcrypt::ContentEncryptionAlgorithmAead;
-/// use quantcrypt::Certificate;
-/// use quantcrypt::PrivateKey;
-/// use quantcrypt::KdfType;
-/// use quantcrypt::WrapType;
-/// use quantcrypt::UserKeyingMaterial;
-/// use quantcrypt::ObjectIdentifier;
-/// use quantcrypt::Attribute;
-/// use quantcrypt::Tag;
-/// use quantcrypt::AttributeValue;
-/// use quantcrypt::SetOfVec;
+/// use quantcrypt::content::AuthEnvelopedDataContent;
+/// use quantcrypt::content::ContentEncryptionAlgorithmAead;
+/// use quantcrypt::certificates::Certificate;
+/// use quantcrypt::keys::PrivateKey;
+/// use quantcrypt::kdfs::KdfType;
+/// use quantcrypt::wraps::WrapType;
+/// use quantcrypt::content::UserKeyingMaterial;
+/// use quantcrypt::content::ObjectIdentifier;
+/// use quantcrypt::content::Attribute;
+/// use quantcrypt::content::Tag;
+/// use quantcrypt::content::AttributeValue;
+/// use quantcrypt::content::SetOfVec;
 ///
 /// let recipient_cert = Certificate::from_file(
 ///     "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
@@ -240,7 +240,7 @@ mod tests {
     use x509_cert::attr::{Attribute, AttributeValue};
 
     use super::*;
-    use crate::{KdfType, UserKeyingMaterial, WrapType};
+    use crate::{content::UserKeyingMaterial, content::WrapType, kdf::common::kdf_type::KdfType};
 
     #[test]
     fn test_auth_enveloped_data_content() {

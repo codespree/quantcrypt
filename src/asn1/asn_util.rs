@@ -1,8 +1,8 @@
 use der::{oid::ObjectIdentifier, Encode};
 
 use crate::{
-    dsa::common::dsa_type::DsaType, errors, kem::common::kem_type::KemType, DsaAlgorithm,
-    KemAlgorithm,
+    dsa::common::dsa_type::DsaType, dsas::DsaAlgorithm, errors, kem::common::kem_type::KemType,
+    kems::KemAlgorithm,
 };
 
 // Change the alias to use `QuantCryptError`.
