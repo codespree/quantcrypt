@@ -29,12 +29,18 @@ impl Oid for DsaType {
             DsaType::Ed25519SHA512 => "1.3.101.112",
             DsaType::Ed448SHA512 => "1.3.101.113",
             // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
-            // TODO: Revert to the lines below when latest fips is used
-            // DsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
-            // DsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
-            // DsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
+            // TODO: Remove support for IPD eventually
+            #[cfg(not(feature = "ipd"))]
+            DsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
+            #[cfg(not(feature = "ipd"))]
+            DsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
+            #[cfg(not(feature = "ipd"))]
+            DsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
+            #[cfg(feature = "ipd")]
             DsaType::MlDsa44 => "1.3.6.1.4.1.2.267.12.4.4",
+            #[cfg(feature = "ipd")]
             DsaType::MlDsa65 => "1.3.6.1.4.1.2.267.12.6.5",
+            #[cfg(feature = "ipd")]
             DsaType::MlDsa87 => "1.3.6.1.4.1.2.267.12.8.7",
 
             // TODO: Change when finalized

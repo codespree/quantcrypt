@@ -2,12 +2,28 @@ use crate::dsa::common::dsa_info::DsaInfo;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::common::dsa_type::DsaType;
 use crate::QuantCryptError;
-use fips204::traits::{SerDes, Signer, Verifier};
+
 use rand_core::SeedableRng;
 
+// When IPD feature is not enabled
+#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_44;
+#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_65;
+#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_87;
+#[cfg(not(feature = "ipd"))]
+use fips204::traits::{SerDes, Signer, Verifier};
+
+// When IPD feature is enabled
+#[cfg(feature = "ipd")]
+use fips204_ipd::ml_dsa_44;
+#[cfg(feature = "ipd")]
+use fips204_ipd::ml_dsa_65;
+#[cfg(feature = "ipd")]
+use fips204_ipd::ml_dsa_87;
+#[cfg(feature = "ipd")]
+use fips204_ipd::traits::{SerDes, Signer, Verifier};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -26,13 +42,14 @@ macro_rules! sign_ml {
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Try signing the message
+        #[cfg(feature = "ipd")]
         let sig = sk
             .try_sign($msg)
             .map_err(|_| QuantCryptError::SignatureFailed)?;
-        //TODO: Revert to the lines below when latest fips is used
-        // let sig = sk
-        //     .try_sign($msg, &[])
-        //     .map_err(|_| QuantCryptError::SignatureFailed)?;
+        #[cfg(not(feature = "ipd"))]
+        let sig = sk
+            .try_sign($msg, &[]) // Empty context
+            .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
         let sig: Vec<u8> = sig.to_vec();
@@ -60,10 +77,13 @@ macro_rules! verify_ml {
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        //TODO: Revert to the lines below when latest fips is used
-        // Ok(pk.verify($msg, &sig_buf, &[]))
+        #[cfg(feature = "ipd")]
+        let result = Ok(pk.verify($msg, &sig_buf));
 
-        Ok(pk.verify($msg, &sig_buf))
+        #[cfg(not(feature = "ipd"))]
+        let result = Ok(pk.verify($msg, &sig_buf, &[]));
+
+        result
     }};
 }
 

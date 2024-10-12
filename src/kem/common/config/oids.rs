@@ -19,17 +19,17 @@ impl Oid for KemType {
     fn get_oid(&self) -> String {
         match self {
             // Composite types from old version:
-            KemType::MlKem512P256 => "2.16.840.1.114027.80.5.2.1.1",
-            KemType::MlKem512BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.1.2",
-            KemType::MlKem512X25519 => "2.16.840.1.114027.80.5.2.1.3",
-            KemType::MlKem512Rsa2048 => "2.16.840.1.114027.80.5.2.1.13",
-            KemType::MlKem512Rsa3072 => "2.16.840.1.114027.80.5.2.1.4",
-            KemType::MlKem768P256 => "2.16.840.1.114027.80.5.2.1.5",
-            KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.1.6",
-            KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.1.7",
-            KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.1.8",
-            KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.1.9",
-            KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.1.10",
+            KemType::MlKem512P256 => "2.16.840.1.114027.80.5.2.1",
+            KemType::MlKem512BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.2",
+            KemType::MlKem512X25519 => "2.16.840.1.114027.80.5.2.3",
+            KemType::MlKem512Rsa2048 => "2.16.840.1.114027.80.5.2.13",
+            KemType::MlKem512Rsa3072 => "2.16.840.1.114027.80.5.2.4",
+            KemType::MlKem768P256 => "2.16.840.1.114027.80.5.2.5",
+            KemType::MlKem768BrainpoolP256r1 => "2.16.840.1.114027.80.5.2.6",
+            KemType::MlKem768X25519 => "2.16.840.1.114027.80.5.2.7",
+            KemType::MlKem1024P384 => "2.16.840.1.114027.80.5.2.8",
+            KemType::MlKem1024BrainpoolP384r1 => "2.16.840.1.114027.80.5.2.9",
+            KemType::MlKem1024X448 => "2.16.840.1.114027.80.5.2.10",
 
             // Composite types from editor's copy, skipped ones are also in old version:
             KemType::MlKem768Rsa2048 => "2.16.840.1.114027.80.5.2.21",
@@ -54,13 +54,19 @@ impl Oid for KemType {
             KemType::RsaOAEP3072 => "1.2.840.113549.1.1.7",
             KemType::RsaOAEP4096 => "1.2.840.113549.1.1.7",
             // ML Types:
-            // KemType::MlKem512 => "2.16.840.1.101.3.4.4.1",
-            // KemType::MlKem768 => "2.16.840.1.101.3.4.4.2",
-            // KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3",
+            #[cfg(not(feature = "ipd"))]
+            KemType::MlKem512 => "2.16.840.1.101.3.4.4.1",
+            #[cfg(not(feature = "ipd"))]
+            KemType::MlKem768 => "2.16.840.1.101.3.4.4.2",
+            #[cfg(not(feature = "ipd"))]
+            KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3",
 
             // oid for old version for ipd
+            #[cfg(feature = "ipd")]
             KemType::MlKem512 => "1.3.6.1.4.1.22554.5.6.1",
+            #[cfg(feature = "ipd")]
             KemType::MlKem768 => "1.3.6.1.4.1.22554.5.6.2",
+            #[cfg(feature = "ipd")]
             KemType::MlKem1024 => "1.3.6.1.4.1.22554.5.6.3",
         }
         .to_string()

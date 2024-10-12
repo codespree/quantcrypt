@@ -16,6 +16,14 @@ Import quantcrypt into your project by adding the following lines to your Cargo.
 quantcrypt = "0.1.0"
 ```
 
+For the purposes of the [PQC Hackathon](https://github.com/IETF-Hackathon/pqc-certificates), the library can also be included in IPD mode. This mode is enabled by setting the `ipd` feature in your Cargo.toml.
+```toml
+[dependencies]
+quantcrypt = { version = "0.1.0", features = ["ipd"] }
+```
+
+When the IPD feature is enabled, the library will use the OIDs defines as IPD OIDs and will not use the context parameter in the finalized FIPS 204 standard.
+
 ## Generating Key Pairs and Certificates
 
 The following snippet demonstrates how to generate a key pair and a certificate using the DSA and KEM algorithms. In addition to pure ML-DSA and ML-KEM algorithms, the library also supports composite algorithms that combine a traditional and post-quantum algorithm into a single key pair and certificate.
@@ -92,12 +100,25 @@ use quantcrypt::content::Tag;
 use quantcrypt::content::AttributeValue;
 use quantcrypt::content::SetOfVec;
 
+// Based on whether IPD feature is enabled or not, use the appropriate test data
+let rc_filename = if quantcrypt::is_ipd_mode_enabled() {
+    "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
+} else {
+    "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
+};
+
 let recipient_cert = Certificate::from_file(
-    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
+    rc_filename,
 ).unwrap();
 
+let sk_filename = if quantcrypt::is_ipd_mode_enabled() {
+    "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
+} else {
+    "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der"
+};
+
 let private_key = PrivateKey::from_file(
-    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der",
+    sk_filename
 ).unwrap();
 
 let ukm = UserKeyingMaterial::new("test".as_bytes()).unwrap();
@@ -158,12 +179,24 @@ use quantcrypt::content::Tag;
 use quantcrypt::content::AttributeValue;
 use quantcrypt::content::SetOfVec;
 
+let rc_filename = if quantcrypt::is_ipd_mode_enabled() {
+    "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
+} else {
+    "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
+};
+
 let recipient_cert = Certificate::from_file(
-    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
+    rc_filename,
 ).unwrap();
 
+let sk_filename = if quantcrypt::is_ipd_mode_enabled() {
+    "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
+} else {
+    "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der"
+};
+
 let private_key = PrivateKey::from_file(
-    "test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der",
+    sk_filename
 ).unwrap();
 
 let ukm = UserKeyingMaterial::new("test".as_bytes()).unwrap();

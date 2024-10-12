@@ -5,6 +5,10 @@ use thiserror::Error;
 pub enum QuantCryptError {
     #[error("Cannot read from the specified file")]
     FileReadError,
+    #[error("Content cannot be empty")]
+    EmptyContent,
+    #[error("Cannot write to the specified file")]
+    FileWriteError,
     #[error("Invalid RecipientInfo")]
     InvalidRecipientInfo,
     #[error("Certificate doesn't contain a Subject Key Identifier extension")]

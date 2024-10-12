@@ -272,20 +272,44 @@ mod tests {
 
     #[test]
     fn test_enveloped_data() {
-        let ta_bytes = include_bytes!("../../test/data/cms_cw/ta.der");
+        #[cfg(feature = "ipd")]
+        let ta_bytes = include_bytes!("../../test/data_ipd/cms_cw/ta.der");
+
+        #[cfg(not(feature = "ipd"))]
+        let ta_bytes = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.3.17_MlDsa44_ta.der");
+
         let ta = Certificate::from_der(ta_bytes).unwrap();
-        let ee_bytes =
-            include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der");
+
+        #[cfg(feature = "ipd")]
+        let ee_bytes = include_bytes!(
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
+        );
+
+        #[cfg(not(feature = "ipd"))]
+        let ee_bytes = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der");
+
         let ee = Certificate::from_der(ee_bytes).unwrap();
-        // ee should be signed by ta, this wont verify because of context parameter
         let result = ta.verify_child(&ee).unwrap();
+        #[cfg(not(feature = "ipd"))]
+        assert_eq!(result, true);
+
+        // Not true for CW artifacts
+        #[cfg(feature = "ipd")]
         assert_eq!(result, false);
 
-        let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256_ukm.der");
+        #[cfg(feature="ipd")]
+        let enveloped = include_bytes!("../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256_ukm.der");
 
+        #[cfg(not(feature="ipd"))]
+        let enveloped = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_kemri_id-alg-hkdf-with-sha256_ukm.der");
+
+        #[cfg(feature = "ipd")]
         let sk = include_bytes!(
-            "../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
         );
+        #[cfg(not(feature = "ipd"))]
+        let sk = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der");
+
         let sk = PrivateKey::from_der(sk).unwrap();
 
         let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
@@ -293,21 +317,34 @@ mod tests {
         let expected = b"abc";
         assert_eq!(result, expected);
 
-        let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256.der");
+        #[cfg(feature="ipd")]
+        let enveloped = include_bytes!("../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-alg-hkdf-with-sha256.der");
+        #[cfg(not(feature = "ipd"))]
+        let enveloped = include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_kemri_id-alg-hkdf-with-sha256.der"
+        );
 
         let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
-        let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-kmac128_ukm.der");
+        #[cfg(feature="ipd")]
+        let enveloped = include_bytes!("../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_id-kmac128_ukm.der");
+        #[cfg(not(feature = "ipd"))]
+        let enveloped = include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_kemri_id-kmac128_ukm.der"
+        );
 
         let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);
         let expected = b"abc";
         assert_eq!(result, expected);
 
-        let enveloped = include_bytes!("../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_auth_id-alg-hkdf-with-sha256_ukm.der");
+        #[cfg(feature="ipd")]
+        let enveloped = include_bytes!("../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_kemri_auth_id-alg-hkdf-with-sha256_ukm.der");
+        #[cfg(not(feature="ipd"))]
+        let enveloped = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_kemri_auth_id-alg-hkdf-with-sha256_ukm.der");
 
         let result = CmsUtil::decrypt_kemri(enveloped, &sk, &ee).unwrap();
         assert_eq!(result.len(), 3);

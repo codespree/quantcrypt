@@ -431,7 +431,7 @@ impl<'a> EnvelopedDataBuilder<'a> {
         let is_auth_enveloped = self.is_auth_enveloped;
 
         if self.plaintext.is_empty() {
-            return Err(QuantCryptError::InvalidContent);
+            return Err(QuantCryptError::EmptyContent);
         }
 
         let data = if !self.is_auth_enveloped {
@@ -456,6 +456,16 @@ impl<'a> EnvelopedDataBuilder<'a> {
             .map_err(|_| QuantCryptError::Unknown)?;
 
         Ok(ci_der)
+    }
+
+    /// Build the EnvelopedData or AuthEnvelopedData and write it to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path to write the file to
+    pub fn build_to_file(self, file_path: &str) -> Result<()> {
+        let data = self.build()?;
+        std::fs::write(file_path, data).map_err(|_| QuantCryptError::FileWriteError)
     }
 }
 
@@ -484,7 +494,7 @@ mod tests {
         let mut builder = EnvelopedDataBuilder::new(cea_type, false)
             .expect("Failed to create EnvelopedDataBuilder");
 
-        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data/cms_cw/ta.der"))
+        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data_ipd/cms_cw/ta.der"))
             .expect("Failed to create Certificate");
 
         let kdf = KdfType::HkdfWithSha256;
@@ -497,14 +507,27 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result, Err(QuantCryptError::InvalidCertificate)));
 
+        #[cfg(feature = "ipd")]
         let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
-            "../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
         ))
         .expect("Failed to create Certificate");
 
+        #[cfg(not(feature = "ipd"))]
+        let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
+        ))
+        .expect("Failed to create Certificate");
+
+        #[cfg(feature = "ipd")]
         let sk_bytes = include_bytes!(
-            "../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
         );
+
+        #[cfg(not(feature = "ipd"))]
+        let sk_bytes =
+            include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der");
+
         let sk_ee_1 = PrivateKey::from_der(sk_bytes).expect("Failed to create PrivateKey");
 
         builder
@@ -594,7 +617,7 @@ mod tests {
         let mut builder = EnvelopedDataBuilder::new(cea_type, true)
             .expect("Failed to create EnvelopedDataBuilder");
 
-        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data/cms_cw/ta.der"))
+        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data_ipd/cms_cw/ta.der"))
             .expect("Failed to create Certificate");
 
         let kdf = KdfType::HkdfWithSha256;
@@ -607,14 +630,26 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result, Err(QuantCryptError::InvalidCertificate)));
 
+        #[cfg(feature = "ipd")]
         let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
-            "../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
         ))
         .expect("Failed to create Certificate");
 
+        #[cfg(not(feature = "ipd"))]
+        let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
+        ))
+        .expect("Failed to create Certificate");
+
+        #[cfg(feature = "ipd")]
         let sk_bytes = include_bytes!(
-            "../../test/data/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
+            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
         );
+        #[cfg(not(feature = "ipd"))]
+        let sk_bytes =
+            include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der");
+
         let sk_ee_1 = PrivateKey::from_der(sk_bytes).expect("Failed to create PrivateKey");
 
         builder
@@ -696,4 +731,98 @@ mod tests {
 
         assert_eq!(pt, plaintext);
     }
+
+    // #[test]
+    // fn gen_cms_test_data() {
+    //     // Generate a TA key pair
+    //     let mut dsa = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
+    //     let (pk, sk) = dsa.generate().unwrap();
+
+    //     // Generate the TA certificate
+    //     let pk_clone = pk.clone();
+    //     let oid = pk_clone.get_oid();
+    //     let friendly_name = DsaAlgorithm::MlDsa44.to_string();
+
+    //     let builder = CertificateBuilder::new(
+    //         Profile::Root,
+    //         None,
+    //         CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+    //         "CN=test.com".to_string(),
+    //         pk,
+    //         &sk,
+    //     ).unwrap();
+
+    //     let ta_cert = builder.build().unwrap();
+    //     let ta_cert_path = format!("test/data/cms/{}_{}_ta.der", oid, friendly_name);
+    //     ta_cert.to_der_file(&ta_cert_path).unwrap();
+
+    //     let mut kg = KemKeyGenerator::new(KemAlgorithm::MlKem512);
+    //     let (pk_ee, sk_ee) = kg.generate().unwrap();
+
+    //     let pk_clone = pk_ee.clone();
+    //     let oid = pk_clone.get_oid();
+    //     let friendly_name = KemAlgorithm::MlKem512.to_string();
+
+    //     let sk_path = format!("test/data/cms/{}_{}_priv.der", oid, friendly_name);
+
+    //     // Write the private key to a file
+    //     sk_ee.to_der_file(&sk_path).unwrap();
+
+    //     // Generate the ee certificate
+    //     let builder = CertificateBuilder::new(
+    //         Profile::Leaf {
+    //             issuer: ta_cert.get_subject(),
+    //             enable_key_agreement: false,
+    //             enable_key_encipherment: true,
+    //         },
+    //         None,
+    //         CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+    //         "CN=sub.test.com".to_string(),
+    //         pk_ee,
+    //         &sk,
+    //     ).unwrap();
+
+    //     let ee_cert = builder.build().unwrap();
+    //     let ee_cert_path = format!("test/data/cms/{}_{}_ee.der", oid, friendly_name);
+    //     ee_cert.to_der_file(&ee_cert_path).unwrap();
+
+    //     let ukim = b"This is some User Keying Material";
+
+    //     let path = format!("test/data/cms/{}_{}_kemri_auth_id-alg-hkdf-with-sha256_ukm.der", oid, friendly_name);
+
+    //     let mut auth_builder = AuthEnvelopedDataContent::get_builder(ContentEncryptionAlgorithmAead::Aes128Gcm).unwrap();
+    //     let kdf = KdfType::HkdfWithSha256;
+    //     let wrap_type = WrapType::Aes128;
+    //     let ukm: der::asn1::OctetString = UserKeyingMaterial::new(ukim.to_vec()).unwrap();
+    //     auth_builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm.clone())).unwrap();
+    //     auth_builder.content(b"abc").unwrap();
+
+    //     auth_builder.build_to_file(&path).unwrap();
+
+    //     // Build the same without auth
+    //     let path = format!("test/data/cms/{}_{}_kemri_id-alg-hkdf-with-sha256_ukm.der", oid, friendly_name);
+    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm.clone())).unwrap();
+    //     builder.content(b"abc").unwrap();
+
+    //     builder.build_to_file(&path).unwrap();
+
+    //     // Build the same without auth and UKIM
+    //     let path = format!("test/data/cms/{}_{}_kemri_id-alg-hkdf-with-sha256.der", oid, friendly_name);
+    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, None).unwrap();
+    //     builder.content(b"abc").unwrap();
+
+    //     builder.build_to_file(&path).unwrap();
+
+    //     // Build the same without auth and using kmac
+    //     let kdf = KdfType::Kmac128;
+    //     let path = format!("test/data/cms/{}_{}_kemri_id-kmac128_ukm.der", oid, friendly_name);
+    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
+    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm)).unwrap();
+    //     builder.content(b"abc").unwrap();
+
+    //     builder.build_to_file(&path).unwrap();
+
+    // }
 }

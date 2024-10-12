@@ -7,7 +7,6 @@ mod dsa;
 mod errors;
 mod kdf;
 mod kem;
-mod oid_mapper;
 mod utils;
 mod wrap;
 
@@ -68,4 +67,10 @@ pub mod content {
     pub use crate::cms::api::Tagged;
     pub use crate::cms::api::UserKeyingMaterial;
     pub use crate::cms::api::WrapType;
+}
+
+/// Check if the IPD mode is enabled. When enabled, the library
+/// will use the IPD OIDs and algorithms.
+pub fn is_ipd_mode_enabled() -> bool {
+    cfg!(feature = "ipd")
 }

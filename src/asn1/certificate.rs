@@ -2,7 +2,6 @@ use crate::{
     dsa::{common::dsa_trait::Dsa, dsa_manager::DsaManager},
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
     keys::PublicKey,
-    oid_mapper::map_to_new_oid,
 };
 use chrono::{DateTime, Utc};
 use cms::enveloped_data::RecipientIdentifier;
@@ -23,9 +22,13 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 /// # Example
 /// ```
 /// use quantcrypt::certificates::Certificate;
-/// let pem_bytes = include_bytes!("../../test/data_old/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem");
-/// let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-/// let cert = Certificate::from_pem(pem).unwrap();
+/// use quantcrypt::is_ipd_mode_enabled;
+/// let cert_path = if is_ipd_mode_enabled() {
+///    "test/data_ipd/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+/// } else {
+///   "test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+/// };
+/// let cert = Certificate::from_file(cert_path).unwrap();
 /// assert!(cert.verify_self_signed().unwrap());
 /// ```
 #[derive(Clone)]
@@ -96,8 +99,7 @@ impl Certificate {
             .algorithm
             .oid
             .to_string();
-        let mapped_oid = map_to_new_oid(&original_oid);
-        let new_oid: ObjectIdentifier = mapped_oid
+        let new_oid: ObjectIdentifier = original_oid
             .parse()
             .map_err(|_| QuantCryptError::InvalidCertificate)?;
         cert.tbs_certificate.subject_public_key_info.algorithm.oid = new_oid;
@@ -256,11 +258,13 @@ impl Certificate {
                     if ext.extn_id == const_oid::db::rfc5280::ID_CE_AUTHORITY_KEY_IDENTIFIER {
                         let akid = AuthorityKeyIdentifier::from_der(ext.extn_value.as_bytes())
                             .map_err(|_| QuantCryptError::InvalidCertificate)?;
+
                         let akid = if let Some(akid) = akid.key_identifier {
                             akid
                         } else {
                             return Ok(false);
                         };
+
                         if akid != parent_skid.0 {
                             return Ok(false);
                         }
@@ -467,9 +471,16 @@ mod tests {
     #[test]
     fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
         // let pem_bytes = include_bytes!("../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem");
+        #[cfg(feature = "ipd")]
         let pem_bytes = include_bytes!(
-            "../../test/data_old/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+            "../../test/data_ipd/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
         );
+
+        #[cfg(not(feature = "ipd"))]
+        let pem_bytes = include_bytes!(
+            "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+        );
+
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
@@ -478,8 +489,14 @@ mod tests {
     #[test]
     fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
         // let pem_bytes = include_bytes!("../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem");
+        #[cfg(feature = "ipd")]
         let pem_bytes = include_bytes!(
-            "../../test/data_old/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
+            "../../test/data_ipd/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
+        );
+
+        #[cfg(not(feature = "ipd"))]
+        let pem_bytes = include_bytes!(
+            "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
         );
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(&pem).unwrap();
@@ -488,31 +505,17 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-        // let pem_bytes = include_bytes!("../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem");
+        #[cfg(not(feature = "ipd"))]
         let pem_bytes = include_bytes!(
-            "../../test/data_old/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
+            "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
+        );
+        #[cfg(feature = "ipd")]
+        let pem_bytes = include_bytes!(
+            "../../test/data_ipd/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
         );
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(&pem).unwrap();
         assert!(cert.verify_self_signed().unwrap());
-    }
-
-    #[test]
-    fn test_dsa_kem() {
-        // let pem_bytes = include_bytes!("../../test/data/MlDsa44-2.16.840.1.101.3.4.3.17_ta.pem");
-        let pem_bytes =
-            include_bytes!("../../test/data_old/MlDsa44-1.3.6.1.4.1.2.267.12.4.4_ta.pem");
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(&pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-
-        // let child_pem_bytes = include_bytes!("../../test/data/MlDsa44_MlKem512-2.16.840.1.101.3.4.4.1_ee.pem");
-        let child_pem_bytes =
-            include_bytes!("../../test/data_old/MlDsa44_MlKem512-1.3.6.1.4.1.22554.5.6.1_ee.pem");
-        let child_pem = std::str::from_utf8(child_pem_bytes).unwrap().trim();
-        let child_cert = Certificate::from_pem(&child_pem).unwrap();
-
-        assert!(cert.verify_child(&child_cert).unwrap());
     }
 
     #[test]

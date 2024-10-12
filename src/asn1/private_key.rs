@@ -10,7 +10,6 @@ use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::dsa_manager::DsaManager;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::kem_manager::KemManager;
-use crate::oid_mapper::map_to_new_oid;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
 use crate::{keys::PublicKey, QuantCryptError};
 use signature::{Keypair, Signer};
@@ -241,7 +240,7 @@ impl PrivateKey {
         let priv_key_info = PrivateKeyInfo::from_der(der)
             .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?;
 
-        let oid = map_to_new_oid(&priv_key_info.algorithm.oid.to_string());
+        let oid = priv_key_info.algorithm.oid.to_string();
 
         // Check if the OID is valid
         if !is_valid_kem_or_dsa_oid(&oid) {
@@ -338,6 +337,40 @@ impl PrivateKey {
                 Err(QuantCryptError::InvalidPrivateKey)
             }
         }
+    }
+
+    /// Save the private key to a file in PEM format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::FileWriteError` will be returned if there is an error writing to the file
+    pub fn to_pem_file(&self, path: &str) -> Result<()> {
+        let pem = self
+            .to_pem()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        std::fs::write(path, pem).map_err(|_| QuantCryptError::FileWriteError)?;
+        Ok(())
+    }
+
+    /// Save the private key to a file in DER format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::FileWriteError` will be returned if there is an error writing to the file
+    pub fn to_der_file(&self, path: &str) -> Result<()> {
+        let der = self
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        std::fs::write(path, der).map_err(|_| QuantCryptError::FileWriteError)?;
+        Ok(())
     }
 }
 

@@ -4,7 +4,6 @@ use crate::dsa::dsa_manager::DsaManager;
 use crate::errors;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::kem_manager::KemManager;
-use crate::oid_mapper::map_to_new_oid;
 use der::{asn1::BitString, Document};
 use der::{Decode, Encode};
 use pem::EncodeConfig;
@@ -216,8 +215,6 @@ impl PublicKey {
         };
 
         let oid = pub_key_info.algorithm.oid.to_string();
-
-        let oid = map_to_new_oid(oid.as_str());
 
         // Check if oid is valid
         if !is_valid_kem_or_dsa_oid(&oid) {
