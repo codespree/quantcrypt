@@ -27,8 +27,12 @@ macro_rules! sign_ml {
 
         // Try signing the message
         let sig = sk
-            .try_sign($msg, &[])
+            .try_sign($msg)
             .map_err(|_| QuantCryptError::SignatureFailed)?;
+        //TODO: Revert to the lines below when latest fips is used
+        // let sig = sk
+        //     .try_sign($msg, &[])
+        //     .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
         let sig: Vec<u8> = sig.to_vec();
@@ -55,7 +59,11 @@ macro_rules! verify_ml {
 
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
-        Ok(pk.verify($msg, &sig_buf, &[]))
+
+        //TODO: Revert to the lines below when latest fips is used
+        // Ok(pk.verify($msg, &sig_buf, &[]))
+
+        Ok(pk.verify($msg, &sig_buf))
     }};
 }
 

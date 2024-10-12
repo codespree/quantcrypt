@@ -1,6 +1,7 @@
 # QuantCrypt
 
-![example workflow](https://github.com/codespree/quantcrypt/actions/workflows/rust.yml/badge.svg) [![dependency status](https://deps.rs/repo/github/codespree/quantcrypt/status.svg)](https://deps.rs/repo/github/codespree/quantcrypt)
+![Crates.io Version](https://img.shields.io/crates/v/quantcrypt)
+ ![example workflow](https://github.com/codespree/quantcrypt/actions/workflows/rust.yml/badge.svg) [![dependency status](https://deps.rs/repo/github/codespree/quantcrypt/status.svg)](https://deps.rs/repo/github/codespree/quantcrypt) 
 
 The goal of this library is to provide a simple and easy-to-use 
 interface for generating key pairs, certificates, signing and verifying messages, and encrypting and decrypting messages using post-quantum cryptographic algorithms.

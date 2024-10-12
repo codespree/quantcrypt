@@ -1,9 +1,9 @@
 use crate::dsa::common::{config::oids::Oid, dsa_type::DsaType};
 
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{Display, EnumIter};
 
-#[derive(Clone, Debug, PartialEq, EnumIter)]
+#[derive(Clone, Debug, PartialEq, EnumIter, Display, Copy)]
 /// The permissible algorithms for the `AlgorithmIdentifier` type.
 pub enum DsaAlgorithm {
     // ML DSA
