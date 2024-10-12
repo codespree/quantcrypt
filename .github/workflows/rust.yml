@@ -20,9 +20,17 @@ jobs:
       run: cargo fmt --all -- --check
     - name: Clippy
       run: cargo clippy
+    - name: Clippy IPD
+      run: cargo clippy --features=ipd
     - name: Check
       run: cargo check
+    - name: Check IPD
+      run: cargo check --features=ipd
     - name: Build
       run: cargo build --release
     - name: Run tests
       run: cargo test --release
+    - name: Build IPD
+      run: cargo build --release --features=ipd
+    - name: Run tests IPD
+      run: cargo test --release --features=ipd

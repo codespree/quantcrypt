@@ -13,16 +13,32 @@ A secondary goal is to provide a set of cryptographic algorithms that are compat
 Import quantcrypt into your project by adding the following lines to your Cargo.toml.
 ```toml
 [dependencies]
-quantcrypt = "0.1.0"
+quantcrypt = "0.2.0"
 ```
 
 For the purposes of the [PQC Hackathon](https://github.com/IETF-Hackathon/pqc-certificates), the library can also be included in IPD mode. This mode is enabled by setting the `ipd` feature in your Cargo.toml.
 ```toml
 [dependencies]
-quantcrypt = { version = "0.1.0", features = ["ipd"] }
+quantcrypt = { version = "0.2.0", features = ["ipd"] }
 ```
 
-When the IPD feature is enabled, the library will use the OIDs defines as IPD OIDs and will not use the context parameter in the finalized FIPS 204 standard.
+When the `ipd` feature is enabled, the library will use [IPD OIDs](https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oid_mapping.md) and will not use the newly introduced `context` parameter in the finalized FIPS 204 standard.
+
+Otherwise, it will use the finalized OIDs where possible, and will use the `context` parameter in the finalized FIPS 204 standard by setting it to an empty string.
+
+## Generating PQC Hackathon Artifacts
+
+For IPD artifacts (presently compatible with OQS provider)
+```ignore
+cargo test gen_pq_hackathon_artifacts --release --features ipd
+```
+
+For non-IPD artifacts (with the NIST `context` parameter)
+```ignore
+cargo test gen_pq_hackathon_artifacts --release
+```
+
+After generating the artifacts, the certificates can be found in the `artifacts/certs` directory.
 
 ## Generating Key Pairs and Certificates
 

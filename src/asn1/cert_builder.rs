@@ -236,25 +236,8 @@ mod test {
 
     #[test]
     fn gen_pq_hackathon_artifacts() {
-        // For composite ML-DSA algorithm only
-        let dsa_algs: Vec<DsaAlgorithm> = vec![
-            DsaAlgorithm::MlDsa44,
-            DsaAlgorithm::MlDsa65,
-            DsaAlgorithm::MlDsa87,
-            DsaAlgorithm::MlDsa44Rsa2048PssSha256,
-            DsaAlgorithm::MlDsa44Rsa2048Pkcs15Sha256,
-            DsaAlgorithm::MlDsa44Ed25519SHA512,
-            DsaAlgorithm::MlDsa44EcdsaP256SHA256,
-            DsaAlgorithm::MlDsa44EcdsaBrainpoolP256r1SHA256,
-            DsaAlgorithm::MlDsa65Rsa3072PssSHA512,
-            DsaAlgorithm::MlDsa65Rsa3072Pkcs15SHA512,
-            DsaAlgorithm::MlDsa65EcdsaP256SHA512,
-            DsaAlgorithm::MlDsa65EcdsaBrainpoolP256r1SHA512,
-            DsaAlgorithm::MlDsa65Ed25519SHA512,
-            DsaAlgorithm::MlDsa87EcdsaP384SHA512,
-            DsaAlgorithm::MlDsa87EcdsaBrainpoolP384r1SHA512,
-            DsaAlgorithm::MlDsa87Ed448SHA512,
-        ];
+        // Generate R4 artifacts for the hackathon
+        let dsa_algs: Vec<DsaAlgorithm> = DsaAlgorithm::all();
 
         for dsa_alg in dsa_algs.iter() {
             // Use DSA to generate key pair for Trust authority
@@ -283,7 +266,13 @@ mod test {
             // Verify self-sign cert
             assert!(cert_root.verify_self_signed().unwrap());
 
-            let dsa_alg_name = &dsa_alg.to_string();
+            let mut dsa_alg_name = dsa_alg.to_string();
+
+            // If IPD mode is enabled, prefix IPD- to the filename
+            if crate::is_ipd_mode_enabled() {
+                let formatted_name = format!("IPD-{}", dsa_alg_name);
+                dsa_alg_name = formatted_name;
+            }
 
             let file_name = format!(
                 "artifacts/certs/{}-{}_ta.der",
