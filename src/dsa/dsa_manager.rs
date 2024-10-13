@@ -8,6 +8,9 @@ use crate::dsa::ml_dsa::MlDsaManager;
 use crate::dsa::rsa_dsa::RsaDsaManager;
 use crate::QuantCryptError;
 
+#[cfg(not(feature = "ipd"))]
+use crate::dsa::slh_dsa::SlhDsaManager;
+
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 const ML_DSA_TYPES: [DsaType; 3] = [DsaType::MlDsa44, DsaType::MlDsa65, DsaType::MlDsa87];
@@ -46,6 +49,22 @@ const COMPOSITE_DSA_TYPES: [DsaType; 13] = [
     DsaType::MlDsa87Ed448SHA512,
 ];
 
+#[cfg(not(feature = "ipd"))]
+const SLH_DSA_TYPES: [DsaType; 12] = [
+    DsaType::SlhDsaSha2_128s,
+    DsaType::SlhDsaSha2_128f,
+    DsaType::SlhDsaSha2_192s,
+    DsaType::SlhDsaSha2_192f,
+    DsaType::SlhDsaSha2_256s,
+    DsaType::SlhDsaSha2_256f,
+    DsaType::SlhDsaShake128s,
+    DsaType::SlhDsaShake128f,
+    DsaType::SlhDsaShake192s,
+    DsaType::SlhDsaShake192f,
+    DsaType::SlhDsaShake256s,
+    DsaType::SlhDsaShake256f,
+];
+
 // Implement clone
 #[derive(Clone)]
 /// Enum to representthe different types of KEM managers
@@ -58,6 +77,9 @@ pub enum DsaManager {
     Ec(EcDsaManager),
     /// Composite DSA manager
     Composite(CompositeDsaManager),
+    /// SLH DSA manager
+    #[cfg(not(feature = "ipd"))]
+    Slh(SlhDsaManager),
 }
 
 impl Dsa for DsaManager {
@@ -69,6 +91,10 @@ impl Dsa for DsaManager {
             _ if ML_DSA_TYPES.contains(&dsa_type) => DsaManager::Ml(MlDsaManager::new(dsa_type)?),
             _ if RSA_DSA_TYPES.contains(&dsa_type) => {
                 DsaManager::Rsa(RsaDsaManager::new(dsa_type)?)
+            }
+            #[cfg(not(feature = "ipd"))]
+            _ if SLH_DSA_TYPES.contains(&dsa_type) => {
+                DsaManager::Slh(SlhDsaManager::new(dsa_type)?)
             }
             _ if EC_DSA_TYPES.contains(&dsa_type) => DsaManager::Ec(EcDsaManager::new(dsa_type)?),
             _ if COMPOSITE_DSA_TYPES.contains(&dsa_type) => {
@@ -86,6 +112,8 @@ impl Dsa for DsaManager {
             DsaManager::Ml(ml) => ml.key_gen(),
             DsaManager::Rsa(rsa) => rsa.key_gen(),
             DsaManager::Ec(ec) => ec.key_gen(),
+            #[cfg(not(feature = "ipd"))]
+            DsaManager::Slh(slh) => slh.key_gen(),
             DsaManager::Composite(composite) => composite.key_gen(),
         }
     }
@@ -95,6 +123,8 @@ impl Dsa for DsaManager {
             DsaManager::Ml(ml) => ml.key_gen_with_rng(rng),
             DsaManager::Rsa(rsa) => rsa.key_gen_with_rng(rng),
             DsaManager::Ec(ec) => ec.key_gen_with_rng(rng),
+            #[cfg(not(feature = "ipd"))]
+            DsaManager::Slh(slh) => slh.key_gen_with_rng(rng),
             DsaManager::Composite(composite) => composite.key_gen_with_rng(rng),
         }
     }
@@ -104,6 +134,8 @@ impl Dsa for DsaManager {
             DsaManager::Ml(ml) => ml.sign(sk, msg),
             DsaManager::Rsa(rsa) => rsa.sign(sk, msg),
             DsaManager::Ec(ec) => ec.sign(sk, msg),
+            #[cfg(not(feature = "ipd"))]
+            DsaManager::Slh(slh) => slh.sign(sk, msg),
             DsaManager::Composite(composite) => composite.sign(sk, msg),
         }
     }
@@ -113,6 +145,8 @@ impl Dsa for DsaManager {
             DsaManager::Ml(ml) => ml.verify(pk, msg, sig),
             DsaManager::Rsa(rsa) => rsa.verify(pk, msg, sig),
             DsaManager::Ec(ec) => ec.verify(pk, msg, sig),
+            #[cfg(not(feature = "ipd"))]
+            DsaManager::Slh(slh) => slh.verify(pk, msg, sig),
             DsaManager::Composite(composite) => composite.verify(pk, msg, sig),
         }
     }
@@ -122,6 +156,8 @@ impl Dsa for DsaManager {
             DsaManager::Ml(ml) => ml.get_dsa_info(),
             DsaManager::Rsa(rsa) => rsa.get_dsa_info(),
             DsaManager::Ec(ec) => ec.get_dsa_info(),
+            #[cfg(not(feature = "ipd"))]
+            DsaManager::Slh(slh) => slh.get_dsa_info(),
             DsaManager::Composite(composite) => composite.get_dsa_info(),
         }
     }
@@ -139,6 +175,8 @@ mod tests {
         all_dsas.extend_from_slice(&RSA_DSA_TYPES);
         all_dsas.extend_from_slice(&EC_DSA_TYPES);
         all_dsas.extend_from_slice(&COMPOSITE_DSA_TYPES);
+        #[cfg(not(feature = "ipd"))]
+        all_dsas.extend_from_slice(&SLH_DSA_TYPES);
 
         // This is just to test that the manager can create all DSA types
         for dsa_type in all_dsas {

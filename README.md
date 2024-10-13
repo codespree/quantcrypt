@@ -16,13 +16,13 @@ Import quantcrypt into your project by adding the following lines to your Cargo.
 quantcrypt = "0.2.0"
 ```
 
-For the purposes of the [PQC Hackathon](https://github.com/IETF-Hackathon/pqc-certificates), the library can also be included in IPD mode. This mode is enabled by setting the `ipd` feature in your Cargo.toml.
+For the purposes of the [PQC Hackathon](https://github.com/IETF-Hackathon/pqc-certificates), the library can also be included in IPD mode (for ML-DSA and ML-KEM only). This mode is enabled by setting the `ipd` feature in your Cargo.toml.
 ```toml
 [dependencies]
 quantcrypt = { version = "0.2.0", features = ["ipd"] }
 ```
 
-When the `ipd` feature is enabled, the library will use [IPD OIDs](https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oid_mapping.md) and will not use the newly introduced `context` parameter in the finalized FIPS 204 standard.
+When the `ipd` feature is enabled, the library will use [IPD OIDs](https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oid_mapping.md) and will not use the newly introduced `context` parameter in the finalized FIPS 204 standard. SLH-DSA signatures will not be supported in this mode.
 
 Otherwise, it will use the finalized OIDs where possible, and will use the `context` parameter in the finalized FIPS 204 standard by setting it to an empty string.
 

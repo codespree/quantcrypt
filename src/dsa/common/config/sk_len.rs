@@ -45,6 +45,31 @@ impl SKLen for DsaType {
             DsaType::MlDsa87EcdsaP384SHA512 => None,
             DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => None,
             DsaType::MlDsa87Ed448SHA512 => None,
+
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_128s => Some(32 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_128f => Some(32 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_192s => Some(48 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_192f => Some(48 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_256s => Some(64 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaSha2_256f => Some(64 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake128s => Some(32 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake128f => Some(32 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake192s => Some(48 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake192f => Some(48 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake256s => Some(64 * 2),
+            #[cfg(not(feature = "ipd"))]
+            DsaType::SlhDsaShake256f => Some(64 * 2),
         }
     }
 }

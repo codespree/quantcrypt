@@ -40,6 +40,32 @@ pub enum DsaType {
     MlDsa87EcdsaP384SHA512,
     MlDsa87EcdsaBrainpoolP384r1SHA512,
     MlDsa87Ed448SHA512,
+
+    // SLH DSA
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_128s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_128f,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_192s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_192f,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_256s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaSha2_256f,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake128s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake128f,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake192s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake192f,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake256s,
+    #[cfg(not(feature = "ipd"))]
+    SlhDsaShake256f,
 }
 
 impl DsaType {

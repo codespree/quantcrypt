@@ -15,6 +15,7 @@ dependencies = [
  "ed448-rust",
  "fips204 0.2.2",
  "fips204 0.4.2",
+ "fips205",
  "hex",
  "hkdf",
  "ml-kem",
@@ -376,6 +377,18 @@ name = "fips204"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af2fc0841e1128019535007318059427a8a355742ff02c72fdba4d9afa148fd8"
+dependencies = [
+ "rand_core",
+ "sha2",
+ "sha3 0.10.8",
+ "zeroize",
+]
+
+[[package]]
+name = "fips205"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "359d91d5feb48ae3769c4eb684886cd772f183ff8975bddfa7a2888469610710"
 dependencies = [
  "rand_core",
  "sha2",

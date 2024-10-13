@@ -35,6 +35,7 @@ hex = "0.4.3"
 fips204_ipd = { package = "fips204", version = "0.2.2" }
 # The second version, aliased as `fips204`
 fips204 = { package = "fips204", version = "0.4.2" }
+fips205 = { package = "fips205", version = "0.4.0" }
 
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
 ed448-rust = "0.1.1"
@@ -51,6 +52,8 @@ tiny-keccak = {version="2.0.2", features=["kmac"]}
 cms = {version="0.2.3", features=["builder", "alloc"]}
 spki = "0.7.3"
 const-oid = "0.9.6"
+
+
 
 
 

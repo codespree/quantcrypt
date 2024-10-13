@@ -6,3 +6,5 @@ pub mod dsa_manager;
 pub mod ec_dsa;
 pub mod ml_dsa;
 pub mod rsa_dsa;
+#[cfg(not(feature = "ipd"))]
+pub mod slh_dsa;
