@@ -235,7 +235,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn gen_pq_hackathon_artifacts() {
+    fn gen_pq_hackathon_artifacts_r4() {
         // Generate R4 artifacts for the hackathon
         let dsa_algs: Vec<DsaAlgorithm> = DsaAlgorithm::all();
 
@@ -266,17 +266,69 @@ mod test {
             // Verify self-sign cert
             assert!(cert_root.verify_self_signed().unwrap());
 
-            let mut dsa_alg_name = dsa_alg.to_string();
+            let dsa_alg_name = dsa_alg.to_string();
 
-            // If IPD mode is enabled, prefix IPD- to the filename
+            let mut save_dir = "artifacts/r4_certs/non-ipd";
+
+            // If IPD mode is enabled, prefix IPD_ to the filename
             if crate::is_ipd_mode_enabled() {
-                let formatted_name = format!("IPD-{}", dsa_alg_name);
-                dsa_alg_name = formatted_name;
+                save_dir = "artifacts/r4_certs/ipd";
             }
 
             let file_name = format!(
-                "artifacts/certs/{}-{}_ta.der",
+                "{}/{}-{}_ta.der",
+                save_dir,
                 dsa_alg_name,
+                dsa_alg.get_oid()
+            );
+
+            // // Write the self-signed certificate from TA to the temp directory
+            cert_root.to_der_file(&file_name).unwrap();
+        }
+    }
+
+    #[test]
+    fn gen_pq_hackathon_artifacts_r3() {
+        // Generate R3 artifacts for the hackathon
+        let dsa_algs: Vec<DsaAlgorithm> = DsaAlgorithm::all();
+
+        for dsa_alg in dsa_algs.iter() {
+            // Use DSA to generate key pair for Trust authority
+            let (pk_root, sk_root) = DsaKeyGenerator::new(*dsa_alg).generate().unwrap();
+
+            let profile = Profile::Root;
+            let serial_no = None; // This will generate a random serial number
+            let validity = CertValidity::new(None, "2034-01-01T00:00:00Z").unwrap(); // Not before is now
+            let subject = "CN=example.com".to_string();
+            let cert_public_key = pk_root.clone();
+            let signer = &sk_root;
+
+            // Create the TA certificate builder
+            // This is a self-signed certificate since cert_public_key and signer are both from the root
+            let builder = CertificateBuilder::new(
+                profile,
+                serial_no,
+                validity.clone(),
+                subject.clone(),
+                cert_public_key,
+                signer,
+            )
+            .unwrap();
+            let cert_root = builder.build().unwrap();
+
+            // Verify self-sign cert
+            assert!(cert_root.verify_self_signed().unwrap());
+
+            let mut save_dir = "artifacts/r3_certs/non-ipd";
+
+            // If IPD mode is enabled, reset save path to ipd
+            if crate::is_ipd_mode_enabled() {
+                save_dir = "artifacts/r3_certs/ipd";
+            }
+
+            let file_name = format!(
+                "{}/{}_ta.der",
+                save_dir,
                 dsa_alg.get_oid()
             );
 
