@@ -40,6 +40,10 @@ cargo test gen_pq_hackathon_artifacts --release
 
 After generating the artifacts, the certificates can be found in the `artifacts/certs` directory.
 
+## Interoperability Results
+
+Once the artifacts are submitted to the IETF Hackathon PQC Certificates repository, the interoperability results can be found at the [IETF PQC Hackathon Certificate Automated Verification Interoperability Results](https://ietf-hackathon.github.io/pqc-certificates/pqc_hackathon_results_certs_r3_automated_tests.html) page.
+
 ## Generating Key Pairs and Certificates
 
 The following snippet demonstrates how to generate a key pair and a certificate using the DSA and KEM algorithms. In addition to pure ML-DSA and ML-KEM algorithms, the library also supports composite algorithms that combine a traditional and post-quantum algorithm into a single key pair and certificate.
