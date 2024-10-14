@@ -71,7 +71,7 @@ impl Certificate {
     pub fn to_pem(&self) -> Result<String> {
         let result = self
             .cert
-            .to_pem(pkcs8::LineEnding::CR)
+            .to_pem(pkcs8::LineEnding::LF)
             .map_err(|_| QuantCryptError::InvalidCertificate)?;
         Ok(result)
     }

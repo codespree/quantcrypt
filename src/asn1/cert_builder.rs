@@ -321,10 +321,10 @@ mod test {
                 save_dir = "artifacts/r3_certs/ipd";
             }
 
-            let file_name = format!("{}/{}_ta.der", save_dir, dsa_alg.get_oid());
+            let file_name = format!("{}/{}_ta.pem", save_dir, dsa_alg.get_oid());
 
             // // Write the self-signed certificate from TA to the temp directory
-            cert_root.to_der_file(&file_name).unwrap();
+            cert_root.to_pem_file(&file_name).unwrap();
         }
     }
 }

@@ -27,6 +27,7 @@ import shutil
 """
 def extract_correct_certs(version):
     assert version in ["r3", "r4"], "Unknown submission version"
+    cert_format = "pem" if version == "r3" else "der"
 
     cert_path = f"./artifacts/{version}_certs"
     assert os.path.exists(cert_path), "Certificates not generated, please run Rust test cases first"
@@ -42,13 +43,13 @@ def extract_correct_certs(version):
     non_ipd_certs_path = os.path.join(cert_path, "non-ipd")
     # Copy files from ipd that end with .der
     for cert in os.listdir(ipd_certs_path):
-        if cert.endswith(".der"):
+        if cert.endswith(f".{cert_format}"):
             shutil.copy(os.path.join(ipd_certs_path, cert), artifacts_certs)
 
     # Copy files from non-ipd only if they do not exist in the r3_certs already
     for cert in os.listdir(non_ipd_certs_path):
         cert_in_r3 = os.path.join(artifacts_certs, cert)
-        if not os.path.exists(cert_in_r3) and cert.endswith(".der"):
+        if not os.path.exists(cert_in_r3) and cert.endswith(f".{cert_format}"):
             shutil.copy(os.path.join(non_ipd_certs_path, cert), artifacts_certs)
 
     # Zip all files in artifacts_certs for correct version
