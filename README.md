@@ -30,19 +30,19 @@ Otherwise, it will use the finalized OIDs where possible, and will use the `cont
 
 For IPD artifacts (presently compatible with OQS provider)
 ```ignore
-cargo test gen_pq_hackathon_artifacts_r3 --release --features ipd // generate artifacts in r3 format
-cargo test gen_pq_hackathon_artifacts_r4 --release --features ipd // generate artifacts in r4 format
+cargo test gen_pq_hackathon_artifacts_r3 --release --features ipd # generate artifacts in r3 format
+cargo test gen_pq_hackathon_artifacts_r4 --release --features ipd # generate artifacts in r4 format
 ```
 
 For non-IPD artifacts (with the NIST `context` parameter)
 ```ignore
-cargo test gen_pq_hackathon_artifacts_r3 --release // generate artifacts in r3 format
-cargo test gen_pq_hackathon_artifacts_r4 --release // generate artifacts in r4 format
+cargo test gen_pq_hackathon_artifacts_r3 --release # generate artifacts in r3 format
+cargo test gen_pq_hackathon_artifacts_r4 --release # generate artifacts in r4 format
 ```
 
 To generate submissios zips:
 ```ignore
-python prepare_submission.py // Select appropriate certificates and archive them as zips for submission
+python prepare_submission.py # Select appropriate certificates and archive them as zips for submission
 ```
 
 Artifacts in both [r3](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r3---deprecated-will-be-removed-at-hackathon-in-november-2024) and [r4](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r4) format are generated. They can be found in `artifacts/submission` folder.
