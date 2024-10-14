@@ -26,19 +26,26 @@ When the `ipd` feature is enabled, the library will use [IPD OIDs](https://githu
 
 Otherwise, it will use the finalized OIDs where possible, and will use the `context` parameter in the finalized FIPS 204 standard by setting it to an empty string.
 
-## Generating PQC Hackathon Artifacts
+## Generating PQC Hackathon Artifacts for [IETF Hackathon - PQC Certificates](https://github.com/IETF-Hackathon/pqc-certificates)
 
 For IPD artifacts (presently compatible with OQS provider)
 ```ignore
-cargo test gen_pq_hackathon_artifacts --release --features ipd
+cargo test gen_pq_hackathon_artifacts_r3 --release --features ipd # generate artifacts in r3 format
+cargo test gen_pq_hackathon_artifacts_r4 --release --features ipd # generate artifacts in r4 format
 ```
 
 For non-IPD artifacts (with the NIST `context` parameter)
 ```ignore
-cargo test gen_pq_hackathon_artifacts --release
+cargo test gen_pq_hackathon_artifacts_r3 --release # generate artifacts in r3 format
+cargo test gen_pq_hackathon_artifacts_r4 --release # generate artifacts in r4 format
 ```
 
-After generating the artifacts, the certificates can be found in the `artifacts/certs` directory.
+To generate submissios zips:
+```ignore
+python prepare_submission.py # Select appropriate certificates and archive them as zips for submission
+```
+
+Artifacts in both [r3](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r3---deprecated-will-be-removed-at-hackathon-in-november-2024) and [r4](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r4) format are generated. They can be found in `artifacts/submission` folder.
 
 ## Interoperability Results
 
@@ -258,18 +265,6 @@ let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
 ).unwrap();
 assert_eq!(edc.get_content(), data);
 ```
-
-## Generate Submission to [IETF Hackathon - PQC Certificates](https://github.com/IETF-Hackathon/pqc-certificates)
-
-To generate submissios to IETF Hackathon - PQC Certificates, you can generate the artifacts as follows:
-
-```ignore
-cargo test --release // Generate non-ipd artifacts
-cargo test --release --features ipd  // Generate ipd artifacts
-python prepare_submission.py // Select appropriate certificates and archive them as zips for submission
-```
-
-Artifacts in both [r3](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r3---deprecated-will-be-removed-at-hackathon-in-november-2024) and [r4](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r4) format are generated. 
 
 ## Minimum Supported Rust Version (MSRV)
 
