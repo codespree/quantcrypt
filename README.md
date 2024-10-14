@@ -255,6 +255,18 @@ let edc = AuthEnvelopedDataContent::from_bytes_for_kem_recipient(
 assert_eq!(edc.get_content(), data);
 ```
 
+## Generate Submission to [IETF Hackathon - PQC Certificates](https://github.com/IETF-Hackathon/pqc-certificates)
+
+To generate submissios to IETF Hackathon - PQC Certificates, you can generate the artifacts as follows:
+
+```ignore
+cargo test --release // Generate non-ipd artifacts
+cargo test --release --features ipd  // Generate ipd artifacts
+python prepare_submission.py // Select appropriate certificates and archive them as zips for submission
+```
+
+Artifacts in both [r3](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r3---deprecated-will-be-removed-at-hackathon-in-november-2024) and [r4](https://github.com/IETF-Hackathon/pqc-certificates?tab=readme-ov-file#zip-format-r4) format are generated. 
+
 ## Minimum Supported Rust Version (MSRV)
 
 The minimum supported Rust version for this library is 1.81.0
