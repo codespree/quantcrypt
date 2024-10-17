@@ -32,19 +32,19 @@ impl SigLen for DsaType {
             DsaType::MlDsa87 => Some(4627),
 
             // TODO: Investigate sig lengths
-            DsaType::MlDsa44Rsa2048PssSha256 => None,
-            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
-            DsaType::MlDsa44Ed25519SHA512 => None,
+            DsaType::MlDsa44Rsa2048PssSha256 => Some(2420 + 256 + 14),
+            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => Some(2420 + 256 + 14),
+            DsaType::MlDsa44Ed25519SHA512 => Some(2420 + 64 + 12),
             DsaType::MlDsa44EcdsaP256SHA256 => None,
             DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => None,
-            DsaType::MlDsa65Rsa3072PssSHA512 => None,
-            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => None,
+            DsaType::MlDsa65Rsa3072PssSHA512 => Some(3309 + 384 + 14),
+            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => Some(3309 + 384 + 14),
             DsaType::MlDsa65EcdsaP256SHA512 => None,
             DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => None,
-            DsaType::MlDsa65Ed25519SHA512 => None,
+            DsaType::MlDsa65Ed25519SHA512 => Some(3309 + 64 + 12),
             DsaType::MlDsa87EcdsaP384SHA512 => None,
             DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => None,
-            DsaType::MlDsa87Ed448SHA512 => None,
+            DsaType::MlDsa87Ed448SHA512 => Some(4627 + 114 + 12),
 
             #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_128s => Some(7856),

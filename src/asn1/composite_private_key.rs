@@ -49,6 +49,9 @@ impl CompositePrivateKey {
         let trad_sk_der = trad_sk
             .to_der()
             .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        println!("Version pq_sk_der: {:?}", pq_sk.version());
+        println!("Length of pq_sk_der: {:?}", pq_sk_der.len());
+        println!("Length of trad_sk_der: {:?}", trad_sk_der.len());
         Ok(Self {
             pq_sk_der,
             trad_sk_der,
