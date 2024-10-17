@@ -101,6 +101,15 @@ impl CompositeKemManager {
             },
             private_key: t_sk,
             // The public key SHOULD be included in the secret key for the traditional KEM
+
+            /*
+            However, the public key of the traditional component, RSA or Elliptic Curve, is
+            required as input to the KEM Combiner function, and is not typically carried
+            within an RSA or Elliptic Curve private key. Therefore the publicKey field of
+            the second OneAsymmetricKey MUST contain the corresponding
+            public key. See Appendix C.3:
+            https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html#impl-cons-decaps-pubkey
+             */
             public_key: Some(t_pk),
         };
 
