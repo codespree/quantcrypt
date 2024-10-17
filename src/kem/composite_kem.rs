@@ -86,7 +86,7 @@ impl CompositeKemManager {
         // Create the composite public key
         let c_pk = CompositePublicKey::new(&self.kem_info.oid, pq_pk, t_pk);
         let pk = c_pk.to_der()?;
-            
+
         let oid: ObjectIdentifier = self
             .kem_info
             .oid
@@ -487,10 +487,9 @@ mod tests {
     fn trial() {
         let mut kem = CompositeKemManager::new(KemType::MlKem512P256).unwrap();
         let (pk, sk) = kem.key_gen().unwrap();
-        
+
         // Print lengths of the public key and secret key
         println!("Length of public key: {:?}", pk.len());
         println!("Length of secret key: {:?}", sk.len());
     }
-    
 }

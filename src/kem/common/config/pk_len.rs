@@ -1,7 +1,7 @@
 use crate::kem::common::kem_type::KemType;
 
 /// A trait to get the length of the public key
-pub trait PKLen {   
+pub trait PKLen {
     fn get_pk_len(&self) -> Option<usize>;
 }
 
@@ -40,7 +40,7 @@ impl PKLen for KemType {
             KemType::MlKem768BrainpoolP256r1 => Some(1184 + 65 + 12),
             KemType::MlKem768X25519 => Some(1184 + 32 + 12),
             KemType::MlKem1024P384 => Some(1568 + 97 + 12),
-            KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 12), 
+            KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 12),
             KemType::MlKem1024X448 => Some(1568 + 56 + 12),
             // Composite types from editor's draft. Skipped ones are also present in old version
             // KEM Pk + Trad Pk + ASN.1 overhead

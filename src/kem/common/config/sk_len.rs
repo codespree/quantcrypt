@@ -36,12 +36,12 @@ impl SKLen for KemType {
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
             // Composite types from old version
-            // pq_sk + trad_sk + pq_overhead + trad_public_key_overhead + trad_overhead + sequence_overhead                      
-            KemType::MlKem512P256 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),                      
-            KemType::MlKem512BrainpoolP256r1 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),                
+            // pq_sk + trad_sk + pq_overhead + trad_public_key_overhead + trad_overhead + sequence_overhead
+            KemType::MlKem512P256 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),
+            KemType::MlKem512BrainpoolP256r1 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),
             KemType::MlKem512X25519 => Some(1632 + 32 + 24 + (32 + 11) + 14 + 4),
             KemType::MlKem512Rsa2048 => None,
-            KemType::MlKem512Rsa3072 => None,           
+            KemType::MlKem512Rsa3072 => None,
             KemType::MlKem768P256 => Some(2400 + 32 + 24 + (65 + 6) + 19 + 4),
             KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 24 + (65 + 6) + 19 + 4),
             KemType::MlKem768X25519 => Some(2400 + 32 + 24 + (32 + 11) + 14 + 4),
