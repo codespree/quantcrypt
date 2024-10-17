@@ -49,7 +49,7 @@ Artifacts in both [r3](https://github.com/IETF-Hackathon/pqc-certificates?tab=re
 
 ## Interoperability Results
 
-Once the artifacts are submitted to the IETF Hackathon PQC Certificates repository, the interoperability results can be found at the [IETF PQC Hackathon Certificate Automated Verification Interoperability Results](https://ietf-hackathon.github.io/pqc-certificates/pqc_hackathon_results_certs_r3_automated_tests.html) page.
+Once the artifacts are submitted to the IETF Hackathon PQC Certificates repository, the interoperability results can be found at the [IETF PQC Hackathon Certificate Automated Verification Interoperability Results](https://ietf-hackathon.github.io/pqc-certificates/pqc_hackathon_results_certs_r4.html) page.
 
 ## Generating Key Pairs and Certificates
 

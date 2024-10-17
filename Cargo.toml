@@ -1,6 +1,6 @@
 [package]
 name = "QuantCrypt"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Seventh Sense AI"]
 license = "Apache-2.0 OR MIT"
@@ -23,7 +23,7 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
 rsa = { version="0.9.6", features=["sha2"] }
-openssl = { version = "0.10.66", features = ["vendored"] }
+openssl = { version = "0.10.68", features = ["vendored"] }
 sha2 = "0.10.8"
 der = "0.7.9"
 pkcs8 = "0.10.2"
@@ -34,7 +34,7 @@ hex = "0.4.3"
 # The first version, aliased as `fips204_ipd`
 fips204_ipd = { package = "fips204", version = "0.2.2" }
 # The second version, aliased as `fips204`
-fips204 = { package = "fips204", version = "0.4.2" }
+fips204 = { package = "fips204", version = "0.4.3" }
 fips205 = { package = "fips205", version = "0.4.0" }
 
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
