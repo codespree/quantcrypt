@@ -18,15 +18,6 @@ impl SKLen for KemType {
     ///
     /// The length of the secret key in bytes or `None` if the length is not fixed
     fn get_sk_len(&self) -> Option<usize> {
-        // There is an extra offset of 2 bytes for ipd versions of ML-KEM composites:
-        // ML-KEM composite ipd overhead: 26 bytes
-        // ML-KEM composite latest overhead: 24 bytes
-        #[cfg(feature = "ipd")]
-        let ipd_offset = 2;
-        
-        #[cfg(not(feature = "ipd"))]
-        let ipd_offset = 0;
-
         match self {
             // These are Nsk length as per SerializePrivateKey(skX)
             // in RFC 9180
@@ -45,29 +36,29 @@ impl SKLen for KemType {
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
             // Composite types from old version
-            // KEM Sk + Trad Sk + ASN.1 overhead                       
-            KemType::MlKem512P256 => Some(1632 + 32 + 118 + ipd_offset),                             
-            KemType::MlKem512BrainpoolP256r1 => Some(1632 + 32 + 118 + ipd_offset),                 
-            KemType::MlKem512X25519 => Some(1632 + 32 + 85 + ipd_offset),
+            // pq_sk + trad_sk + pq_overhead + trad_overhead + sequence_overhead                      
+            KemType::MlKem512P256 => Some(1632 + 32 + 24 + 86 + 4),                      
+            KemType::MlKem512BrainpoolP256r1 => Some(1632 + 32 + 24 + 86 + 4),                
+            KemType::MlKem512X25519 => Some(1632 + 32 + 24 + 57 + 4),
             KemType::MlKem512Rsa2048 => None,
             KemType::MlKem512Rsa3072 => None,           
-            KemType::MlKem768P256 => Some(2400 + 32 + 118 + ipd_offset),
-            KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 118 + ipd_offset),
-            KemType::MlKem768X25519 => Some(2400 + 32 + 85 + ipd_offset),
-            KemType::MlKem1024P384 => Some(3168 + 48 + 151 + ipd_offset),
-            KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 151 + ipd_offset),
-            KemType::MlKem1024X448 => Some(3168 + 56 + 110 + ipd_offset),
+            KemType::MlKem768P256 => Some(2400 + 32 + 24 + 86 + 4),
+            KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 24 + 86 + 4),
+            KemType::MlKem768X25519 => Some(2400 + 32 + 24 + 57 + 4),
+            KemType::MlKem1024P384 => Some(3168 + 48 + 24 + 123 + 4),
+            KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 24 + 123 + 4),
+            KemType::MlKem1024X448 => Some(3168 + 56 + 24 + 82 + 4),
             // Composite types from editor's draft. Skipped ones are also present in old version
             // KEM Sk + Trad Sk + ASN.1 overhead
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
             KemType::MlKem768Rsa4096 => None,
-            // KemType::MlKem768X25519 => Some(2400 + 32 + 85 + ipd_offset),
-            KemType::MlKem768P384 => Some(2400 + 48 + 151  + ipd_offset),
-            // KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 118 + ipd_offset),
-            // KemType::MlKem1024P384 => Some(3168 + 48 + 151 + ipd_offset),
-            // KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 151 + ipd_offset),
-            // KemType::MlKem1024X448 => Some(3168 + 56 + 110 + ipd_offset),
+            // KemType::MlKem768X25519 => Some(2400 + 32 + 85),
+            KemType::MlKem768P384 => Some(3168 + 48 + 24 + 123 + 4),
+            // KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 118),
+            // KemType::MlKem1024P384 => Some(3168 + 48 + 151),
+            // KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 151),
+            // KemType::MlKem1024X448 => Some(3168 + 56 + 110),
         }
     }
 }
