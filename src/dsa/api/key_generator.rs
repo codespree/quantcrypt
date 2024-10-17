@@ -51,7 +51,7 @@ impl DsaKeyGenerator {
         let (pk, sk) = dsa_manager.key_gen()?;
         let oid = dsa_type.get_oid();
         let pk = PublicKey::new(&oid, &pk)?;
-        let sk = PrivateKey::new(&oid, &sk, Some(pk.clone()))?;
+        let sk = PrivateKey::new(&oid, &sk)?;
         Ok((pk, sk))
     }
 }

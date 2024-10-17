@@ -7,6 +7,8 @@ use rand_core::CryptoRngCore;
 use crate::dsa::common::dsa_info::DsaInfo;
 use crate::dsa::common::dsa_trait::Dsa;
 use crate::dsa::common::dsa_type::DsaType;
+use crate::utils::openssl_utils::get_pk_from_sk_ec_based;
+use crate::utils::openssl_utils::get_pk_from_sk_pkey_based;
 use crate::utils::openssl_utils::sign_ec_based;
 use crate::utils::openssl_utils::sign_pkey_based;
 use crate::utils::openssl_utils::verify_ec_based;
@@ -131,6 +133,16 @@ impl Dsa for EcDsaManager {
 
     fn get_dsa_info(&self) -> DsaInfo {
         self.dsa_info.clone()
+    }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        if let Some(nid) = self.ec_based_nid {
+            get_pk_from_sk_ec_based(sk, nid).map_err(|_| QuantCryptError::InvalidPrivateKey)
+        } else if let Some(id) = self.pk_based_id {
+            get_pk_from_sk_pkey_based(sk, id).map_err(|_| QuantCryptError::InvalidPrivateKey)
+        } else {
+            Err(QuantCryptError::NotImplemented)
+        }
     }
 }
 

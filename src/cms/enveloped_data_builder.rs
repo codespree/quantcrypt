@@ -494,8 +494,10 @@ mod tests {
         let mut builder = EnvelopedDataBuilder::new(cea_type, false)
             .expect("Failed to create EnvelopedDataBuilder");
 
-        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data_ipd/cms_cw/ta.der"))
-            .expect("Failed to create Certificate");
+        let cert_ta_1 = Certificate::from_der(include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.3.17_MlDsa44_ta.der"
+        ))
+        .expect("Failed to create Certificate");
 
         let kdf = KdfType::HkdfWithSha256;
         let wrap = WrapType::Aes256;
@@ -507,24 +509,11 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result, Err(QuantCryptError::InvalidCertificate)));
 
-        #[cfg(feature = "ipd")]
-        let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
-            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
-        ))
-        .expect("Failed to create Certificate");
-
-        #[cfg(not(feature = "ipd"))]
         let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
             "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
         ))
         .expect("Failed to create Certificate");
 
-        #[cfg(feature = "ipd")]
-        let sk_bytes = include_bytes!(
-            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
-        );
-
-        #[cfg(not(feature = "ipd"))]
         let sk_bytes =
             include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der");
 
@@ -541,12 +530,8 @@ mod tests {
             .unwrap();
         let ta_pk_2 =
             PublicKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_pk_2).unwrap();
-        let ta_sk_2 = PrivateKey::new(
-            &DsaType::MlDsa44Rsa2048PssSha256.get_oid(),
-            &ta_sk_2,
-            Some(ta_pk_2.clone()),
-        )
-        .unwrap();
+        let ta_sk_2 =
+            PrivateKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_sk_2).unwrap();
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,
@@ -565,12 +550,8 @@ mod tests {
             .unwrap();
 
         let ee_pk2 = PublicKey::new(&KemType::MlKem768BrainpoolP256r1.get_oid(), &ee_pk2).unwrap();
-        let ee_sk2 = PrivateKey::new(
-            &KemType::MlKem768BrainpoolP256r1.get_oid(),
-            &ee_sk2.clone(),
-            Some(ee_pk2.clone()),
-        )
-        .unwrap();
+        let ee_sk2 =
+            PrivateKey::new(&KemType::MlKem768BrainpoolP256r1.get_oid(), &ee_sk2.clone()).unwrap();
         //let spki = SubjectPublicKeyInfo::from_key(ee_pk2).unwrap();
         let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(); // Not before is now
         let serial_no = None; // This will generate a random serial number
@@ -617,8 +598,10 @@ mod tests {
         let mut builder = EnvelopedDataBuilder::new(cea_type, true)
             .expect("Failed to create EnvelopedDataBuilder");
 
-        let cert_ta_1 = Certificate::from_der(include_bytes!("../../test/data_ipd/cms_cw/ta.der"))
-            .expect("Failed to create Certificate");
+        let cert_ta_1 = Certificate::from_der(include_bytes!(
+            "../../test/data/cms/2.16.840.1.101.3.4.3.17_MlDsa44_ta.der"
+        ))
+        .expect("Failed to create Certificate");
 
         let kdf = KdfType::HkdfWithSha256;
         let wrap = WrapType::Aes256;
@@ -630,23 +613,11 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result, Err(QuantCryptError::InvalidCertificate)));
 
-        #[cfg(feature = "ipd")]
-        let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
-            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
-        ))
-        .expect("Failed to create Certificate");
-
-        #[cfg(not(feature = "ipd"))]
         let cert_ee_1: Certificate = Certificate::from_der(include_bytes!(
             "../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
         ))
         .expect("Failed to create Certificate");
 
-        #[cfg(feature = "ipd")]
-        let sk_bytes = include_bytes!(
-            "../../test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
-        );
-        #[cfg(not(feature = "ipd"))]
         let sk_bytes =
             include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der");
 
@@ -663,12 +634,8 @@ mod tests {
             .unwrap();
         let ta_pk_2 =
             PublicKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_pk_2).unwrap();
-        let ta_sk_2 = PrivateKey::new(
-            &DsaType::MlDsa44Rsa2048PssSha256.get_oid(),
-            &ta_sk_2,
-            Some(ta_pk_2.clone()),
-        )
-        .unwrap();
+        let ta_sk_2 =
+            PrivateKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_sk_2).unwrap();
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,
@@ -687,12 +654,8 @@ mod tests {
             .unwrap();
 
         let ee_pk2 = PublicKey::new(&KemType::MlKem768BrainpoolP256r1.get_oid(), &ee_pk2).unwrap();
-        let ee_sk2 = PrivateKey::new(
-            &KemType::MlKem768BrainpoolP256r1.get_oid(),
-            &ee_sk2.clone(),
-            Some(ee_pk2.clone()),
-        )
-        .unwrap();
+        let ee_sk2 =
+            PrivateKey::new(&KemType::MlKem768BrainpoolP256r1.get_oid(), &ee_sk2.clone()).unwrap();
         //let spki = SubjectPublicKeyInfo::from_key(ee_pk2).unwrap();
         let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(); // Not before is now
         let serial_no = None; // This will generate a random serial number

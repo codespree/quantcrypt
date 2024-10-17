@@ -227,6 +227,14 @@ impl Dsa for RsaDsaManager {
     fn get_dsa_info(&self) -> DsaInfo {
         self.dsa_info.clone()
     }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        let rsa_sk = openssl::rsa::Rsa::private_key_from_der(sk)
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        rsa_sk
+            .public_key_to_der_pkcs1()
+            .map_err(|_| QuantCryptError::SerializationFailed)
+    }
 }
 
 #[cfg(test)]

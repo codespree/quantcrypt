@@ -97,4 +97,15 @@ pub trait Dsa {
     ///
     /// A structure containing metadata about the DSA
     fn get_dsa_info(&self) -> DsaInfo;
+
+    /// Get the public key from a secret key
+    ///
+    /// # Arguments
+    ///
+    /// * `sk` - The secret key
+    ///
+    /// # Returns
+    ///
+    /// The public key
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>>;
 }

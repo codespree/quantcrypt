@@ -29,20 +29,9 @@ impl Oid for DsaType {
             DsaType::Ed25519SHA512 => "1.3.101.112",
             DsaType::Ed448SHA512 => "1.3.101.113",
             // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
-            #[cfg(not(feature = "ipd"))]
             DsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
-            #[cfg(not(feature = "ipd"))]
             DsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
-            #[cfg(not(feature = "ipd"))]
             DsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
-
-            // TODO: Remove support for IPD eventually
-            #[cfg(feature = "ipd")]
-            DsaType::MlDsa44 => "1.3.6.1.4.1.2.267.12.4.4",
-            #[cfg(feature = "ipd")]
-            DsaType::MlDsa65 => "1.3.6.1.4.1.2.267.12.6.5",
-            #[cfg(feature = "ipd")]
-            DsaType::MlDsa87 => "1.3.6.1.4.1.2.267.12.8.7",
 
             // TODO: Change when finalized
             DsaType::MlDsa44Rsa2048PssSha256 => "2.16.840.1.114027.80.8.1.1",
@@ -59,29 +48,17 @@ impl Oid for DsaType {
             DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => "2.16.840.1.114027.80.8.1.12",
             DsaType::MlDsa87Ed448SHA512 => "2.16.840.1.114027.80.8.1.13",
 
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_128s => "2.16.840.1.101.3.4.3.20",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_128f => "2.16.840.1.101.3.4.3.21",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_192s => "2.16.840.1.101.3.4.3.22",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_192f => "2.16.840.1.101.3.4.3.23",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_256s => "2.16.840.1.101.3.4.3.24",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaSha2_256f => "2.16.840.1.101.3.4.3.25",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake128s => "2.16.840.1.101.3.4.3.26",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake128f => "2.16.840.1.101.3.4.3.27",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake192s => "2.16.840.1.101.3.4.3.28",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake192f => "2.16.840.1.101.3.4.3.29",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake256s => "2.16.840.1.101.3.4.3.30",
-            #[cfg(not(feature = "ipd"))]
             DsaType::SlhDsaShake256f => "2.16.840.1.101.3.4.3.31",
         }
         .to_string()

@@ -268,6 +268,23 @@ impl Dsa for CompositeDsaManager {
     fn get_dsa_info(&self) -> DsaInfo {
         self.dsa_info.clone()
     }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        // Decompose the composite secret key
+        let c_key = CompositePrivateKey::from_der(&self.dsa_info.oid, sk)?;
+        let sk_trad = c_key.get_trad_sk()?.private_key;
+        let sk_pq = c_key.get_pq_sk()?.private_key;
+
+        let pk_trad = self.trad_dsa.get_public_key(sk_trad)?;
+        let pk_pq = self.pq_dsa.get_public_key(sk_pq)?;
+
+        let c_pk = CompositePublicKey::new(&self.dsa_info.oid, &pk_pq, &pk_trad);
+        let pk = c_pk
+            .to_der()
+            .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
+
+        Ok(pk)
+    }
 }
 
 #[cfg(test)]

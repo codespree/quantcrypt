@@ -3,6 +3,10 @@ macro_rules! test_dsa {
     ($dsa:expr) => {{
         let mut dsa = $dsa.unwrap();
         let (pk, sk) = dsa.key_gen().unwrap();
+
+        let pk2 = dsa.get_public_key(&sk).unwrap();
+        assert_eq!(pk, pk2);
+
         let dsa_info = dsa.get_dsa_info();
         let expected_pk_len = dsa_info.pk_byte_len;
         if let Some(expected_pk_len) = expected_pk_len {

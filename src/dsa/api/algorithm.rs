@@ -26,29 +26,17 @@ pub enum DsaAlgorithm {
     MlDsa87EcdsaBrainpoolP384r1SHA512,
     MlDsa87Ed448SHA512,
 
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_128s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_128f,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_192s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_192f,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_256s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaSha2_256f,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake128s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake128f,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake192s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake192f,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake256s,
-    #[cfg(not(feature = "ipd"))]
     SlhDsaShake256f,
 }
 
@@ -87,29 +75,17 @@ impl DsaAlgorithm {
             }
             DsaAlgorithm::MlDsa87Ed448SHA512 => DsaType::MlDsa87Ed448SHA512,
 
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_128s => DsaType::SlhDsaSha2_128s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_128f => DsaType::SlhDsaSha2_128f,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_192s => DsaType::SlhDsaSha2_192s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_192f => DsaType::SlhDsaSha2_192f,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_256s => DsaType::SlhDsaSha2_256s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaSha2_256f => DsaType::SlhDsaSha2_256f,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake128s => DsaType::SlhDsaShake128s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake128f => DsaType::SlhDsaShake128f,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake192s => DsaType::SlhDsaShake192s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake192f => DsaType::SlhDsaShake192f,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake256s => DsaType::SlhDsaShake256s,
-            #[cfg(not(feature = "ipd"))]
             DsaAlgorithm::SlhDsaShake256f => DsaType::SlhDsaShake256f,
         }
     }
