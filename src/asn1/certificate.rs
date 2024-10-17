@@ -22,12 +22,7 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 /// # Example
 /// ```
 /// use quantcrypt::certificates::Certificate;
-/// use quantcrypt::is_ipd_mode_enabled;
-/// let cert_path = if is_ipd_mode_enabled() {
-///    "test/data_ipd/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-/// } else {
-///   "test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-/// };
+/// let cert_path = "test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem";
 /// let cert = Certificate::from_file(cert_path).unwrap();
 /// assert!(cert.verify_self_signed().unwrap());
 /// ```
@@ -470,13 +465,6 @@ mod tests {
 
     #[test]
     fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
-        // let pem_bytes = include_bytes!("../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem");
-        #[cfg(feature = "ipd")]
-        let pem_bytes = include_bytes!(
-            "../../test/data_ipd/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-        );
-
-        #[cfg(not(feature = "ipd"))]
         let pem_bytes = include_bytes!(
             "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
         );
@@ -488,13 +476,6 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
-        // let pem_bytes = include_bytes!("../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem");
-        #[cfg(feature = "ipd")]
-        let pem_bytes = include_bytes!(
-            "../../test/data_ipd/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
-        );
-
-        #[cfg(not(feature = "ipd"))]
         let pem_bytes = include_bytes!(
             "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
         );
@@ -505,13 +486,8 @@ mod tests {
 
     #[test]
     fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-        #[cfg(not(feature = "ipd"))]
         let pem_bytes = include_bytes!(
             "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
-        );
-        #[cfg(feature = "ipd")]
-        let pem_bytes = include_bytes!(
-            "../../test/data_ipd/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
         );
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let cert = Certificate::from_pem(&pem).unwrap();

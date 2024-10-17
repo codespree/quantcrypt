@@ -25,8 +25,6 @@ pub struct PrivateKey {
     private_key: Vec<u8>,
     /// Is it a composite key
     is_composite: bool,
-    /// The public key.
-    public_key: Option<PublicKey>,
 }
 
 impl Signer<DsaSignature> for PrivateKey {
@@ -40,8 +38,14 @@ impl Keypair for PrivateKey {
     type VerifyingKey = PublicKey;
 
     fn verifying_key(&self) -> <Self as Keypair>::VerifyingKey {
-        // TODO: This can panic if public key is not set
-        self.public_key.clone().unwrap()
+        if !is_dsa_oid(&self.oid) {
+            panic!("Unsupported operation");
+        }
+
+        let dsa = DsaManager::new_from_oid(&self.oid).unwrap();
+        let pk = dsa.get_public_key(&self.private_key).unwrap();
+
+        PublicKey::new(&self.oid, &pk).unwrap()
     }
 }
 
@@ -73,7 +77,7 @@ impl PrivateKey {
     /// # Errors
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the OID is invalid
-    pub(crate) fn new(oid: &str, key: &[u8], public_key: Option<PublicKey>) -> Result<Self> {
+    pub(crate) fn new(oid: &str, key: &[u8]) -> Result<Self> {
         if !is_valid_kem_or_dsa_oid(&oid.to_string()) {
             return Err(errors::QuantCryptError::InvalidPrivateKey);
         }
@@ -82,7 +86,6 @@ impl PrivateKey {
             oid: oid.to_string(),
             private_key: key.to_vec(),
             is_composite,
-            public_key,
         })
     }
 
@@ -100,17 +103,13 @@ impl PrivateKey {
     /// # Errors
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
-    pub fn from_composite(
-        public_key: Option<PublicKey>,
-        composite_sk: &CompositePrivateKey,
-    ) -> Result<Self> {
+    pub fn from_composite(composite_sk: &CompositePrivateKey) -> Result<Self> {
         Ok(Self {
             oid: composite_sk.get_oid().to_string(),
             private_key: composite_sk
                 .to_der()
                 .map_err(|_| errors::QuantCryptError::InvalidPrivateKey)?,
             is_composite: true,
-            public_key,
         })
     }
 
@@ -133,15 +132,6 @@ impl PrivateKey {
         &self.private_key
     }
 
-    /// Get the public key
-    ///
-    /// # Returns
-    ///
-    /// The public key (if available)
-    pub fn get_public_key(&self) -> Option<&PublicKey> {
-        self.public_key.as_ref()
-    }
-
     /// Check if the key is a composite key
     ///
     /// # Returns
@@ -161,8 +151,6 @@ impl PrivateKey {
     ///
     /// `KeyError::InvalidPrivateKey` will be returned if the private key is invalid
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let pub_key = self.public_key.as_ref().map(|pk| pk.get_key());
-
         let oid: ObjectIdentifier = self
             .oid
             .parse()
@@ -174,7 +162,7 @@ impl PrivateKey {
                 parameters: None,
             },
             private_key: &self.private_key,
-            public_key: pub_key,
+            public_key: None,
         };
         Ok(priv_key_info
             .to_der()
@@ -250,18 +238,10 @@ impl PrivateKey {
         // Check if the OID is a composite key
         let is_composite = is_composite_kem_or_dsa_oid(&oid);
 
-        // Check if the public key is present
-        let public_key = if let Some(pk) = priv_key_info.public_key {
-            Some(PublicKey::new(&oid, pk)?)
-        } else {
-            None
-        };
-
         Ok(Self {
             oid: oid.to_string(),
             private_key: priv_key_info.private_key.to_vec(),
             is_composite,
-            public_key,
         })
     }
 
@@ -387,9 +367,6 @@ mod test {
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let pk = PrivateKey::from_pem(pem).unwrap();
 
-        // There is no public key in the PEM file
-        assert!(pk.public_key.is_none());
-
         assert!(pk.is_composite());
         assert_eq!(pk.get_oid(), DsaType::MlDsa44EcdsaP256SHA256.get_oid());
 
@@ -398,7 +375,7 @@ mod test {
 
         assert_eq!(pk.oid, pk2.get_oid());
 
-        let pk2 = PrivateKey::from_composite(pk.public_key, &pk2).unwrap();
+        let pk2 = PrivateKey::from_composite(&pk2).unwrap();
         let pem2 = pk2.to_pem().unwrap();
         assert_eq!(pem, pem2.trim());
 
@@ -484,23 +461,5 @@ mod test {
 
         let der2 = pk2.to_der().unwrap();
         assert_eq!(der, der2);
-    }
-
-    #[test]
-    fn test_sk_containing_pk() {
-        let (pk, sk) = DsaManager::new(DsaType::MlDsa44)
-            .unwrap()
-            .key_gen()
-            .unwrap();
-        let pk = PublicKey::new(&DsaType::MlDsa44.get_oid(), &pk).unwrap();
-        let sk = PrivateKey::new(&DsaType::MlDsa44.get_oid(), &sk, Some(pk.clone())).unwrap();
-        let sk_der = sk.to_der().unwrap();
-        let sk2 = PrivateKey::from_der(&sk_der).unwrap();
-        let pk2 = sk2.get_public_key().unwrap();
-        assert_eq!(pk.get_key(), pk2.get_key());
-        assert_eq!(
-            sk.get_public_key().unwrap().get_key(),
-            sk2.get_public_key().unwrap().get_key()
-        );
     }
 }

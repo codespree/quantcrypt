@@ -54,20 +54,9 @@ impl Oid for KemType {
             KemType::RsaOAEP3072 => "1.2.840.113549.1.1.7",
             KemType::RsaOAEP4096 => "1.2.840.113549.1.1.7",
             // ML Types:
-            #[cfg(not(feature = "ipd"))]
             KemType::MlKem512 => "2.16.840.1.101.3.4.4.1",
-            #[cfg(not(feature = "ipd"))]
             KemType::MlKem768 => "2.16.840.1.101.3.4.4.2",
-            #[cfg(not(feature = "ipd"))]
             KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3",
-
-            // oid for old version for ipd
-            #[cfg(feature = "ipd")]
-            KemType::MlKem512 => "1.3.6.1.4.1.22554.5.6.1",
-            #[cfg(feature = "ipd")]
-            KemType::MlKem768 => "1.3.6.1.4.1.22554.5.6.2",
-            #[cfg(feature = "ipd")]
-            KemType::MlKem1024 => "1.3.6.1.4.1.22554.5.6.3",
         }
         .to_string()
     }

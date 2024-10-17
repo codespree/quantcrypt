@@ -268,12 +268,7 @@ mod test {
 
             let dsa_alg_name = dsa_alg.to_string();
 
-            let mut save_dir = "artifacts/r4_certs/non-ipd";
-
-            // If IPD mode is enabled, prefix IPD_ to the filename
-            if crate::is_ipd_mode_enabled() {
-                save_dir = "artifacts/r4_certs/ipd";
-            }
+            let save_dir = "artifacts/r4_certs/non-ipd";
 
             let file_name = format!("{}/{}-{}_ta.der", save_dir, dsa_alg_name, dsa_alg.get_oid());
 
@@ -314,12 +309,7 @@ mod test {
             // Verify self-sign cert
             assert!(cert_root.verify_self_signed().unwrap());
 
-            let mut save_dir = "artifacts/r3_certs/non-ipd";
-
-            // If IPD mode is enabled, reset save path to ipd
-            if crate::is_ipd_mode_enabled() {
-                save_dir = "artifacts/r3_certs/ipd";
-            }
+            let save_dir = "artifacts/r3_certs/non-ipd";
 
             let file_name = format!("{}/{}_ta.pem", save_dir, dsa_alg.get_oid());
 

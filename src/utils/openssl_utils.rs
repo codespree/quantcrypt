@@ -420,18 +420,18 @@ pub fn get_keypair_pkey_based_with_rng(
 /// # Arguments
 ///
 /// * `sk` - The secret key
-/// * `group` - The EC group
+/// * `nid` - The ID of the curve
 ///
 /// # Returns
 ///
 /// The public key as a byte vector from an uncompressed point
-#[allow(dead_code)] // This function can be used in the future
-pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
-    let mut ctx = BigNumContext::new()?;
+pub fn get_pk_from_sk_ec_based(sk: &[u8], nid: Nid) -> Result<Vec<u8>> {
+    let mut ctx: BigNumContext = BigNumContext::new()?;
+    let group = EcGroup::from_curve_name(nid)?;
     let private_key_bn = BigNum::from_slice(sk)?;
-    let pk_point = compute_public_key(&ctx, group, &private_key_bn)?;
+    let pk_point = compute_public_key(&ctx, &group, &private_key_bn)?;
     Ok(pk_point.to_bytes(
-        group,
+        &group,
         openssl::ec::PointConversionForm::UNCOMPRESSED,
         &mut ctx,
     )?)
@@ -447,8 +447,7 @@ pub fn get_pk_from_sk_ec_based(sk: &[u8], group: &EcGroup) -> Result<Vec<u8>> {
 /// # Returns
 ///
 /// The public key as a byte vector
-#[allow(dead_code)] // This function can be used in the future
-fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
+pub fn get_pk_from_sk_pkey_based(sk: &[u8], id: Id) -> Result<Vec<u8>> {
     let sk = PKey::private_key_from_raw_bytes(sk, id)?;
     Ok(sk.raw_public_key()?)
 }

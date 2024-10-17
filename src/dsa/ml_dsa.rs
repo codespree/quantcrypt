@@ -6,24 +6,10 @@ use crate::QuantCryptError;
 use rand_core::SeedableRng;
 
 // When IPD feature is not enabled
-#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_44;
-#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_65;
-#[cfg(not(feature = "ipd"))]
 use fips204::ml_dsa_87;
-#[cfg(not(feature = "ipd"))]
 use fips204::traits::{SerDes, Signer, Verifier};
-
-// When IPD feature is enabled
-#[cfg(feature = "ipd")]
-use fips204_ipd::ml_dsa_44;
-#[cfg(feature = "ipd")]
-use fips204_ipd::ml_dsa_65;
-#[cfg(feature = "ipd")]
-use fips204_ipd::ml_dsa_87;
-#[cfg(feature = "ipd")]
-use fips204_ipd::traits::{SerDes, Signer, Verifier};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -42,11 +28,6 @@ macro_rules! sign_ml {
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Try signing the message
-        #[cfg(feature = "ipd")]
-        let sig = sk
-            .try_sign($msg)
-            .map_err(|_| QuantCryptError::SignatureFailed)?;
-        #[cfg(not(feature = "ipd"))]
         let sig = sk
             .try_sign($msg, &[]) // Empty context
             .map_err(|_| QuantCryptError::SignatureFailed)?;
@@ -77,13 +58,22 @@ macro_rules! verify_ml {
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        #[cfg(feature = "ipd")]
-        let result = Ok(pk.verify($msg, &sig_buf));
-
-        #[cfg(not(feature = "ipd"))]
         let result = Ok(pk.verify($msg, &sig_buf, &[]));
 
         result
+    }};
+}
+
+macro_rules! get_public_key {
+    ($sig_type:ident, $sk:expr) => {{
+        if $sk.len() != $sig_type::SK_LEN {
+            return Err(QuantCryptError::InvalidPrivateKey);
+        }
+        let mut sk_buf = [0u8; $sig_type::SK_LEN];
+        sk_buf.copy_from_slice($sk);
+        let pk = $sig_type::PrivateKey::try_from_bytes(sk_buf)
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        Ok(pk.get_public_key().into_bytes().to_vec())
     }};
 }
 
@@ -201,6 +191,15 @@ impl Dsa for MlDsaManager {
     /// size of signature, etc.
     fn get_dsa_info(&self) -> DsaInfo {
         self.dsa_info.clone()
+    }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        match self.dsa_info.dsa_type {
+            DsaType::MlDsa44 => get_public_key!(ml_dsa_44, sk),
+            DsaType::MlDsa65 => get_public_key!(ml_dsa_65, sk),
+            DsaType::MlDsa87 => get_public_key!(ml_dsa_87, sk),
+            _ => Err(QuantCryptError::NotImplemented),
+        }
     }
 }
 

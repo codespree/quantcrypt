@@ -45,21 +45,13 @@ pub enum ContentEncryptionAlgorithm {
 /// use quantcrypt::content::SetOfVec;
 ///
 // Based on whether IPD feature is enabled or not, use the appropriate test data
-/// let rc_filename = if quantcrypt::is_ipd_mode_enabled() {
-///     "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der"
-/// } else {
-///     "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der"
-/// };
+/// let rc_filename = "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der";
 ///
 /// let recipient_cert = Certificate::from_file(
 ///     rc_filename,
 /// ).unwrap();
 ///
-/// let sk_filename = if quantcrypt::is_ipd_mode_enabled() {
-///     "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der"
-/// } else {
-///     "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der"
-/// };
+/// let sk_filename = "test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der";
 ///
 /// let private_key = PrivateKey::from_file(
 ///     sk_filename
@@ -255,23 +247,9 @@ mod tests {
 
     #[test]
     fn test_enveloped_data_content() {
-        #[cfg(feature = "ipd")]
-        let recipient_cert = Certificate::from_file(
-            "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_ee.der",
-        )
-        .unwrap();
-
-        #[cfg(not(feature = "ipd"))]
         let recipient_cert =
             Certificate::from_file("test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_ee.der").unwrap();
 
-        #[cfg(feature = "ipd")]
-        let private_key = PrivateKey::from_file(
-            "test/data_ipd/cms_cw/1.3.6.1.4.1.22554.5.6.1_ML-KEM-512-ipd_priv.der",
-        )
-        .unwrap();
-
-        #[cfg(not(feature = "ipd"))]
         let private_key =
             PrivateKey::from_file("test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_priv.der")
                 .unwrap();

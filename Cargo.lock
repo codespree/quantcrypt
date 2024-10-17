@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "QuantCrypt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "cms",
@@ -13,8 +13,7 @@ dependencies = [
  "der_derive",
  "ed25519-dalek",
  "ed448-rust",
- "fips204 0.2.2",
- "fips204 0.4.2",
+ "fips204",
  "fips205",
  "hex",
  "hkdf",
@@ -363,20 +362,9 @@ checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
 
 [[package]]
 name = "fips204"
-version = "0.2.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea2461567040f75a882162ffe38f6dc35bf5a193e995ca3f8c1f5d3c101be1d"
-dependencies = [
- "rand_core",
- "sha3 0.10.8",
- "zeroize",
-]
-
-[[package]]
-name = "fips204"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af2fc0841e1128019535007318059427a8a355742ff02c72fdba4d9afa148fd8"
+checksum = "a2f6698c48aedd28ff9060f0f9b9712bd465db780ddcfd0d64fd3da199577ca1"
 dependencies = [
  "rand_core",
  "sha2",
@@ -648,9 +636,9 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "openssl"
-version = "0.10.66"
+version = "0.10.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9529f4786b70a3e8c61e11179af17ab6188ad8d0ded78c5529441ed39d4bd9c1"
+checksum = "6174bc48f102d208783c2c84bf931bb75927a617866870de8a4ea85597f871f5"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -683,9 +671,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.103"
+version = "0.9.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f9e8deee91df40a943c71b917e5874b951d32a802526c85721ce3b776c929d6"
+checksum = "45abf306cbf99debc8195b66b7346498d7b10c210de50418b5ccd7ceba08c741"
 dependencies = [
  "cc",
  "libc",

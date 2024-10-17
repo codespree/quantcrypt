@@ -6,31 +6,18 @@ use crate::QuantCryptError;
 use rand_core::SeedableRng;
 
 // When IPD feature is not enabled
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_128f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_128s;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_192f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_192s;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_256f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_sha2_256s;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_128f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_128s;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_192f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_192s;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_256f;
-#[cfg(not(feature = "ipd"))]
 use fips205::slh_dsa_shake_256s;
-#[cfg(not(feature = "ipd"))]
 use fips205::traits::{SerDes, Signer, Verifier};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
@@ -94,6 +81,19 @@ macro_rules! keygen_slh {
         let pk = pk.into_bytes().to_vec();
         let sk = sk.into_bytes().to_vec();
         Ok((pk, sk))
+    }};
+}
+
+macro_rules! get_public_key {
+    ($sig_type:ident, $sk:expr) => {{
+        if $sk.len() != $sig_type::SK_LEN {
+            return Err(QuantCryptError::InvalidPrivateKey);
+        }
+        let mut sk_buf = [0u8; $sig_type::SK_LEN];
+        sk_buf.copy_from_slice($sk);
+        let pk = $sig_type::PrivateKey::try_from_bytes(&sk_buf)
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        Ok(pk.get_public_key().into_bytes().to_vec())
     }};
 }
 
@@ -215,6 +215,24 @@ impl Dsa for SlhDsaManager {
     fn get_dsa_info(&self) -> DsaInfo {
         self.dsa_info.clone()
     }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        match self.dsa_info.dsa_type {
+            DsaType::SlhDsaSha2_128f => get_public_key!(slh_dsa_sha2_128f, sk),
+            DsaType::SlhDsaSha2_128s => get_public_key!(slh_dsa_sha2_128s, sk),
+            DsaType::SlhDsaSha2_192f => get_public_key!(slh_dsa_sha2_192f, sk),
+            DsaType::SlhDsaSha2_192s => get_public_key!(slh_dsa_sha2_192s, sk),
+            DsaType::SlhDsaSha2_256f => get_public_key!(slh_dsa_sha2_256f, sk),
+            DsaType::SlhDsaSha2_256s => get_public_key!(slh_dsa_sha2_256s, sk),
+            DsaType::SlhDsaShake128f => get_public_key!(slh_dsa_shake_128f, sk),
+            DsaType::SlhDsaShake128s => get_public_key!(slh_dsa_shake_128s, sk),
+            DsaType::SlhDsaShake192f => get_public_key!(slh_dsa_shake_192f, sk),
+            DsaType::SlhDsaShake192s => get_public_key!(slh_dsa_shake_192s, sk),
+            DsaType::SlhDsaShake256f => get_public_key!(slh_dsa_shake_256f, sk),
+            DsaType::SlhDsaShake256s => get_public_key!(slh_dsa_shake_256s, sk),
+            _ => Err(QuantCryptError::NotImplemented),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -229,14 +247,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_128s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-128s-2.16.840.1.101.3.4.3.20_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-128s-2.16.840.1.101.3.4.3.20_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -244,14 +258,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_128f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-128f-2.16.840.1.101.3.4.3.21_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-128f-2.16.840.1.101.3.4.3.21_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -259,14 +269,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_192s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-192s-2.16.840.1.101.3.4.3.22_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-192s-2.16.840.1.101.3.4.3.22_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -274,14 +280,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_192f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-192f-2.16.840.1.101.3.4.3.23_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-192f-2.16.840.1.101.3.4.3.23_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -289,14 +291,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_256s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-256s-2.16.840.1.101.3.4.3.24_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-256s-2.16.840.1.101.3.4.3.24_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -304,14 +302,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_256f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-sha2-256f-2.16.840.1.101.3.4.3.25_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-sha2-256f-2.16.840.1.101.3.4.3.25_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -319,14 +313,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake128s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-128s-2.16.840.1.101.3.4.3.26_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-128s-2.16.840.1.101.3.4.3.26_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -334,14 +324,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake128f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-128f-2.16.840.1.101.3.4.3.27_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-128f-2.16.840.1.101.3.4.3.27_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -349,14 +335,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake192s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-192s-2.16.840.1.101.3.4.3.28_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-192s-2.16.840.1.101.3.4.3.28_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -364,14 +346,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake192f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-192f-2.16.840.1.101.3.4.3.29_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-192f-2.16.840.1.101.3.4.3.29_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -379,14 +357,10 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake256s);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-256s-2.16.840.1.101.3.4.3.30_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-256s-2.16.840.1.101.3.4.3.30_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 
     #[test]
@@ -394,13 +368,9 @@ mod tests {
         let dsa = SlhDsaManager::new(DsaType::SlhDsaShake256f);
         test_dsa!(dsa);
 
-        #[cfg(not(feature = "ipd"))]
-        {
-            let cert_bytes = include_bytes!(
-                "../../test/data/slh/slh-dsa-shake-256f-2.16.840.1.101.3.4.3.31_ta.der"
-            );
-            let cert = Certificate::from_der(cert_bytes).unwrap();
-            assert!(cert.verify_self_signed().unwrap());
-        }
+        let cert_bytes =
+            include_bytes!("../../test/data/slh/slh-dsa-shake-256f-2.16.840.1.101.3.4.3.31_ta.der");
+        let cert = Certificate::from_der(cert_bytes).unwrap();
+        assert!(cert.verify_self_signed().unwrap());
     }
 }
