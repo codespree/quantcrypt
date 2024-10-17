@@ -31,7 +31,7 @@ impl SigLen for DsaType {
             DsaType::MlDsa65 => Some(3309),
             DsaType::MlDsa87 => Some(4627),
 
-            // TODO: Investigate sig lengths
+            // pq_pk + trad_pk + overhead
             DsaType::MlDsa44Rsa2048PssSha256 => Some(2420 + 256 + 14),
             DsaType::MlDsa44Rsa2048Pkcs15Sha256 => Some(2420 + 256 + 14),
             DsaType::MlDsa44Ed25519SHA512 => Some(2420 + 64 + 12),

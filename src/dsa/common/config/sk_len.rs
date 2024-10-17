@@ -31,7 +31,7 @@ impl SKLen for DsaType {
             DsaType::MlDsa65 => Some(4032),
             DsaType::MlDsa87 => Some(4896),
 
-            // pq_sk + trad_sk + pq_overhead + trad_overhead + sequence_overhead
+            // pq_sk + trad_sk + pq_overhead + trad_overhead + sequence_overhead (to wrap 2 OAKs)
             DsaType::MlDsa44Rsa2048PssSha256 => None,
             DsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
             DsaType::MlDsa44Ed25519SHA512 => Some(2560 + 32 + 24 + 14 + 4),                          

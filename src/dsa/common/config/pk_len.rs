@@ -31,7 +31,7 @@ impl PKLen for DsaType {
             DsaType::MlDsa65 => Some(1952),
             DsaType::MlDsa87 => Some(2592),
 
-            // TODO: Investigate lengths
+            // pq_pk + trad_pk + overhead
             DsaType::MlDsa44Rsa2048PssSha256 => None,
             DsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
             DsaType::MlDsa44Ed25519SHA512 => Some(1312 + 32 + 12),                      
