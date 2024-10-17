@@ -482,14 +482,4 @@ mod tests {
         let kem = CompositeKemManager::new(KemType::MlKem1024X448);
         test_kem!(kem);
     }
-
-    #[test]
-    fn trial() {
-        let mut kem = CompositeKemManager::new(KemType::MlKem512P256).unwrap();
-        let (pk, sk) = kem.key_gen().unwrap();
-
-        // Print lengths of the public key and secret key
-        println!("Length of public key: {:?}", pk.len());
-        println!("Length of secret key: {:?}", sk.len());
-    }
 }
