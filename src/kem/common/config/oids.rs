@@ -46,7 +46,7 @@ impl Oid for KemType {
             KemType::P256 => "1.2.840.10045.3.1.7",
             KemType::P384 => "1.3.132.0.34",
             KemType::X25519 => "1.3.101.110", // RFC 8410
-            KemType::X448 => "1.3.101.110",
+            KemType::X448 => "1.3.101.111",
             KemType::BrainpoolP256r1 => "1.3.36.3.3.2.8.1.7", // RFC 5639
             KemType::BrainpoolP384r1 => "1.3.36.3.3.2.8.1.11",
             // RSA Types:

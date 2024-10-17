@@ -43,8 +43,8 @@ impl KemKeyGenerator {
     /// A tuple containing the public and secret keys (pk, sk)
     pub fn generate(&mut self) -> Result<(PublicKey, PrivateKey)> {
         let kem_type = self.algorithm.get_kem_type();
-        let mut dsa_manager = KemManager::new(kem_type.clone())?;
-        let (pk, sk) = dsa_manager
+        let mut kem_manager = KemManager::new(kem_type.clone())?;
+        let (pk, sk) = kem_manager
             .key_gen()
             .map_err(|_| errors::QuantCryptError::KeyPairGenerationFailed)?;
         let oid = kem_type.get_oid();

@@ -46,12 +46,12 @@ impl CTLen for KemType {
             KemType::MlKem768Rsa2048 => Some(1088 + 256 + 12),
             KemType::MlKem768Rsa3072 => Some(1088 + 384 + 12),
             KemType::MlKem768Rsa4096 => Some(1088 + 512 + 12),
-            // KemType::MlKem768X25519 => None,
+            // KemType::MlKem768X25519 => Some(1088 + 32 + 10),
             KemType::MlKem768P384 => Some(1088 + 97 + 10),
-            // KemType::MlKem768BrainpoolP256r1 => None,
-            // KemType::MlKem1024P384 => None,
-            // KemType::MlKem1024BrainpoolP384r1 => None,
-            // KemType::MlKem1024X448 => None,
+            // KemType::MlKem768BrainpoolP256r1 => Some(1088 + 65 + 10),
+            // KemType::MlKem1024P384 => Some(1568 + 97 + 10),
+            // KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 10),
+            // KemType::MlKem1024X448 => Some(1568 + 56 + 10),
         }
     }
 }
