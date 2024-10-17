@@ -365,9 +365,10 @@ impl<'a> EnvelopedDataBuilder<'a> {
             _ => return Err(QuantCryptError::UnsupportedOperation),
         };
 
-        // TODO: If there is any auth attributes, we need to check if the auth attributes
-        // contain the content type attribute and message digest attribute. If not, we need to add them.'
-        // RFC5652 § 11.1 , § 11.2
+        // There is no need to add Message Digest or Content Type attributes to the AuthEnvelopedData
+        // Content Type only needs to be added if it is not the default value ID_DATA. See the
+        // discussion here:
+        // https://github.com/codespree/quantcrypt/issues/1
 
         let mut builder = AuthEnvelopedDataBuilder::new(
             None,
