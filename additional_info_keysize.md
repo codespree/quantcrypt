@@ -1,22 +1,103 @@
 
 # ML-DSA Key Length Summary
 
-| DSA | Traditional Composite | Npk | Nsk | sig_len |
+| DSA | Traditional Algorithm  | Npk | Nsk | sig_len |
 | --- | -------------------- | --- | --- | ------- |
 | ML-DSA44 | <N.A> | 1312 | 2560 | 2420 |
-| ML-DSA44 | Ed25519SHA512 | 1356 | 2634 | 2690 |
-| ML-DSA44 | EcdsaP256SHA256 | 1389 | 2639 | 2690 |
-| ML-DSA44 | EcdsaBrainpoolP256r1SHA256 | 1389 | 2639 | 2496 |
+| ML-DSA44 | Rsa2048PssSha256 | 1596 | <N.A> | 2690 |
+| ML-DSA44 | Rsa2048Pkcs15Sha256 | 1596 | <N.A> | 2690 |
+| ML-DSA44 | Ed25519SHA512 | 1356 | 2634 | 2496 |
+| ML-DSA44 | EcdsaP256SHA256 | 1389 | 2639 | <N.A> |
+| ML-DSA44 | EcdsaBrainpoolP256r1SHA256 | 1389 | 2639 | <N.A> |
 | ML-DSA65 | <N.A> | 1952 | 4032 | 3309 |
-| ML-DSA65 | EcdsaP256SHA512 | 2029 | 4111 | 3707 |
-| ML-DSA65 | EcdsaBrainpoolP256r1SHA512 | 2029 | 4111 | 3707 |
+| ML-DSA65 | Rsa3072PssSHA512 | 2364 | <N.A> | 3707 |
+| ML-DSA65 | Rsa3072Pkcs15SHA512 | 2364 | <N.A> | 3707 |
+| ML-DSA65 | EcdsaP256SHA512 | 2029 | 4111 | <N.A> |
+| ML-DSA65 | EcdsaBrainpoolP256r1SHA512 | 2029 | 4111 | <N.A> |
 | ML-DSA65 | Ed25519SHA512 | 1996 | 4106 | 3385 |
 | ML-DSA87 | <N.A> | 2592 | 4896 | 4627 |
 | ML-DSA87 | EcdsaP384SHA512 | 2701 | 4991 | <N.A> |
 | ML-DSA87 | EcdsaBrainpoolP384r1SHA512 | 2701 | 4991 | <N.A> |
 | ML-DSA87 | Ed448SHA512 | 2661 | 4995 | 4753 |
 
-## Notes on Overhead Computation
+## ASCII Version
+```
++-----------+----------------------------+------+-------+----------+
+|   DSA     | Traditional Algorithm       | Npk  |  Nsk  | sig_len |
++-----------+----------------------------+------+-------+---------+
+| ML-DSA44  | <N.A>                       | 1312 | 2560  | 2420    |
+| ML-DSA44  | Rsa2048PssSha256            | 1596 | <N.A> | 2690    |
+| ML-DSA44  | Rsa2048Pkcs15Sha256         | 1596 | <N.A> | 2690    |
+| ML-DSA44  | Ed25519SHA512               | 1356 | 2634  | 2496    |
+| ML-DSA44  | EcdsaP256SHA256             | 1389 | 2639  | <N.A>   |
+| ML-DSA44  | EcdsaBrainpoolP256r1SHA256  | 1389 | 2639  | <N.A>   |
+| ML-DSA65  | <N.A>                       | 1952 | 4032  | 3309    |
+| ML-DSA65  | Rsa3072PssSHA512            | 2364 | <N.A> | 3707    |
+| ML-DSA65  | Rsa3072Pkcs15SHA512         | 2364 | <N.A> | 3707    |
+| ML-DSA65  | EcdsaP256SHA512             | 2029 | 4111  | <N.A>   |
+| ML-DSA65  | EcdsaBrainpoolP256r1SHA512  | 2029 | 4111  | <N.A>   |
+| ML-DSA65  | Ed25519SHA512               | 1996 | 4106  | 3385    |
+| ML-DSA87  | <N.A>                       | 2592 | 4896  | 4627    |
+| ML-DSA87  | EcdsaP384SHA512             | 2701 | 4991  | <N.A>   |
+| ML-DSA87  | EcdsaBrainpoolP384r1SHA512  | 2701 | 4991  | <N.A>   |
+| ML-DSA87  | Ed448SHA512                 | 2661 | 4995  | 4753    |
++-----------+----------------------------+------+-------+----------+
+```
+
+# ML-KEM Key Length Summary
+
+| KEM        | Traditional Composite    |   Npk | Nsk   |   ss_len |   ct_len |
+|------------|--------------------------|-------|-------|----------|----------|
+| ML-KEM512  | P256                     |   877 | 1782  |       32 |      843 |
+| ML-KEM512  | BrainpoolP256r1          |   877 | 1782  |       32 |      843 |
+| ML-KEM512  | X25519                   |   844 | 1749  |       32 |      810 |
+| ML-KEM512  | Rsa2048                  |  1084 | <N.A> |       32 |     1036 |
+| ML-KEM512  | Rsa3072                  |  1084 | <N.A> |       32 |     1164 |
+| ML-KEM768  | P256                     |  1261 | 2550  |       48 |     1163 |
+| ML-KEM768  | BrainpoolP256r1          |  1261 | 2550  |       48 |     1163 |
+| ML-KEM768  | X25519                   |  1228 | 2517  |     **48 |  ***1130 |
+| *ML-KEM768 | Rsa2048                  |  1468 | <N.A> |       32 |     1356 |
+| *ML-KEM768 | Rsa3072                  |  1596 | <N.A> |       32 |     1484 |
+| *ML-KEM768 | Rsa4096                  |  1724 | <N.A> |       32 |     1612 |
+| *ML-KEM768 | P384                     |  1293 | 2599  |       48 |     1195 |
+| ML-KEM1024 | P384                     |  1677 | 3367  |       64 |     1675 |
+| ML-KEM1024 | BrainpoolP384r1          |  1677 | 3367  |       64 |     1675 |
+| ML-KEM1024 | X448                     |  1636 | 3334  |       64 |     1634 |
+
+*: Only available in editor’s copy  
+
+**: 48 given SHA3-384 in the public version. In the editor's copy it's SHA-256 and thus 32. Following the public version [here](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/04/).
+
+*** Here the computation (kem_ct + trad_ct + overhead) = 1088 + 32 + 10 = 1130, and the composite computation logic seems to follow the editor’s copy (i.e. SHA-256 instead of SHA3-384).
+
+## ASCII Version
+```
++-----------+-----------------------+------+--------+--------+--------+
+| KEM       | Traditional Composite | Npk  | Nsk    | ss_len | ct_len |
++-----------+-----------------------+------+--------+--------+--------+
+| ML-KEM512 | P256                  |  877 |  1782  |   32   |   843  |
+| ML-KEM512 | BrainpoolP256r1       |  877 |  1782  |   32   |   843  |
+| ML-KEM512 | X25519                |  844 |  1749  |   32   |   810  |
+| ML-KEM512 | Rsa2048               | 1084 |  N/A   |   32   |  1036  |
+| ML-KEM512 | Rsa3072               | 1084 |  N/A   |   32   |  1164  |
+| ML-KEM768 | P256                  | 1261 |  2550  |   48   |  1163  |
+| ML-KEM768 | BrainpoolP256r1       | 1261 |  2550  |   48   |  1163  |
+| ML-KEM768 | X25519                | 1228 |  2517  | **48   | ***1130|
+| *ML-KEM768| Rsa2048               | 1468 |  N/A   |   32   |  1356  |
+| *ML-KEM768| Rsa3072               | 1596 |  N/A   |   32   |  1484  |
+| *ML-KEM768| Rsa4096               | 1724 |  N/A   |   32   |  1612  |
+| *ML-KEM768| P384                  | 1293 |  2599  |   48   |  1195  |
+| ML-KEM1024| P384                  | 1677 |  3367  |   64   |  1675  |
+| ML-KEM1024| BrainpoolP384r1       | 1677 |  3367  |   64   |  1675  |
+| ML-KEM1024| X448                  | 1636 |  3334  |   64   |  1634  |
++-----------+-----------------------+------+--------+--------+--------+
+
+*: Only available in editor’s copy  
+**: Should be 48 given SHA3-384 in the public version. In the editor's copy it's SHA-256 and thus 32. Following the public version [here](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/04/).
+*** Here the computation (kem_ct + trad_ct + overhead) = 1088 + 32 + 10 = 1130, and the composite computation logic seems to follow the editor’s copy (i.e. SHA-256 instead of SHA3-384).
+```
+
+### Notes on Overhead Computation
 
 The full derivation of the aforementioned lengths can be found in the `common::config` folder of the DSA folder. As a general guideline, below are some overhead computations:
 
@@ -88,3 +169,7 @@ Total = 9 + <oid_bytes>
 | EcdsaBrainpoolP384r1SHA512 | 1.2.840.10045.4.3.4 | 10 | 9 + 10 = 19 |
 | EcdsaP256SHA512 | 1.2.840.10045.4.3.4 | 10 | 9 + 10 = 19 |
 | EcdsaP384SHA512 | 1.2.840.10045.4.3.4 | 10 | 9 + 10 = 19 |
+
+### DSA vs KEM Secret Key Overhead Comparison
+
+For the secret key of composite KEMs, they also store the public key of the tranditional algorithm, causing additional overheads. On the other hand, composite DSAs do not store traditional public keys so that their secret key overhead is solely due to the wrapping structures (Algorithm Identifier and SEQUENCE). 

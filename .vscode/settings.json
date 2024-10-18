@@ -1,5 +1,5 @@
 {
     "rust-analyzer.runnables.extraArgs": [
-        "--features=ipd"
+        
     ]
 }

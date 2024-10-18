@@ -45,7 +45,9 @@ impl SSLen for KemType {
             KemType::MlKem512Rsa3072 => 32,
             KemType::MlKem768P256 => 48,
             KemType::MlKem768BrainpoolP256r1 => 48,
-            KemType::MlKem768X25519 => 48, // should be 48 given SHA3-384 in old version. In editor's copy it's SHA-256 and thus 32. Follow the public draft instead
+            // Should be 48 given SHA3-384 in the public version. In the editor's copy it's SHA-256 and thus 32. Follow the public version here.
+            // Public Copy Reference: https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/
+            KemType::MlKem768X25519 => 48,
             KemType::MlKem1024P384 => 64,
             KemType::MlKem1024BrainpoolP384r1 => 64,
             KemType::MlKem1024X448 => 64,

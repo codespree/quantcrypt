@@ -13,6 +13,7 @@ impl SKLen for DsaType {
     /// The length of the private key in bytes or `None` if the length is not fixed
     fn get_sk_len(&self) -> Option<usize> {
         match self {
+            // RSAs do not have a fixed sk length
             DsaType::Rsa2048Pkcs15SHA256 => None,
             DsaType::Rsa2048PssSHA256 => None,
             DsaType::Rsa3072Pkcs15SHA512 => None,
