@@ -13,10 +13,10 @@ impl PKLen for DsaType {
     /// The length of the public key in bytes or `None` if the length is not fixed
     fn get_pk_len(&self) -> Option<usize> {
         match self {
-            DsaType::Rsa2048Pkcs15SHA256 => None,
-            DsaType::Rsa2048PssSHA256 => None,
-            DsaType::Rsa3072Pkcs15SHA512 => None,
-            DsaType::Rsa3072PssSHA512 => None,
+            DsaType::Rsa2048Pkcs15SHA256 => Some(270),
+            DsaType::Rsa2048PssSHA256 => Some(270),
+            DsaType::Rsa3072Pkcs15SHA512 => Some(398),
+            DsaType::Rsa3072PssSHA512 => Some(398),
 
             DsaType::EcdsaP256SHA256 => Some(65),
             DsaType::EcdsaP256SHA512 => Some(65),
@@ -32,13 +32,13 @@ impl PKLen for DsaType {
             DsaType::MlDsa87 => Some(2592),
 
             // pq_pk + trad_pk + overhead
-            DsaType::MlDsa44Rsa2048PssSha256 => None,
-            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
+            DsaType::MlDsa44Rsa2048PssSha256 => Some(1312 + 270 + 14),
+            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => Some(1312 + 270 + 14),
             DsaType::MlDsa44Ed25519SHA512 => Some(1312 + 32 + 12),
             DsaType::MlDsa44EcdsaP256SHA256 => Some(1312 + 65 + 12),
             DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => Some(1312 + 65 + 12),
-            DsaType::MlDsa65Rsa3072PssSHA512 => None,
-            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => None,
+            DsaType::MlDsa65Rsa3072PssSHA512 => Some(1952 + 398 + 14),
+            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => Some(1952 + 398 + 14),
             DsaType::MlDsa65EcdsaP256SHA512 => Some(1952 + 65 + 12),
             DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => Some(1952 + 65 + 12),
             DsaType::MlDsa65Ed25519SHA512 => Some(1952 + 32 + 12),

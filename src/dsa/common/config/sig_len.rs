@@ -18,6 +18,7 @@ impl SigLen for DsaType {
             DsaType::Rsa3072Pkcs15SHA512 => Some(384),
             DsaType::Rsa3072PssSHA512 => Some(384),
 
+            // P256 and P384 variations do not have a fixed sig_len
             DsaType::EcdsaP256SHA256 => None,
             DsaType::EcdsaP256SHA512 => None,
             DsaType::EcdsaP384SHA512 => None,

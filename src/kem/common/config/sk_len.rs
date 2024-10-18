@@ -36,7 +36,9 @@ impl SKLen for KemType {
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
             // Composite types from old version
+            // In Kem composites, traditional public key is part of the private key
             // pq_sk + trad_sk + pq_overhead + trad_public_key_overhead + trad_overhead + sequence_overhead
+            // trad_overhead = 9 + <oid_byte>
             KemType::MlKem512P256 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),
             KemType::MlKem512BrainpoolP256r1 => Some(1632 + 32 + 24 + (65 + 6) + 19 + 4),
             KemType::MlKem512X25519 => Some(1632 + 32 + 24 + (32 + 11) + 14 + 4),
@@ -49,7 +51,6 @@ impl SKLen for KemType {
             KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 24 + (97 + 7) + 19 + 4),
             KemType::MlKem1024X448 => Some(3168 + 56 + 24 + (56 + 12) + 14 + 4),
             // Composite types from editor's draft. Skipped ones are also present in old version
-            // KEM Sk + Trad Sk + ASN.1 overhead
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
             KemType::MlKem768Rsa4096 => None,
