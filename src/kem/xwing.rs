@@ -43,7 +43,17 @@ impl XWingKemManager {
     }
 
     fn combiner(&self, ss_m: &[u8], ss_x: &[u8], ct_x: &[u8], pk_x: &[u8]) -> Result<Vec<u8>> {
-        let xwing_label = b"\\.//^\\";
+        /*
+         * The XWing KEM uses the following label as the equivalent of a domain
+         * separator string for composite KEMs. The label is defined as:
+         *
+         * \./
+         * /^\
+         *
+         */
+        let xw1 = b"\\./";
+        let xw2 = b"/^\\";
+        let xwing_label = [&xw1[..], &xw2[..]].concat();
         let mut info = xwing_label.to_vec();
         info.extend_from_slice(ss_m);
         info.extend_from_slice(ss_x);
