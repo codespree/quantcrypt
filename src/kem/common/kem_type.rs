@@ -64,6 +64,7 @@ pub enum KemType {
     MlKem1024BrainpoolP384r1,
     /// id-MLKEM1024-X448
     MlKem1024X448,
+    XWing,
 }
 
 impl KemType {

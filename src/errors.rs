@@ -3,6 +3,8 @@ use thiserror::Error;
 #[derive(Error, Debug, PartialEq)]
 /// Error type for the QuantCrypt library
 pub enum QuantCryptError {
+    #[error("Error while deriving key")]
+    KdfError,
     #[error("Cannot read from the specified file")]
     FileReadError,
     #[error("Content cannot be empty")]

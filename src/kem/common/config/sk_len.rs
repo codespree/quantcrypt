@@ -60,6 +60,7 @@ impl SKLen for KemType {
             // KemType::MlKem1024P384 => Some(3168 + 48 + 151),
             // KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 151),
             // KemType::MlKem1024X448 => Some(3168 + 56 + 110),
+            KemType::XWing => Some(32),
         }
     }
 }

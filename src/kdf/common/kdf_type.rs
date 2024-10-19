@@ -15,6 +15,10 @@ pub enum KdfType {
     Kmac128,
     /// Kmac with 256-bit key
     Kmac256,
+    /// Shake 128
+    Shake128,
+    /// Shake 256
+    Shake256,
 }
 
 impl KdfType {

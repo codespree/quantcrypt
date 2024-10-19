@@ -57,6 +57,11 @@ impl Oid for KemType {
             KemType::MlKem512 => "2.16.840.1.101.3.4.4.1",
             KemType::MlKem768 => "2.16.840.1.101.3.4.4.2",
             KemType::MlKem1024 => "2.16.840.1.101.3.4.4.3",
+
+            // XWing
+            // TODO: XWing doesn't have an OID yet
+            // this should be updated when an OID is assigned
+            KemType::XWing => "2.16.840.1.101.3.4.4.2.0",
         }
         .to_string()
     }

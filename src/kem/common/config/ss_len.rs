@@ -63,6 +63,7 @@ impl SSLen for KemType {
             // KemType::MlKem1024P384 => 64,
             // KemType::MlKem1024BrainpoolP384r1 => 64,
             // KemType::MlKem1024X448 => 64,
+            KemType::XWing => 32,
         }
     }
 }

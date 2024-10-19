@@ -2,6 +2,7 @@ use crate::kdf::common::kdf_trait::Kdf;
 use crate::kdf::common::kdf_type::KdfType;
 use crate::kdf::hkdf::Hkdf;
 use crate::kdf::kmac::Kmac;
+use crate::kdf::sha3::Sha3Kdf;
 use crate::QuantCryptError;
 
 use crate::kdf::common::kdf_info::KdfInfo;
@@ -14,6 +15,7 @@ const HKDF_TYPES: [KdfType; 3] = [
     KdfType::HkdfWithSha512,
 ];
 const KMAC_TYPES: [KdfType; 2] = [KdfType::Kmac128, KdfType::Kmac256];
+const SHA3_TYPES: [KdfType; 2] = [KdfType::Shake128, KdfType::Shake256];
 
 // Implement clone
 #[derive(Clone)]
@@ -23,6 +25,7 @@ pub enum KdfManager {
     Hkdf(Hkdf),
     /// Kmac implementation
     Kmac(Kmac),
+    Sha3(Sha3Kdf),
 }
 
 impl Kdf for KdfManager {
@@ -33,6 +36,7 @@ impl Kdf for KdfManager {
         let result = match kdf_type {
             _ if HKDF_TYPES.contains(&kdf_type) => KdfManager::Hkdf(Hkdf::new(kdf_type)?),
             _ if KMAC_TYPES.contains(&kdf_type) => KdfManager::Kmac(Kmac::new(kdf_type)?),
+            _ if SHA3_TYPES.contains(&kdf_type) => KdfManager::Sha3(Sha3Kdf::new(kdf_type)?),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -44,6 +48,7 @@ impl Kdf for KdfManager {
         match self {
             KdfManager::Hkdf(hkdf) => hkdf.get_kdf_info(),
             KdfManager::Kmac(kmac) => kmac.get_kdf_info(),
+            KdfManager::Sha3(sha3) => sha3.get_kdf_info(),
         }
     }
 
@@ -57,6 +62,7 @@ impl Kdf for KdfManager {
         match self {
             KdfManager::Hkdf(hkdf) => hkdf.derive(ikm, info, length, salt),
             KdfManager::Kmac(kmac) => kmac.derive(ikm, info, length, salt),
+            KdfManager::Sha3(sha3) => sha3.derive(ikm, info, length, salt),
         }
     }
 }

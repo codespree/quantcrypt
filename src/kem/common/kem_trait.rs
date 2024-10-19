@@ -52,7 +52,7 @@ pub trait Kem {
     ///
     /// # Returns
     ///
-    /// A tuple containing the ciphertext and shared secret (ct, ss)
+    /// A tuple containing the ciphertext and shared secret (ss, ct)
     fn encap(&mut self, pk: &[u8]) -> Result<(Vec<u8>, Vec<u8>)>;
 
     /// Decapsulate a ciphertext

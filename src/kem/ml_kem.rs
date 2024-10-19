@@ -84,6 +84,26 @@ pub struct MlKemManager {
     kem_info: KemInfo,
 }
 
+impl MlKemManager {
+    pub fn key_gen_deterministic(&self, d: &B32, z: &B32) -> Result<(Vec<u8>, Vec<u8>)> {
+        match self.kem_info.kem_type {
+            KemType::MlKem512 => {
+                let result = MlKem512::generate_deterministic(d, z);
+                Ok((result.1.as_bytes().to_vec(), result.0.as_bytes().to_vec()))
+            }
+            KemType::MlKem768 => {
+                let result = MlKem768::generate_deterministic(d, z);
+                Ok((result.1.as_bytes().to_vec(), result.0.as_bytes().to_vec()))
+            }
+            KemType::MlKem1024 => {
+                let result = MlKem1024::generate_deterministic(d, z);
+                Ok((result.1.as_bytes().to_vec(), result.0.as_bytes().to_vec()))
+            }
+            _ => Err(QuantCryptError::NotImplemented),
+        }
+    }
+}
+
 impl Kem for MlKemManager {
     /// Create a new KEM instance
     ///

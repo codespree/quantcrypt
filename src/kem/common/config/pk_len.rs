@@ -53,6 +53,7 @@ impl PKLen for KemType {
             // KemType::MlKem1024P384 => Some(1568 + 97 + 12),
             // KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 12),
             // KemType::MlKem1024X448 => Some(1568 + 56 + 12),
+            KemType::XWing => Some(1216),
         }
     }
 }

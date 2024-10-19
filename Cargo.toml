@@ -15,7 +15,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 name = "quantcrypt"
 
 [dependencies]
-ml-kem = "0.2.1"
+ml-kem = { version="0.2.1", features=["deterministic"]}
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
