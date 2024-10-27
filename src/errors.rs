@@ -3,6 +3,18 @@ use thiserror::Error;
 #[derive(Error, Debug, PartialEq)]
 /// Error type for the QuantCrypt library
 pub enum QuantCryptError {
+    #[error("Failed to decrypt data")]
+    DecryptionFailed,
+    #[error("Invalid AEAD ciphertext length")]
+    InvalidAeadCiphertextLength,
+    #[error("Invalid AEAD plaintext length")]
+    InvalidAeadPlaintextLength,
+    #[error("Invalid AEAD AAD length")]
+    InvalidAeadAadLength,
+    #[error("Invalid AEAD nonce length")]
+    InvalidAeadNonceLength,
+    #[error("Invalid AEAD key length")]
+    InvalidAeadKeyLength,
     #[error("Error while deriving key")]
     KdfError,
     #[error("Cannot read from the specified file")]
