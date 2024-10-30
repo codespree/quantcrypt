@@ -1,4 +1,5 @@
 use crate::dsa::common::dsa_type::DsaType;
+use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 /// A trait to get the length of the public key
 
 pub trait SigLen {
@@ -28,25 +29,6 @@ impl SigLen for DsaType {
             DsaType::Ed25519SHA512 => Some(64),
             DsaType::Ed448SHA512 => Some(114),
 
-            DsaType::MlDsa44 => Some(2420),
-            DsaType::MlDsa65 => Some(3309),
-            DsaType::MlDsa87 => Some(4627),
-
-            // pq_pk + trad_pk + overhead
-            DsaType::MlDsa44Rsa2048PssSha256 => Some(2420 + 256 + 14),
-            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => Some(2420 + 256 + 14),
-            DsaType::MlDsa44Ed25519SHA512 => Some(2420 + 64 + 12),
-            DsaType::MlDsa44EcdsaP256SHA256 => None,
-            DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => None,
-            DsaType::MlDsa65Rsa3072PssSHA512 => Some(3309 + 384 + 14),
-            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => Some(3309 + 384 + 14),
-            DsaType::MlDsa65EcdsaP256SHA512 => None,
-            DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => None,
-            DsaType::MlDsa65Ed25519SHA512 => Some(3309 + 64 + 12),
-            DsaType::MlDsa87EcdsaP384SHA512 => None,
-            DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => None,
-            DsaType::MlDsa87Ed448SHA512 => Some(4627 + 114 + 12),
-
             DsaType::SlhDsaSha2_128s => Some(7856),
             DsaType::SlhDsaSha2_128f => Some(17088),
             DsaType::SlhDsaSha2_192s => Some(16224),
@@ -59,6 +41,37 @@ impl SigLen for DsaType {
             DsaType::SlhDsaShake192f => Some(35664),
             DsaType::SlhDsaShake256s => Some(29792),
             DsaType::SlhDsaShake256f => Some(49856),
+        }
+    }
+}
+
+impl SigLen for PrehashDsaType {
+    /// Get the length of the signature
+    ///
+    /// # Returns
+    ///
+    /// The length of the signature in bytes
+    fn get_sig_len(&self) -> Option<usize> {
+        match self {
+            PrehashDsaType::MlDsa44 => Some(2420),
+            PrehashDsaType::MlDsa65 => Some(3309),
+            PrehashDsaType::MlDsa87 => Some(4627),
+
+            // pq_pk + trad_pk + overhead
+            PrehashDsaType::MlDsa44Rsa2048Pss => Some(2420 + 256 + 14),
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => Some(2420 + 256 + 14),
+            PrehashDsaType::MlDsa44Ed25519 => Some(2420 + 64 + 12),
+            PrehashDsaType::MlDsa44EcdsaP256=> None,
+            PrehashDsaType::MlDsa65Rsa3072Pss => Some(3309 + 384 + 14),
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Some(3309 + 384 + 14),
+            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,
+            PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64 + 12),
+            PrehashDsaType::MlDsa87EcdsaP384=> None,
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,
+            PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114 + 12),
+            PrehashDsaType::MlDsa65Rsa4096Pss=> None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually 
         }
     }
 }

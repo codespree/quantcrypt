@@ -1,4 +1,5 @@
 use crate::dsa::common::dsa_type::DsaType;
+use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
 /// A trait to get the OID of a DSA
 pub trait Oid {
@@ -28,25 +29,6 @@ impl Oid for DsaType {
             | DsaType::EcdsaP384SHA512 => "1.2.840.10045.4.3.4",
             DsaType::Ed25519SHA512 => "1.3.101.112",
             DsaType::Ed448SHA512 => "1.3.101.113",
-            // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
-            DsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
-            DsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
-            DsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
-
-            // TODO: Change when finalized
-            DsaType::MlDsa44Rsa2048PssSha256 => "2.16.840.1.114027.80.8.1.1",
-            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => "2.16.840.1.114027.80.8.1.2",
-            DsaType::MlDsa44Ed25519SHA512 => "2.16.840.1.114027.80.8.1.3",
-            DsaType::MlDsa44EcdsaP256SHA256 => "2.16.840.1.114027.80.8.1.4",
-            DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => "2.16.840.1.114027.80.8.1.5",
-            DsaType::MlDsa65Rsa3072PssSHA512 => "2.16.840.1.114027.80.8.1.6",
-            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => "2.16.840.1.114027.80.8.1.7",
-            DsaType::MlDsa65EcdsaP256SHA512 => "2.16.840.1.114027.80.8.1.8",
-            DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => "2.16.840.1.114027.80.8.1.9",
-            DsaType::MlDsa65Ed25519SHA512 => "2.16.840.1.114027.80.8.1.10",
-            DsaType::MlDsa87EcdsaP384SHA512 => "2.16.840.1.114027.80.8.1.11",
-            DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => "2.16.840.1.114027.80.8.1.12",
-            DsaType::MlDsa87Ed448SHA512 => "2.16.840.1.114027.80.8.1.13",
 
             DsaType::SlhDsaSha2_128s => "2.16.840.1.101.3.4.3.20",
             DsaType::SlhDsaSha2_128f => "2.16.840.1.101.3.4.3.21",
@@ -60,6 +42,39 @@ impl Oid for DsaType {
             DsaType::SlhDsaShake192f => "2.16.840.1.101.3.4.3.29",
             DsaType::SlhDsaShake256s => "2.16.840.1.101.3.4.3.30",
             DsaType::SlhDsaShake256f => "2.16.840.1.101.3.4.3.31",
+        }
+        .to_string()
+    }
+}
+
+impl Oid for PrehashDsaType {
+    /// Get the OID for the prehash DSA
+    ///
+    /// # Returns
+    ///
+    /// The OID for the prehash DSA
+    fn get_oid(&self) -> String {
+        match self {
+            
+            // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
+            PrehashDsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
+            PrehashDsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
+            PrehashDsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
+
+            PrehashDsaType::MlDsa44Rsa2048Pss => "2.16.840.1.114027.80.8.1.21",
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => "2.16.840.1.114027.80.8.1.22",
+            PrehashDsaType::MlDsa44Ed25519 => "2.16.840.1.114027.80.8.1.23",
+            PrehashDsaType::MlDsa44EcdsaP256 => "2.16.840.1.114027.80.8.1.24",
+            PrehashDsaType::MlDsa65Rsa3072Pss => "2.16.840.1.114027.80.8.1.26",
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => "2.16.840.1.114027.80.8.1.27",
+            PrehashDsaType::MlDsa65EcdsaP384 => "2.16.840.1.114027.80.8.1.28",
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => "2.16.840.1.114027.80.8.1.29",
+            PrehashDsaType::MlDsa65Ed25519 => "2.16.840.1.114027.80.8.1.30",
+            PrehashDsaType::MlDsa87EcdsaP384 => "2.16.840.1.114027.80.8.1.31",
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => "2.16.840.1.114027.80.8.1.32",
+            PrehashDsaType::MlDsa87Ed448 => "2.16.840.1.114027.80.8.1.33",
+            PrehashDsaType::MlDsa65Rsa4096Pss => "2.16.840.1.114027.80.8.1.34",
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => "2.16.840.1.114027.80.8.1.35",
         }
         .to_string()
     }

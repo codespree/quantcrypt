@@ -497,7 +497,7 @@ mod tests {
     #[test]
     fn test_akid_skid() {
         // First generate a TA cert
-        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::PrehashDsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
 
@@ -552,7 +552,7 @@ mod tests {
         let validity =
             CertValidity::new(Some(&not_before.to_rfc3339()), &not_after.to_rfc3339()).unwrap();
 
-        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::PrehashDsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
         let cert = crate::certificates::CertificateBuilder::new(

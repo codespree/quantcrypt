@@ -473,9 +473,8 @@ impl<'a> EnvelopedDataBuilder<'a> {
 #[cfg(test)]
 mod tests {
     use crate::dsa::common::config::oids::Oid;
-    use crate::dsa::common::dsa_trait::Dsa;
-    use crate::dsa::common::dsa_type::DsaType;
-    use crate::dsa::dsa_manager::DsaManager;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
+    use crate::dsa::dsa_manager::PrehashDsaManager;
     use crate::kem::common::config::oids::Oid as _;
     use crate::kem::common::kem_type::KemType;
     use crate::{
@@ -525,14 +524,14 @@ mod tests {
             .unwrap();
 
         // Add a new recipient (of a completely different type)
-        let (ta_pk_2, ta_sk_2) = DsaManager::new(DsaType::MlDsa44Rsa2048PssSha256)
+        let (ta_pk_2, ta_sk_2) = PrehashDsaManager::new(PrehashDsaType::MlDsa44Rsa2048Pss)
             .unwrap()
             .key_gen()
             .unwrap();
         let ta_pk_2 =
-            PublicKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_pk_2).unwrap();
+            PublicKey::new(&PrehashDsaType::MlDsa44Rsa2048Pss.get_oid(), &ta_pk_2).unwrap();
         let ta_sk_2 =
-            PrivateKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_sk_2).unwrap();
+            PrivateKey::new(&PrehashDsaType::MlDsa44Rsa2048Pss.get_oid(), &ta_sk_2).unwrap();
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,
@@ -629,14 +628,14 @@ mod tests {
             .unwrap();
 
         // Add a new recipient (of a completely different type)
-        let (ta_pk_2, ta_sk_2) = DsaManager::new(DsaType::MlDsa44Rsa2048PssSha256)
+        let (ta_pk_2, ta_sk_2) = PrehashDsaManager::new(PrehashDsaType::MlDsa44Rsa2048Pss)
             .unwrap()
             .key_gen()
             .unwrap();
         let ta_pk_2 =
-            PublicKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_pk_2).unwrap();
+            PublicKey::new(&PrehashDsaType::MlDsa44Rsa2048Pss.get_oid(), &ta_pk_2).unwrap();
         let ta_sk_2 =
-            PrivateKey::new(&DsaType::MlDsa44Rsa2048PssSha256.get_oid(), &ta_sk_2).unwrap();
+            PrivateKey::new(&PrehashDsaType::MlDsa44Rsa2048Pss.get_oid(), &ta_sk_2).unwrap();
         let ta_cert_2 = CertificateBuilder::new(
             Profile::Root,
             None,

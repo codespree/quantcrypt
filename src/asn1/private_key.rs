@@ -357,7 +357,7 @@ impl PrivateKey {
 #[cfg(test)]
 mod test {
     use crate::dsa::common::config::oids::Oid;
-    use crate::dsa::common::dsa_type::DsaType;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
     use super::*;
 
@@ -368,7 +368,7 @@ mod test {
         let pk = PrivateKey::from_pem(pem).unwrap();
 
         assert!(pk.is_composite());
-        assert_eq!(pk.get_oid(), DsaType::MlDsa44EcdsaP256SHA256.get_oid());
+        assert_eq!(pk.get_oid(), PrehashDsaType::MlDsa44EcdsaP256.get_oid());
 
         let key_bytes = pk.get_key();
         let pk2 = CompositePrivateKey::from_der(&pk.oid, &key_bytes).unwrap();
@@ -379,7 +379,7 @@ mod test {
         let pem2 = pk2.to_pem().unwrap();
         assert_eq!(pem, pem2.trim());
 
-        let oid = DsaType::MlDsa44EcdsaP256SHA256.get_oid();
+        let oid = PrehashDsaType::MlDsa44EcdsaP256.get_oid();
         assert_eq!(pk.oid, oid);
     }
 

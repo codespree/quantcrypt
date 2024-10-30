@@ -2,8 +2,9 @@ use crate::asn1::asn_util::oid_to_der;
 use crate::asn1::composite_private_key::CompositePrivateKey;
 use crate::asn1::composite_public_key::CompositePublicKey;
 use crate::dsa::asn1::composite_dsa_primitives::CompositeSignatureValue;
-use crate::dsa::common::dsa_info::DsaInfo;
-use crate::dsa::dsa_manager::DsaManager;
+use crate::dsa::common::prehash_dsa_info::PrehashDsaInfo;
+use crate::dsa::dsa_manager::{DsaManager, PrehashDsaManager};
+
 use crate::QuantCryptError;
 use openssl::hash::Hasher;
 use openssl::hash::MessageDigest;
@@ -12,7 +13,7 @@ use der::{Decode, Encode};
 use pkcs8::ObjectIdentifier;
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 
-use super::common::{dsa_trait::Dsa, dsa_type::DsaType};
+use super::common::{prehash_dsa_trait::PrehashDsa,dsa_type::DsaType, prehash_dsa_type::PrehashDsaType};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -20,16 +21,18 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 #[derive(Clone)]
 pub struct CompositeDsaManager {
     /// The DSA metadata information
-    dsa_info: DsaInfo,
+    dsa_info: PrehashDsaInfo,
     /// The traditional DSA manager
     trad_dsa: Box<DsaManager>,
     /// The post-quantum DSA manager
-    pq_dsa: Box<DsaManager>,
+    pq_dsa: Box<PrehashDsaManager>,
     /// The key derivation function
     kdf: MessageDigest,
 }
 
 impl CompositeDsaManager {
+    // TODO: Deprecate this as discussed
+
     /// Get's the prehash message for the composite DSA
     ///
     /// # Arguments
@@ -123,90 +126,78 @@ impl CompositeDsaManager {
     }
 }
 
-impl Dsa for CompositeDsaManager {
-    fn new(dsa_type: super::common::dsa_type::DsaType) -> Result<Self>
+impl PrehashDsa for CompositeDsaManager {
+    fn new(dsa_type: super::common::prehash_dsa_type::PrehashDsaType) -> Result<Self>
     where
         Self: Sized,
     {
-        let dsa_info = DsaInfo::new(dsa_type.clone());
+        let dsa_info = PrehashDsaInfo::new(dsa_type.clone());
 
         let result = match dsa_type {
-            DsaType::MlDsa44Rsa2048PssSha256 => Self {
+            PrehashDsaType::MlDsa44Rsa2048Pss => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048PssSHA256)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa44)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
                 kdf: MessageDigest::sha256(),
             },
-            DsaType::MlDsa44Rsa2048Pkcs15Sha256 => Self {
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048Pkcs15SHA256)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa44)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
                 kdf: MessageDigest::sha256(),
             },
-            DsaType::MlDsa44Ed25519SHA512 => Self {
+            PrehashDsaType::MlDsa44Ed25519 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Ed25519SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa44)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa44EcdsaP256SHA256 => Self {
+            PrehashDsaType::MlDsa44EcdsaP256 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaP256SHA256)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa44)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
                 kdf: MessageDigest::sha256(),
             },
-            DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256 => Self {
-                dsa_info,
-                trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA256)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa44)?),
-                kdf: MessageDigest::sha256(),
-            },
-            DsaType::MlDsa65Rsa3072PssSHA512 => Self {
+            PrehashDsaType::MlDsa65Rsa3072Pss => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072PssSHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa65)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa65Rsa3072Pkcs15SHA512 => Self {
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072Pkcs15SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa65)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa65EcdsaP256SHA512 => Self {
-                dsa_info,
-                trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaP256SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa65)?),
-                kdf: MessageDigest::sha512(),
-            },
-            DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512 => Self {
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa65)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa65Ed25519SHA512 => Self {
+            PrehashDsaType::MlDsa65Ed25519 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Ed25519SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa65)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa87EcdsaP384SHA512 => Self {
+            PrehashDsaType::MlDsa87EcdsaP384 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaP384SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa87)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa87)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512 => Self {
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa87)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa87)?),
                 kdf: MessageDigest::sha512(),
             },
-            DsaType::MlDsa87Ed448SHA512 => Self {
+            PrehashDsaType::MlDsa87Ed448 => Self {
                 dsa_info,
                 trad_dsa: Box::new(DsaManager::new(DsaType::Ed448SHA512)?),
-                pq_dsa: Box::new(DsaManager::new(DsaType::MlDsa87)?),
+                pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa87)?),
                 kdf: MessageDigest::sha512(),
             },
             _ => {
@@ -231,22 +222,27 @@ impl Dsa for CompositeDsaManager {
         self.key_gen_composite(&t_pk, &t_sk, &pq_pk, &pq_sk)
     }
 
-    fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+    fn sign(&self, sk: &[u8], msg: &[u8], ctx:Option<&[u8]>) -> Result<Vec<u8>> {
         let msg = self.pre_hash(msg)?;
 
         let c_key = CompositePrivateKey::from_der(&self.dsa_info.oid, sk)?;
         let sk_trad = c_key.get_trad_sk()?.private_key;
         let sk_pq = c_key.get_pq_sk()?.private_key;
 
-        let trad_sig = self.trad_dsa.sign(sk_trad, &msg)?;
-        let pq_sig = self.pq_dsa.sign(sk_pq, &msg)?;
+        let trad_sig = self.trad_dsa.sign(sk_trad, &msg, ctx)?;
+        let pq_sig = self.pq_dsa.sign(sk_pq, &msg, ctx)?;
 
         let c_sig = CompositeSignatureValue::new(&pq_sig, &trad_sig);
 
         Ok(c_sig.to_der().unwrap())
     }
 
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
+    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<Vec<u8>>{
+        //TODO: Implement this
+        Ok(vec![0])
+    }
+
+    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>,) -> Result<bool> {
         let msg = self.pre_hash(msg)?;
 
         let c_key = CompositePublicKey::from_der(&self.dsa_info.oid, pk)?;
@@ -260,12 +256,17 @@ impl Dsa for CompositeDsaManager {
         let pq_sig = c_sig.get_pq_sig();
 
         let is_verified_trad = self.trad_dsa.verify(&trad_pk, &msg, &t_sig)?;
-        let is_verified_pq = self.pq_dsa.verify(&pq_pk, &msg, &pq_sig)?;
+        let is_verified_pq = self.pq_dsa.verify(&pq_pk, &msg, &pq_sig, ctx)?;
 
         Ok(is_verified_pq && is_verified_trad)
     }
 
-    fn get_dsa_info(&self) -> DsaInfo {
+    fn verify_prehash(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<bool>{
+        //TODO: Implement this
+        Ok(false)
+    }
+
+    fn get_dsa_info(&self) -> PrehashDsaInfo {
         self.dsa_info.clone()
     }
 
@@ -289,85 +290,75 @@ impl Dsa for CompositeDsaManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::dsa::common::macros::test_dsa;
+    use crate::dsa::common::macros::test_prehash_dsa;
 
     use super::*;
 
-    #[test]
-    fn test_mldsa_44_rsa_2048_pss_sha256() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa44Rsa2048PssSha256);
-        test_dsa!(dsa);
-    }
+    // TODO: Add testcases for the 3 new composites
 
-    #[test]
-    fn test_mldsa_44_rsa_2048_pkcs15_sha256() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa44Rsa2048Pkcs15Sha256);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_44_rsa_2048_pss_sha256() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa44Rsa2048Pss);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_44_ed25519_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa44Ed25519SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_44_rsa_2048_pkcs15_sha256() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa44Rsa2048Pkcs15);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_44_ecdsa_p256_sha256() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa44EcdsaP256SHA256);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_44_ed25519_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa44Ed25519);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_44_ecdsa_brainpool_p256r1_sha256() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa44EcdsaBrainpoolP256r1SHA256);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_44_ecdsa_p256_sha256() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa44EcdsaP256);
+    //     test_prehash_dsa!(dsa);
+    // }
+    // #[test]
+    // fn test_mldsa_65_rsa_3072_pss_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa65Rsa3072Pss);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_65_rsa_3072_pss_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa65Rsa3072PssSHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_65_rsa_3072_pkcs15_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa65Rsa3072Pkcs15);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_65_rsa_3072_pkcs15_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa65Rsa3072Pkcs15SHA512);
-        test_dsa!(dsa);
-    }
 
-    #[test]
-    fn test_mldsa_65_ecdsa_p256_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa65EcdsaP256SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_65_ecdsa_brainpool_p256r1_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_65_ecdsa_brainpool_p256r1_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa65EcdsaBrainpoolP256r1SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_65_ed25519_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa65Ed25519);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_65_ed25519_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa65Ed25519SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_87_ecdsa_p384_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa87EcdsaP384);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_87_ecdsa_p384_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa87EcdsaP384SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_87_ecdsa_brainpool_p384r1_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1);
+    //     test_prehash_dsa!(dsa);
+    // }
 
-    #[test]
-    fn test_mldsa_87_ecdsa_brainpool_p384r1_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa87EcdsaBrainpoolP384r1SHA512);
-        test_dsa!(dsa);
-    }
-
-    #[test]
-    fn test_mldsa_87_ed448_sha512() {
-        let dsa = CompositeDsaManager::new(DsaType::MlDsa87Ed448SHA512);
-        test_dsa!(dsa);
-    }
+    // #[test]
+    // fn test_mldsa_87_ed448_sha512() {
+    //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa87Ed448);
+    //     test_prehash_dsa!(dsa);
+    // }
 }

@@ -58,16 +58,16 @@ impl DsaKeyGenerator {
 
 #[cfg(test)]
 mod test {
-    use crate::dsa::api::algorithm::DsaAlgorithm;
+    use crate::dsa::api::algorithm::PrehashDsaAlgorithm;
     use crate::dsa::api::key_generator::DsaKeyGenerator;
 
     #[test]
     fn test_key_generator_sign_verify() {
         // Try a pure algorithm
-        let mut key_generator = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
+        let mut key_generator = DsaKeyGenerator::new(PrehashDsaAlgorithm::MlDsa44);
         let (pk, sk) = key_generator.generate().unwrap();
-        assert_eq!(pk.get_oid(), DsaAlgorithm::MlDsa44.get_oid());
-        assert_eq!(sk.get_oid(), DsaAlgorithm::MlDsa44.get_oid());
+        assert_eq!(pk.get_oid(), PrehashDsaAlgorithm::MlDsa44.get_oid());
+        assert_eq!(sk.get_oid(), PrehashDsaAlgorithm::MlDsa44.get_oid());
 
         let msg = b"Hello, world!";
         let sig = sk.sign(msg).unwrap();
