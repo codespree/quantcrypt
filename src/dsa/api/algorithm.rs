@@ -128,7 +128,7 @@ impl PrehashDsaAlgorithm {
             PrehashDsaAlgorithm::MlDsa44EcdsaP256 => PrehashDsaType::MlDsa44EcdsaP256,
             PrehashDsaAlgorithm::MlDsa65Rsa3072Pss => PrehashDsaType::MlDsa65Rsa3072Pss,
             PrehashDsaAlgorithm::MlDsa65Rsa3072Pkcs15 => PrehashDsaType::MlDsa65Rsa3072Pkcs15,
-            PrehashDsaAlgorithm::MlDsa65EcdsaP384 => PrehashDsaType::MlDsa65EcdsaP384, //TODO: newly added, check manually 
+            PrehashDsaAlgorithm::MlDsa65EcdsaP384 => PrehashDsaType::MlDsa65EcdsaP384, //TODO: newly added, check manually
             PrehashDsaAlgorithm::MlDsa65EcdsaBrainpoolP256r1 => {
                 PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1
             }
@@ -138,8 +138,8 @@ impl PrehashDsaAlgorithm {
                 PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1
             }
             PrehashDsaAlgorithm::MlDsa87Ed448 => PrehashDsaType::MlDsa87Ed448,
-            PrehashDsaAlgorithm::MlDsa65Rsa4096Pss => PrehashDsaType::MlDsa65Rsa4096Pss, //TODO: newly added, check manually 
-            PrehashDsaAlgorithm::MlDsa65Rsa4096Pkcs15=> PrehashDsaType::MlDsa65Rsa4096Pkcs15, //TODO: newly added, check manually 
+            PrehashDsaAlgorithm::MlDsa65Rsa4096Pss => PrehashDsaType::MlDsa65Rsa4096Pss, //TODO: newly added, check manually
+            PrehashDsaAlgorithm::MlDsa65Rsa4096Pkcs15 => PrehashDsaType::MlDsa65Rsa4096Pkcs15, //TODO: newly added, check manually
         }
     }
 
@@ -151,7 +151,9 @@ impl PrehashDsaAlgorithm {
     pub fn is_composite(&self) -> bool {
         !matches!(
             self,
-            PrehashDsaAlgorithm::MlDsa44 | PrehashDsaAlgorithm::MlDsa65 | PrehashDsaAlgorithm::MlDsa87
+            PrehashDsaAlgorithm::MlDsa44
+                | PrehashDsaAlgorithm::MlDsa65
+                | PrehashDsaAlgorithm::MlDsa87
         )
     }
 

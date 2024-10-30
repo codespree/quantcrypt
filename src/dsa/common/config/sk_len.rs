@@ -45,7 +45,6 @@ impl SKLen for DsaType {
     }
 }
 
-
 impl SKLen for PrehashDsaType {
     /// Get the length of the private key
     ///
@@ -65,14 +64,14 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::MlDsa44EcdsaP256 => Some(2560 + 32 + 24 + 19 + 4),
             PrehashDsaType::MlDsa65Rsa3072Pss => None,
             PrehashDsaType::MlDsa65Rsa3072Pkcs15 => None,
-            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually
             PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => Some(4032 + 32 + 24 + 19 + 4),
             PrehashDsaType::MlDsa65Ed25519 => Some(4032 + 32 + 24 + 14 + 4),
             PrehashDsaType::MlDsa87EcdsaP384 => Some(4896 + 48 + 24 + 19 + 4),
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Some(4896 + 48 + 24 + 19 + 4),
             PrehashDsaType::MlDsa87Ed448 => Some(4896 + 57 + 24 + 14 + 4),
-            PrehashDsaType::MlDsa65Rsa4096Pss=> None, //TODO: newly added, check manually 
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65Rsa4096Pss => None, //TODO: newly added, check manually
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually
         }
     }
 }

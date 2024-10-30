@@ -14,7 +14,9 @@ use pkcs8::ObjectIdentifier;
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 
 use super::common::dsa_trait::Dsa;
-use super::common::{prehash_dsa_trait::PrehashDsa,dsa_type::DsaType, prehash_dsa_type::PrehashDsaType};
+use super::common::{
+    dsa_type::DsaType, prehash_dsa_trait::PrehashDsa, prehash_dsa_type::PrehashDsaType,
+};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
@@ -223,7 +225,7 @@ impl PrehashDsa for CompositeDsaManager {
         self.key_gen_composite(&t_pk, &t_sk, &pq_pk, &pq_sk)
     }
 
-    fn sign(&self, sk: &[u8], msg: &[u8], ctx:Option<&[u8]>) -> Result<Vec<u8>> {
+    fn sign(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
         let msg = self.pre_hash(msg)?;
 
         let c_key = CompositePrivateKey::from_der(&self.dsa_info.oid, sk)?;
@@ -238,12 +240,18 @@ impl PrehashDsa for CompositeDsaManager {
         Ok(c_sig.to_der().unwrap())
     }
 
-    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<Vec<u8>>{
+    fn sign_prehash(
+        &self,
+        sk: &[u8],
+        msg: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<Vec<u8>> {
         //TODO: Implement this
         Ok(vec![0])
     }
 
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>,) -> Result<bool> {
+    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>) -> Result<bool> {
         let msg = self.pre_hash(msg)?;
 
         let c_key = CompositePublicKey::from_der(&self.dsa_info.oid, pk)?;
@@ -262,7 +270,14 @@ impl PrehashDsa for CompositeDsaManager {
         Ok(is_verified_pq && is_verified_trad)
     }
 
-    fn verify_prehash(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<bool>{
+    fn verify_prehash(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<bool> {
         //TODO: Implement this
         Ok(false)
     }
@@ -331,7 +346,6 @@ mod tests {
     //     let dsa = CompositeDsaManager::new(PrehashDsaType::MlDsa65Rsa3072Pkcs15);
     //     test_prehash_dsa!(dsa);
     // }
-
 
     // #[test]
     // fn test_mldsa_65_ecdsa_brainpool_p256r1_sha512() {

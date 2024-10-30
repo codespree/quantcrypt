@@ -1,8 +1,8 @@
 use rand_core::CryptoRngCore;
 
 use crate::dsa::common::dsa_trait::Dsa;
-use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
 use crate::dsa::common::dsa_type::DsaType;
+use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
 use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 use crate::dsa::composite_dsa::CompositeDsaManager;
 use crate::dsa::ec_dsa::EcDsaManager;
@@ -14,7 +14,11 @@ use crate::dsa::slh_dsa::SlhDsaManager;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const ML_DSA_TYPES: [PrehashDsaType; 3] = [PrehashDsaType::MlDsa44, PrehashDsaType::MlDsa65, PrehashDsaType::MlDsa87];
+const ML_DSA_TYPES: [PrehashDsaType; 3] = [
+    PrehashDsaType::MlDsa44,
+    PrehashDsaType::MlDsa65,
+    PrehashDsaType::MlDsa87,
+];
 
 const RSA_DSA_TYPES: [DsaType; 4] = [
     DsaType::Rsa2048Pkcs15SHA256,
@@ -35,7 +39,7 @@ const EC_DSA_TYPES: [DsaType; 8] = [
 ];
 
 // TODO: Uncomment the new types and implement their logic
-// This includes 
+// This includes
 const COMPOSITE_DSA_TYPES: [PrehashDsaType; 11] = [
     PrehashDsaType::MlDsa44Rsa2048Pss,
     PrehashDsaType::MlDsa44Rsa2048Pkcs15,
@@ -49,7 +53,7 @@ const COMPOSITE_DSA_TYPES: [PrehashDsaType; 11] = [
     PrehashDsaType::MlDsa87EcdsaP384,
     PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1,
     PrehashDsaType::MlDsa87Ed448,
-    //PrehashDsaType::MlDsa65Rsa4096Pss, 
+    //PrehashDsaType::MlDsa65Rsa4096Pss,
     //PrehashDsaType::MlDsa65Rsa4096Pkcs15,
 ];
 
@@ -165,7 +169,9 @@ impl PrehashDsa for PrehashDsaManager {
         Self: Sized,
     {
         let result = match dsa_type {
-            _ if ML_DSA_TYPES.contains(&dsa_type) => PrehashDsaManager::Ml(MlDsaManager::new(dsa_type)?),
+            _ if ML_DSA_TYPES.contains(&dsa_type) => {
+                PrehashDsaManager::Ml(MlDsaManager::new(dsa_type)?)
+            }
             _ if COMPOSITE_DSA_TYPES.contains(&dsa_type) => {
                 PrehashDsaManager::Composite(CompositeDsaManager::new(dsa_type)?)
             }
@@ -197,7 +203,13 @@ impl PrehashDsa for PrehashDsaManager {
         }
     }
 
-    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<Vec<u8>> {
+    fn sign_prehash(
+        &self,
+        sk: &[u8],
+        msg: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<Vec<u8>> {
         match self {
             PrehashDsaManager::Ml(ml) => ml.sign_prehash(sk, msg, ctx, ph),
             PrehashDsaManager::Composite(composite) => composite.sign_prehash(sk, msg, ctx, ph),
@@ -211,10 +223,19 @@ impl PrehashDsa for PrehashDsaManager {
         }
     }
 
-    fn verify_prehash(&self, pk: &[u8], msg: &[u8], sig: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<bool> {
+    fn verify_prehash(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        sig: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<bool> {
         match self {
             PrehashDsaManager::Ml(ml) => ml.verify(pk, msg, sig, ctx),
-            PrehashDsaManager::Composite(composite) => composite.verify_prehash(pk, msg, sig, ctx, ph),
+            PrehashDsaManager::Composite(composite) => {
+                composite.verify_prehash(pk, msg, sig, ctx, ph)
+            }
         }
     }
 
@@ -265,4 +286,3 @@ mod tests {
         }
     }
 }
-

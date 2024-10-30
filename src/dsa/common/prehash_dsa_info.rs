@@ -4,7 +4,6 @@ use crate::dsa::common::config::sig_len::SigLen;
 use crate::dsa::common::config::sk_len::SKLen;
 use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
-
 // TODO: There could me more info to include for Prehash DSA Info
 
 /// A structure to represent metadata about a DSA

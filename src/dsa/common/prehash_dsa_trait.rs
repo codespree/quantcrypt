@@ -88,7 +88,8 @@ pub trait PrehashDsa {
     /// # Returns
     ///
     /// The signature of the message
-    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<Vec<u8>>;
+    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8])
+        -> Result<Vec<u8>>;
 
     /// Verify a signature
     ///
@@ -117,7 +118,14 @@ pub trait PrehashDsa {
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify_prehash(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<bool>;
+    fn verify_prehash(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<bool>;
 
     /// Get DSA metadata information such as the key lengths,
     /// size of signature, etc.

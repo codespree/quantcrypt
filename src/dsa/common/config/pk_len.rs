@@ -63,14 +63,14 @@ impl PKLen for PrehashDsaType {
             PrehashDsaType::MlDsa44EcdsaP256 => Some(1312 + 65 + 12),
             PrehashDsaType::MlDsa65Rsa3072Pss => Some(1952 + 398 + 14),
             PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Some(1952 + 398 + 14),
-            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually
             PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => Some(1952 + 65 + 12),
             PrehashDsaType::MlDsa65Ed25519 => Some(1952 + 32 + 12),
             PrehashDsaType::MlDsa87EcdsaP384 => Some(2592 + 97 + 12),
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Some(2592 + 97 + 12),
             PrehashDsaType::MlDsa87Ed448 => Some(2592 + 57 + 12),
-            PrehashDsaType::MlDsa65Rsa4096Pss=> None, //TODO: newly added, check manually 
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65Rsa4096Pss => None, //TODO: newly added, check manually
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually
         }
     }
 }

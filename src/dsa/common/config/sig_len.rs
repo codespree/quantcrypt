@@ -61,17 +61,17 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::MlDsa44Rsa2048Pss => Some(2420 + 256 + 14),
             PrehashDsaType::MlDsa44Rsa2048Pkcs15 => Some(2420 + 256 + 14),
             PrehashDsaType::MlDsa44Ed25519 => Some(2420 + 64 + 12),
-            PrehashDsaType::MlDsa44EcdsaP256=> None,
+            PrehashDsaType::MlDsa44EcdsaP256 => None,
             PrehashDsaType::MlDsa65Rsa3072Pss => Some(3309 + 384 + 14),
             PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Some(3309 + 384 + 14),
-            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65EcdsaP384 => None, //TODO: newly added, check manually
             PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,
             PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64 + 12),
-            PrehashDsaType::MlDsa87EcdsaP384=> None,
+            PrehashDsaType::MlDsa87EcdsaP384 => None,
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,
             PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114 + 12),
-            PrehashDsaType::MlDsa65Rsa4096Pss=> None, //TODO: newly added, check manually 
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually 
+            PrehashDsaType::MlDsa65Rsa4096Pss => None, //TODO: newly added, check manually
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually
         }
     }
 }

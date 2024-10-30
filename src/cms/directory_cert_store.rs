@@ -175,7 +175,10 @@ mod tests {
     use x509_cert::builder::Profile;
 
     use crate::{
-        certificates::{CertValidity, CertificateBuilder}, dsa::api::{algorithm::PrehashDsaAlgorithm, key_generator::PrehashDsaKeyGenerator}, dsas::{DsaAlgorithm, DsaKeyGenerator}, kems::{KemAlgorithm, KemKeyGenerator}
+        certificates::{CertValidity, CertificateBuilder},
+        dsa::api::{algorithm::PrehashDsaAlgorithm, key_generator::PrehashDsaKeyGenerator},
+        dsas::{DsaAlgorithm, DsaKeyGenerator},
+        kems::{KemAlgorithm, KemKeyGenerator},
     };
 
     use super::*;

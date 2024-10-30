@@ -33,7 +33,10 @@ impl PrehashDsaType {
     }
 
     pub fn is_composite(&self) -> bool {
-        !matches!(self, PrehashDsaType::MlDsa44 | PrehashDsaType::MlDsa65 | PrehashDsaType::MlDsa87)
+        !matches!(
+            self,
+            PrehashDsaType::MlDsa44 | PrehashDsaType::MlDsa65 | PrehashDsaType::MlDsa87
+        )
     }
 
     pub fn from_oid(oid: &str) -> Option<PrehashDsaType> {

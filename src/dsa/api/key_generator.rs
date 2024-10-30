@@ -2,7 +2,10 @@ use crate::asn1::private_key::PrivateKey;
 use crate::asn1::public_key::PublicKey;
 use crate::dsa::common::config::oids::Oid;
 use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
-use crate::dsa::{api::algorithm::DsaAlgorithm,api::algorithm::PrehashDsaAlgorithm, common::dsa_trait::Dsa, dsa_manager::DsaManager, dsa_manager::PrehashDsaManager};
+use crate::dsa::{
+    api::algorithm::DsaAlgorithm, api::algorithm::PrehashDsaAlgorithm, common::dsa_trait::Dsa,
+    dsa_manager::DsaManager, dsa_manager::PrehashDsaManager,
+};
 use crate::errors;
 
 type Result<T> = std::result::Result<T, errors::QuantCryptError>;
@@ -95,7 +98,7 @@ impl PrehashDsaKeyGenerator {
 #[cfg(test)]
 mod test {
     use crate::dsa::api::algorithm::PrehashDsaAlgorithm;
-    use crate::dsa::api::key_generator:: PrehashDsaKeyGenerator;
+    use crate::dsa::api::key_generator::PrehashDsaKeyGenerator;
 
     #[test]
     fn test_key_generator_sign_verify() {
@@ -139,7 +142,8 @@ mod test {
         assert!(pk.verify(msg, &sig).unwrap());
 
         // Try a composite algorithm RSA PKCS1 based
-        let mut key_generator = PrehashDsaKeyGenerator::new(PrehashDsaAlgorithm::MlDsa44Rsa2048Pkcs15);
+        let mut key_generator =
+            PrehashDsaKeyGenerator::new(PrehashDsaAlgorithm::MlDsa44Rsa2048Pkcs15);
         let (pk, sk) = key_generator.generate().unwrap();
         assert_eq!(
             pk.get_oid(),

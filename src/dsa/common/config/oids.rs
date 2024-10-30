@@ -55,7 +55,6 @@ impl Oid for PrehashDsaType {
     /// The OID for the prehash DSA
     fn get_oid(&self) -> String {
         match self {
-            
             // TODO: https://github.com/IETF-Hackathon/pqc-certificates/blob/master/docs/oids.json
             PrehashDsaType::MlDsa44 => "2.16.840.1.101.3.4.3.17",
             PrehashDsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",

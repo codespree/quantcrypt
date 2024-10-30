@@ -30,8 +30,7 @@ macro_rules! test_dsa {
     }};
 }
 
-
-// TODO: Implement using context and PH ? 
+// TODO: Implement using context and PH ?
 #[cfg(test)]
 macro_rules! test_prehash_dsa {
     ($dsa:expr) => {{

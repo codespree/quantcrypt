@@ -149,7 +149,7 @@ impl PrehashDsa for MlDsaManager {
     /// * `msg` - The message to sign
     /// * `sk` - The secret key
     /// * `ctx` - The context
-    /// 
+    ///
     /// # Returns
     ///
     /// The signature
@@ -163,7 +163,13 @@ impl PrehashDsa for MlDsaManager {
         }
     }
 
-    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<Vec<u8>>{
+    fn sign_prehash(
+        &self,
+        sk: &[u8],
+        msg: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<Vec<u8>> {
         //TODO: Implement this
         Ok(vec![0])
     }
@@ -196,7 +202,14 @@ impl PrehashDsa for MlDsaManager {
         }
     }
 
-    fn verify_prehash(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>, ph: &[u8]) -> Result<bool>{
+    fn verify_prehash(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+        ph: &[u8],
+    ) -> Result<bool> {
         //TODO: Implement this
         Ok(false)
     }
@@ -220,8 +233,8 @@ impl PrehashDsa for MlDsaManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
     use crate::dsa::common::macros::test_prehash_dsa;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
     // #[test]
     // fn test_ml_dsa_44() {
