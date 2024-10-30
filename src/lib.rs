@@ -31,6 +31,8 @@ pub mod keys {
 pub mod dsas {
     pub use crate::dsa::api::algorithm::DsaAlgorithm;
     pub use crate::dsa::api::key_generator::DsaKeyGenerator;
+    pub use crate::dsa::api::algorithm::PrehashDsaAlgorithm;
+    pub use crate::dsa::api::key_generator::PrehashDsaKeyGenerator;
 }
 
 /// Defines KEM types and key generation

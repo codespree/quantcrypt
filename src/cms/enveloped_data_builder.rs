@@ -473,6 +473,7 @@ impl<'a> EnvelopedDataBuilder<'a> {
 #[cfg(test)]
 mod tests {
     use crate::dsa::common::config::oids::Oid;
+    use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
     use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
     use crate::dsa::dsa_manager::PrehashDsaManager;
     use crate::kem::common::config::oids::Oid as _;

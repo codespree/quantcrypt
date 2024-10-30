@@ -13,6 +13,7 @@ use der::{Decode, Encode};
 use pkcs8::ObjectIdentifier;
 use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 
+use super::common::dsa_trait::Dsa;
 use super::common::{prehash_dsa_trait::PrehashDsa,dsa_type::DsaType, prehash_dsa_type::PrehashDsaType};
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
@@ -229,7 +230,7 @@ impl PrehashDsa for CompositeDsaManager {
         let sk_trad = c_key.get_trad_sk()?.private_key;
         let sk_pq = c_key.get_pq_sk()?.private_key;
 
-        let trad_sig = self.trad_dsa.sign(sk_trad, &msg, ctx)?;
+        let trad_sig = self.trad_dsa.sign(sk_trad, &msg)?;
         let pq_sig = self.pq_dsa.sign(sk_pq, &msg, ctx)?;
 
         let c_sig = CompositeSignatureValue::new(&pq_sig, &trad_sig);
