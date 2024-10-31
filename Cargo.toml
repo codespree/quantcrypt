@@ -46,7 +46,8 @@ cms = {version="0.2.3", features=["builder", "alloc"]}
 spki = "0.7.3"
 const-oid = "0.9.6"
 
-
+[profile.dev]
+opt-level = 1
 
 
 

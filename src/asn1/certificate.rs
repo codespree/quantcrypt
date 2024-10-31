@@ -465,7 +465,7 @@ impl Certificate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{certificates::CertValidity, certificates::Certificate};
+    use crate::certificates::CertValidity;
 
     // #[test]
     // fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
