@@ -20,41 +20,53 @@ const ML_DSA_TYPES: [PrehashDsaType; 3] = [
     PrehashDsaType::MlDsa87,
 ];
 
-const RSA_DSA_TYPES: [DsaType; 4] = [
+const RSA_DSA_TYPES: [DsaType; 6] = [
     DsaType::Rsa2048Pkcs15SHA256,
     DsaType::Rsa2048PssSHA256,
     DsaType::Rsa3072Pkcs15SHA512,
     DsaType::Rsa3072PssSHA512,
+    DsaType::Rsa4096Pkcs15Sha512,
+    DsaType::Rsa4096PssSha512,
 ];
 
-const EC_DSA_TYPES: [DsaType; 8] = [
+const EC_DSA_TYPES: [DsaType; 6] = [
     DsaType::EcdsaP256SHA256,
-    DsaType::EcdsaP256SHA512,
-    DsaType::EcdsaP384SHA512,
-    DsaType::EcdsaBrainpoolP256r1SHA512,
     DsaType::EcdsaBrainpoolP256r1SHA256,
-    DsaType::EcdsaBrainpoolP384r1SHA512,
-    DsaType::Ed25519SHA512,
-    DsaType::Ed448SHA512,
+    DsaType::EcdsaBrainpoolP384r1SHA384,
+    DsaType::EcdsaP384SHA384,
+    DsaType::Ed25519,
+    DsaType::Ed448,
 ];
 
-// TODO: Uncomment the new types and implement their logic
-// This includes
-const COMPOSITE_DSA_TYPES: [PrehashDsaType; 11] = [
+const COMPOSITE_DSA_TYPES: [PrehashDsaType; 28] = [
     PrehashDsaType::MlDsa44Rsa2048Pss,
     PrehashDsaType::MlDsa44Rsa2048Pkcs15,
     PrehashDsaType::MlDsa44Ed25519,
     PrehashDsaType::MlDsa44EcdsaP256,
     PrehashDsaType::MlDsa65Rsa3072Pss,
     PrehashDsaType::MlDsa65Rsa3072Pkcs15,
-    //PrehashDsaType::MlDsa65EcdsaP384,
+    PrehashDsaType::MlDsa65EcdsaP384,
     PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1,
     PrehashDsaType::MlDsa65Ed25519,
     PrehashDsaType::MlDsa87EcdsaP384,
     PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1,
     PrehashDsaType::MlDsa87Ed448,
-    //PrehashDsaType::MlDsa65Rsa4096Pss,
-    //PrehashDsaType::MlDsa65Rsa4096Pkcs15,
+    PrehashDsaType::MlDsa65Rsa4096Pss,
+    PrehashDsaType::MlDsa65Rsa4096Pkcs15,
+    PrehashDsaType::MlDsa44Rsa2048PssSha256,
+    PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256,
+    PrehashDsaType::MlDsa44Ed25519Sha512,
+    PrehashDsaType::MlDsa44EcdsaP256Sha256,
+    PrehashDsaType::MlDsa65Rsa3072PssSha512,
+    PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512,
+    PrehashDsaType::MlDsa65EcdsaP384Sha512,
+    PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512,
+    PrehashDsaType::MlDsa65Ed25519Sha512,
+    PrehashDsaType::MlDsa87EcdsaP384Sha512,
+    PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512,
+    PrehashDsaType::MlDsa87Ed448Sha512,
+    PrehashDsaType::MlDsa65Rsa4096PssSha512,
+    PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512,
 ];
 
 const SLH_DSA_TYPES: [DsaType; 12] = [
@@ -86,7 +98,7 @@ pub enum DsaManager {
 
 // Implement clone
 #[derive(Clone)]
-/// Enum to representthe different types of KEM managers
+/// Enum to represent the different types of pre-hash DSA managers
 pub enum PrehashDsaManager {
     /// ML DSA manager
     Ml(MlDsaManager),
@@ -196,46 +208,23 @@ impl PrehashDsa for PrehashDsaManager {
         }
     }
 
-    fn sign(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
+    fn sign_with_ctx(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
         match self {
-            PrehashDsaManager::Ml(ml) => ml.sign(sk, msg, ctx),
-            PrehashDsaManager::Composite(composite) => composite.sign(sk, msg, ctx),
+            PrehashDsaManager::Ml(ml) => ml.sign_with_ctx(sk, msg, ctx),
+            PrehashDsaManager::Composite(composite) => composite.sign_with_ctx(sk, msg, ctx),
         }
     }
 
-    fn sign_prehash(
-        &self,
-        sk: &[u8],
-        msg: &[u8],
-        ctx: Option<&[u8]>,
-        ph: &[u8],
-    ) -> Result<Vec<u8>> {
-        match self {
-            PrehashDsaManager::Ml(ml) => ml.sign_prehash(sk, msg, ctx, ph),
-            PrehashDsaManager::Composite(composite) => composite.sign_prehash(sk, msg, ctx, ph),
-        }
-    }
-
-    fn verify(&self, pk: &[u8], msg: &[u8], sig: &[u8], ctx: Option<&[u8]>) -> Result<bool> {
-        match self {
-            PrehashDsaManager::Ml(ml) => ml.verify(pk, msg, sig, ctx),
-            PrehashDsaManager::Composite(composite) => composite.verify(pk, msg, sig, ctx),
-        }
-    }
-
-    fn verify_prehash(
+    fn verify_with_ctx(
         &self,
         pk: &[u8],
         msg: &[u8],
         sig: &[u8],
         ctx: Option<&[u8]>,
-        ph: &[u8],
     ) -> Result<bool> {
         match self {
-            PrehashDsaManager::Ml(ml) => ml.verify(pk, msg, sig, ctx),
-            PrehashDsaManager::Composite(composite) => {
-                composite.verify_prehash(pk, msg, sig, ctx, ph)
-            }
+            PrehashDsaManager::Ml(ml) => ml.verify_with_ctx(pk, msg, sig, ctx),
+            PrehashDsaManager::Composite(composite) => composite.verify_with_ctx(pk, msg, sig, ctx),
         }
     }
 

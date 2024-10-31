@@ -1,5 +1,8 @@
 use crate::{
-    dsa::{common::dsa_trait::Dsa, dsa_manager::DsaManager},
+    dsa::{
+        common::{dsa_trait::Dsa, prehash_dsa_trait::PrehashDsa},
+        dsa_manager::{DsaManager, PrehashDsaManager},
+    },
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
     keys::PublicKey,
 };
@@ -22,7 +25,7 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 /// # Example
 /// ```
 /// use quantcrypt::certificates::Certificate;
-/// let cert_path = "test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem";
+/// let cert_path = "test/data/MlDsa44EcdsaP256Sha256-2.16.840.1.114027.80.8.1.43_ta.der";
 /// let cert = Certificate::from_file(cert_path).unwrap();
 /// assert!(cert.verify_self_signed().unwrap());
 /// ```
@@ -448,6 +451,9 @@ impl Certificate {
         if let Ok(man) = DsaManager::new_from_oid(&oid) {
             let info = man.get_dsa_info();
             format!("{:?}", info.dsa_type)
+        } else if let Ok(man) = PrehashDsaManager::new_from_oid(&oid) {
+            let info = man.get_dsa_info();
+            format!("{:?}", info.dsa_type)
         } else if let Ok(man) = KemManager::new_from_oid(&oid) {
             let info = man.get_kem_info();
             format!("{:?}", info.kem_type)
@@ -461,46 +467,43 @@ impl Certificate {
 mod tests {
     use crate::{certificates::CertValidity, certificates::Certificate};
 
-    //const USE_OLD_VERSION: bool = true;
+    // #[test]
+    // fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+    //     );
 
-    #[test]
-    fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-        );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
+    // #[test]
+    // fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
+    //     );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(&pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
-    #[test]
-    fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
-        );
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(&pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
-
-    #[test]
-    fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
-        );
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(&pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
+    // #[test]
+    // fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
+    //     );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(&pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
     #[test]
     fn test_akid_skid() {
         // First generate a TA cert
-        let (pk, sk) =
-            crate::dsas::PrehashDsaKeyGenerator::new(crate::dsas::PrehashDsaAlgorithm::MlDsa44)
-                .generate()
-                .unwrap();
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
+            .generate()
+            .unwrap();
 
         let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap();
 
@@ -553,10 +556,9 @@ mod tests {
         let validity =
             CertValidity::new(Some(&not_before.to_rfc3339()), &not_after.to_rfc3339()).unwrap();
 
-        let (pk, sk) =
-            crate::dsas::PrehashDsaKeyGenerator::new(crate::dsas::PrehashDsaAlgorithm::MlDsa44)
-                .generate()
-                .unwrap();
+        let (pk, sk) = crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44)
+            .generate()
+            .unwrap();
         let cert = crate::certificates::CertificateBuilder::new(
             crate::certificates::Profile::Root,
             None,

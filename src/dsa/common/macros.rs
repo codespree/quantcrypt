@@ -30,7 +30,6 @@ macro_rules! test_dsa {
     }};
 }
 
-// TODO: Implement using context and PH ?
 #[cfg(test)]
 macro_rules! test_prehash_dsa {
     ($dsa:expr) => {{
@@ -59,6 +58,12 @@ macro_rules! test_prehash_dsa {
         }
 
         let verified = dsa.verify(&pk, msg, &signature).unwrap();
+        assert!(verified);
+
+        // Test with context
+        let ctx = b"test context";
+        let signature = dsa.sign_with_ctx(&sk, msg, Some(ctx)).unwrap();
+        let verified = dsa.verify_with_ctx(&pk, msg, &signature, Some(ctx)).unwrap();
         assert!(verified);
     }};
 }

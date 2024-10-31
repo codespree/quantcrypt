@@ -176,7 +176,6 @@ mod tests {
 
     use crate::{
         certificates::{CertValidity, CertificateBuilder},
-        dsa::api::{algorithm::PrehashDsaAlgorithm, key_generator::PrehashDsaKeyGenerator},
         dsas::{DsaAlgorithm, DsaKeyGenerator},
         kems::{KemAlgorithm, KemKeyGenerator},
     };
@@ -188,7 +187,7 @@ mod tests {
         let dir_path = "test/data/chain";
 
         // Create some certificates
-        let (ta_pk, ta_sk) = PrehashDsaKeyGenerator::new(PrehashDsaAlgorithm::MlDsa44)
+        let (ta_pk, ta_sk) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
         let cert = CertificateBuilder::new(
@@ -213,7 +212,7 @@ mod tests {
         cert.to_der_file(&cert_path).unwrap();
 
         // Create a sub-CA certificate
-        let (sub_pk, sub_sk) = PrehashDsaKeyGenerator::new(PrehashDsaAlgorithm::MlDsa44)
+        let (sub_pk, sub_sk) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44)
             .generate()
             .unwrap();
         let cert_sub = CertificateBuilder::new(

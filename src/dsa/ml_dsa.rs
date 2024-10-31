@@ -14,7 +14,7 @@ use fips204::traits::{SerDes, Signer, Verifier};
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 macro_rules! sign_ml {
-    ($ml_type:ident, $sk:expr, $msg:expr) => {{
+    ($ml_type:ident, $sk:expr, $msg:expr, $ctx:expr) => {{
         if $sk.len() != $ml_type::SK_LEN {
             return Err(QuantCryptError::InvalidPrivateKey);
         }
@@ -29,7 +29,7 @@ macro_rules! sign_ml {
 
         // Try signing the message
         let sig = sk
-            .try_sign($msg, &[]) // Empty context
+            .try_sign($msg, $ctx)
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
@@ -39,7 +39,7 @@ macro_rules! sign_ml {
 }
 
 macro_rules! verify_ml {
-    ($ml_type:ident, $pk: expr, $msg: expr, $signature: expr) => {{
+    ($ml_type:ident, $pk: expr, $msg: expr, $signature: expr, $ctx:expr) => {{
         if $pk.len() != $ml_type::PK_LEN {
             return Err(QuantCryptError::InvalidPublicKey);
         }
@@ -58,7 +58,7 @@ macro_rules! verify_ml {
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        let result = Ok(pk.verify($msg, &sig_buf, &[]));
+        let result = Ok(pk.verify($msg, &sig_buf, $ctx));
 
         result
     }};
@@ -153,25 +153,14 @@ impl PrehashDsa for MlDsaManager {
     /// # Returns
     ///
     /// The signature
-    fn sign(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
-        //TODO: Implement this
+    fn sign_with_ctx(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
+        let ctx = ctx.unwrap_or(&[]);
         match self.dsa_info.dsa_type {
-            PrehashDsaType::MlDsa44 => sign_ml!(ml_dsa_44, sk, msg),
-            PrehashDsaType::MlDsa65 => sign_ml!(ml_dsa_65, sk, msg),
-            PrehashDsaType::MlDsa87 => sign_ml!(ml_dsa_87, sk, msg),
+            PrehashDsaType::MlDsa44 => sign_ml!(ml_dsa_44, sk, msg, ctx),
+            PrehashDsaType::MlDsa65 => sign_ml!(ml_dsa_65, sk, msg, ctx),
+            PrehashDsaType::MlDsa87 => sign_ml!(ml_dsa_87, sk, msg, ctx),
             _ => Err(QuantCryptError::NotImplemented),
         }
-    }
-
-    fn sign_prehash(
-        &self,
-        sk: &[u8],
-        msg: &[u8],
-        ctx: Option<&[u8]>,
-        ph: &[u8],
-    ) -> Result<Vec<u8>> {
-        //TODO: Implement this
-        Ok(vec![0])
     }
 
     /// Verify a signature
@@ -186,32 +175,26 @@ impl PrehashDsa for MlDsaManager {
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>) -> Result<bool> {
-        // TODO: Use context
-        match self.dsa_info.dsa_type {
-            PrehashDsaType::MlDsa44 => {
-                verify_ml!(ml_dsa_44, pk, msg, signature)
-            }
-            PrehashDsaType::MlDsa65 => {
-                verify_ml!(ml_dsa_65, pk, msg, signature)
-            }
-            PrehashDsaType::MlDsa87 => {
-                verify_ml!(ml_dsa_87, pk, msg, signature)
-            }
-            _ => Err(QuantCryptError::NotImplemented),
-        }
-    }
-
-    fn verify_prehash(
+    fn verify_with_ctx(
         &self,
         pk: &[u8],
         msg: &[u8],
         signature: &[u8],
         ctx: Option<&[u8]>,
-        ph: &[u8],
     ) -> Result<bool> {
-        //TODO: Implement this
-        Ok(false)
+        let ctx = ctx.unwrap_or(&[]);
+        match self.dsa_info.dsa_type {
+            PrehashDsaType::MlDsa44 => {
+                verify_ml!(ml_dsa_44, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::MlDsa65 => {
+                verify_ml!(ml_dsa_65, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::MlDsa87 => {
+                verify_ml!(ml_dsa_87, pk, msg, signature, ctx)
+            }
+            _ => Err(QuantCryptError::NotImplemented),
+        }
     }
 
     /// Get DSA metadata information such as the key lengths,
@@ -236,21 +219,21 @@ mod tests {
     use crate::dsa::common::macros::test_prehash_dsa;
     use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
-    // #[test]
-    // fn test_ml_dsa_44() {
-    //     let dsa = MlDsaManager::new(PrehashDsaType::MlDsa44);
-    //     test_prehash_dsa!(dsa);
-    // }
+    #[test]
+    fn test_ml_dsa_44() {
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa44);
+        test_prehash_dsa!(dsa);
+    }
 
-    // #[test]
-    // fn test_ml_dsa_65() {
-    //     let dsa = MlDsaManager::new(PrehashDsaType::MlDsa65);
-    //     test_prehash_dsa!(dsa);
-    // }
+    #[test]
+    fn test_ml_dsa_65() {
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa65);
+        test_prehash_dsa!(dsa);
+    }
 
-    // #[test]
-    // fn test_ml_dsa_87() {
-    //     let dsa = MlDsaManager::new(PrehashDsaType::MlDsa87);
-    //     test_prehash_dsa!(dsa);
-    // }
+    #[test]
+    fn test_ml_dsa_87() {
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa87);
+        test_prehash_dsa!(dsa);
+    }
 }

@@ -18,16 +18,13 @@ impl SigLen for DsaType {
             DsaType::Rsa2048PssSHA256 => Some(256),
             DsaType::Rsa3072Pkcs15SHA512 => Some(384),
             DsaType::Rsa3072PssSHA512 => Some(384),
+            // TODO: Fill in the rest of the public key lengths
+            DsaType::Rsa4096Pkcs15Sha512 => None,
+            DsaType::Rsa4096PssSha512 => None,
 
             // P256 and P384 variations do not have a fixed sig_len
             DsaType::EcdsaP256SHA256 => None,
-            DsaType::EcdsaP256SHA512 => None,
-            DsaType::EcdsaP384SHA512 => None,
             DsaType::EcdsaBrainpoolP256r1SHA256 => None,
-            DsaType::EcdsaBrainpoolP256r1SHA512 => None,
-            DsaType::EcdsaBrainpoolP384r1SHA512 => None,
-            DsaType::Ed25519SHA512 => Some(64),
-            DsaType::Ed448SHA512 => Some(114),
 
             DsaType::SlhDsaSha2_128s => Some(7856),
             DsaType::SlhDsaSha2_128f => Some(17088),
@@ -41,6 +38,12 @@ impl SigLen for DsaType {
             DsaType::SlhDsaShake192f => Some(35664),
             DsaType::SlhDsaShake256s => Some(29792),
             DsaType::SlhDsaShake256f => Some(49856),
+
+            //TODO:Fill these in
+            DsaType::EcdsaP384SHA384 => None,
+            DsaType::EcdsaBrainpoolP384r1SHA384 => None,
+            DsaType::Ed25519 => None,
+            DsaType::Ed448 => None,
         }
     }
 }
@@ -72,6 +75,22 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114 + 12),
             PrehashDsaType::MlDsa65Rsa4096Pss => None, //TODO: newly added, check manually
             PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, //TODO: newly added, check manually
+
+            //TODO:Fill these in
+            PrehashDsaType::MlDsa44Rsa2048PssSha256 => None,
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256 => None,
+            PrehashDsaType::MlDsa44Ed25519Sha512 => None,
+            PrehashDsaType::MlDsa44EcdsaP256Sha256 => None,
+            PrehashDsaType::MlDsa65Rsa3072PssSha512 => None,
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512 => None,
+            PrehashDsaType::MlDsa65Rsa4096PssSha512 => None,
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512 => None,
+            PrehashDsaType::MlDsa65EcdsaP384Sha512 => None,
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512 => None,
+            PrehashDsaType::MlDsa65Ed25519Sha512 => None,
+            PrehashDsaType::MlDsa87EcdsaP384Sha512 => None,
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512 => None,
+            PrehashDsaType::MlDsa87Ed448Sha512 => None,
         }
     }
 }

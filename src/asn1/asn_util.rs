@@ -1,7 +1,10 @@
 use der::{oid::ObjectIdentifier, Encode};
 
 use crate::{
-    dsa::common::dsa_type::DsaType, dsas::DsaAlgorithm, errors, kem::common::kem_type::KemType,
+    dsa::common::{dsa_type::DsaType, prehash_dsa_type::PrehashDsaType},
+    dsas::DsaAlgorithm,
+    errors,
+    kem::common::kem_type::KemType,
     kems::KemAlgorithm,
 };
 
@@ -72,7 +75,13 @@ pub fn is_composite_kem_or_dsa_oid(oid: &str) -> bool {
         false
     };
 
-    is_composite_kem || is_composite_dsa
+    let is_composite_prehash_dsa = if let Some(d_type) = PrehashDsaType::from_oid(oid) {
+        d_type.is_composite()
+    } else {
+        false
+    };
+
+    is_composite_kem || is_composite_dsa || is_composite_prehash_dsa
 }
 
 /// Check if an OID is a KEM OID
@@ -100,6 +109,7 @@ pub fn is_kem_oid(oid: &str) -> bool {
 pub fn is_dsa_oid(oid: &str) -> bool {
     DsaAlgorithm::from_oid(oid).is_some()
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

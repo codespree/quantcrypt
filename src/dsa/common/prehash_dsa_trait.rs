@@ -74,22 +74,21 @@ pub trait PrehashDsa {
     /// # Returns
     ///
     /// The signature of the message
-    fn sign(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>>;
+    fn sign_with_ctx(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>>;
 
-    /// Sign a message with prehash
+    /// Sign a message
     ///
     /// # Arguments
     ///
     /// * `sk` - The secret key to sign the message
     /// * `msg` - The message to sign
-    /// * `ctx` - The context to sign
-    /// * `ph` - The Message Digest Algorithm for pre-hashing to sign
     ///
     /// # Returns
     ///
     /// The signature of the message
-    fn sign_prehash(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>, ph: &[u8])
-        -> Result<Vec<u8>>;
+    fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+        self.sign_with_ctx(sk, msg, None)
+    }
 
     /// Verify a signature
     ///
@@ -103,29 +102,28 @@ pub trait PrehashDsa {
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8], ctx: Option<&[u8]>) -> Result<bool>;
+    fn verify_with_ctx(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+    ) -> Result<bool>;
 
-    /// Verify a signature with prehash
+    /// Verify a signature
     ///
     /// # Arguments
     ///
     /// * `pk` - The public key to verify the signature
     /// * `msg` - The message to verify
     /// * `signature` - The signature to verify
-    /// * `ctx` - The context to verify
-    /// * `ph` - The Message Digest Algorithm for pre-hashing to verify
     ///
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify_prehash(
-        &self,
-        pk: &[u8],
-        msg: &[u8],
-        signature: &[u8],
-        ctx: Option<&[u8]>,
-        ph: &[u8],
-    ) -> Result<bool>;
+    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
+        self.verify_with_ctx(pk, msg, signature, None)
+    }
 
     /// Get DSA metadata information such as the key lengths,
     /// size of signature, etc.

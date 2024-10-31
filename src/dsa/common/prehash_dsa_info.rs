@@ -1,10 +1,10 @@
+use crate::dsa::common::config::hash_type::HashTypeConfig;
 use crate::dsa::common::config::oids::Oid;
 use crate::dsa::common::config::pk_len::PKLen;
 use crate::dsa::common::config::sig_len::SigLen;
 use crate::dsa::common::config::sk_len::SKLen;
 use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
-
-// TODO: There could me more info to include for Prehash DSA Info
+use crate::hash::common::hash_type::HashType;
 
 /// A structure to represent metadata about a DSA
 ///
@@ -22,6 +22,8 @@ pub struct PrehashDsaInfo {
     pub sig_byte_len: Option<usize>,
     /// The OID of the DSA
     pub oid: String,
+    /// The hash type used for prehashing
+    pub hash_type: Option<HashType>,
 }
 
 impl PrehashDsaInfo {
@@ -39,12 +41,14 @@ impl PrehashDsaInfo {
         let sk_byte_len = dsa_type.get_sk_len();
         let sig_byte_len = dsa_type.get_sig_len();
         let oid = dsa_type.get_oid();
+        let hash_type = dsa_type.get_hash_type();
         PrehashDsaInfo {
             dsa_type,
             pk_byte_len,
             sk_byte_len,
             sig_byte_len,
             oid,
+            hash_type,
         }
     }
 }
