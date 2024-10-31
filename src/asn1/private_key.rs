@@ -7,7 +7,9 @@ use pkcs8::{spki::AlgorithmIdentifier, PrivateKeyInfo};
 use crate::asn1::asn_util::{is_composite_kem_or_dsa_oid, is_valid_kem_or_dsa_oid};
 use crate::asn1::signature::DsaSignature;
 use crate::dsa::common::dsa_trait::Dsa;
-use crate::dsa::dsa_manager::DsaManager;
+use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
+use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
+use crate::dsa::dsa_manager::{DsaManager, PrehashDsaManager};
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::kem_manager::KemManager;
 use crate::{asn1::composite_private_key::CompositePrivateKey, errors};
@@ -42,10 +44,15 @@ impl Keypair for PrivateKey {
             panic!("Unsupported operation");
         }
 
-        let dsa = DsaManager::new_from_oid(&self.oid).unwrap();
-        let pk = dsa.get_public_key(&self.private_key).unwrap();
-
-        PublicKey::new(&self.oid, &pk).unwrap()
+        if let Ok(dsa) = DsaManager::new_from_oid(&self.oid) {
+            let pk = dsa.get_public_key(&self.private_key).unwrap();
+            PublicKey::new(&self.oid, &pk).unwrap()
+        } else if let Ok(dsa) = PrehashDsaManager::new_from_oid(&self.oid) {
+            let pk = dsa.get_public_key(&self.private_key).unwrap();
+            PublicKey::new(&self.oid, &pk).unwrap()
+        } else {
+            panic!("Unsupported operation");
+        }
     }
 }
 
@@ -260,11 +267,15 @@ impl PrivateKey {
             return Err(errors::QuantCryptError::UnsupportedOperation);
         }
 
-        let dsa = DsaManager::new_from_oid(&self.oid)?;
-
-        let sig = dsa.sign(&self.private_key, data)?;
-
-        Ok(sig)
+        if let Some(dsa_type) = PrehashDsaType::from_oid(&self.oid) {
+            let dsa_manager = PrehashDsaManager::new(dsa_type)?;
+            let sig = dsa_manager.sign(&self.private_key, data)?;
+            Ok(sig)
+        } else {
+            let dsa_manager = DsaManager::new_from_oid(&self.oid)?;
+            let sig = dsa_manager.sign(&self.private_key, data)?;
+            Ok(sig)
+        }
     }
 
     /// Use the private key to decapsulate a shared secret from a ciphertext
@@ -357,7 +368,7 @@ impl PrivateKey {
 #[cfg(test)]
 mod test {
     use crate::dsa::common::config::oids::Oid;
-    use crate::dsa::common::dsa_type::DsaType;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
     use super::*;
 
@@ -368,7 +379,10 @@ mod test {
         let pk = PrivateKey::from_pem(pem).unwrap();
 
         assert!(pk.is_composite());
-        assert_eq!(pk.get_oid(), DsaType::MlDsa44EcdsaP256SHA256.get_oid());
+        assert_eq!(
+            pk.get_oid(),
+            PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid()
+        );
 
         let key_bytes = pk.get_key();
         let pk2 = CompositePrivateKey::from_der(&pk.oid, &key_bytes).unwrap();
@@ -379,7 +393,7 @@ mod test {
         let pem2 = pk2.to_pem().unwrap();
         assert_eq!(pem, pem2.trim());
 
-        let oid = DsaType::MlDsa44EcdsaP256SHA256.get_oid();
+        let oid = PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid();
         assert_eq!(pk.oid, oid);
     }
 
@@ -450,6 +464,15 @@ mod test {
 
     #[test]
     fn test_sk_serialization_deserialization() {
+        // First write the private key to a file
+        // let mut dsa_key_gen =
+        //     crate::dsas::DsaKeyGenerator::new(crate::dsas::DsaAlgorithm::MlDsa44EcdsaP256Sha256);
+        // let (pk, sk) = dsa_key_gen.generate().unwrap();
+        // sk.to_pem_file("test/data/mldsa44_ecdsa_p256_sha256_sk.pem")
+        //     .unwrap();
+
+        // pk.to_pem_file("test/data/mldsa44_ecdsa_p256_sha256_pk.pem").unwrap();
+
         let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_sk.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let pk = PrivateKey::from_pem(pem).unwrap();

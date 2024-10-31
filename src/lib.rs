@@ -6,6 +6,7 @@ mod cea;
 mod cms;
 mod dsa;
 mod errors;
+mod hash;
 mod kdf;
 mod kem;
 mod utils;

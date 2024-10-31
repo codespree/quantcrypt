@@ -4,7 +4,6 @@ use sha3::{Digest, Sha3_256, Sha3_384, Sha3_512};
 // Implement Copy and Debug for KemType
 #[derive(Clone, Debug)]
 /// The type of the Key Derivation Function (KDF)
-// TODO: Align KEM with internet draft
 // Ignore dead code for now
 #[allow(dead_code)]
 pub enum KdfType {

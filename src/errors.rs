@@ -3,6 +3,8 @@ use thiserror::Error;
 #[derive(Error, Debug, PartialEq)]
 /// Error type for the QuantCrypt library
 pub enum QuantCryptError {
+    #[error("Context is too big. Only 255 bytes are allowed")]
+    InvalidContext,
     #[error("Failed to decrypt data")]
     DecryptionFailed,
     #[error("Invalid AEAD ciphertext length")]

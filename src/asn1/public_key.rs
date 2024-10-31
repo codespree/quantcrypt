@@ -1,6 +1,8 @@
 use crate::asn1::asn_util::{is_composite_kem_or_dsa_oid, is_valid_kem_or_dsa_oid};
 use crate::dsa::common::dsa_trait::Dsa;
-use crate::dsa::dsa_manager::DsaManager;
+use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
+use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
+use crate::dsa::dsa_manager::{DsaManager, PrehashDsaManager};
 use crate::errors;
 use crate::kem::common::kem_trait::Kem;
 use crate::kem::kem_manager::KemManager;
@@ -250,14 +252,19 @@ impl PublicKey {
             return Err(errors::QuantCryptError::UnsupportedOperation);
         }
 
-        let dsa =
-            DsaManager::new_from_oid(&self.oid).map_err(|_| errors::QuantCryptError::InvalidOid)?;
+        let result = if let Some(dsa_type) = PrehashDsaType::from_oid(&self.oid) {
+            let dsa_manager = PrehashDsaManager::new(dsa_type)?;
+            dsa_manager
+                .verify(self.get_key(), message, signature)
+                .unwrap_or(false)
+        } else {
+            let dsa_manager = DsaManager::new_from_oid(&self.oid)?;
+            dsa_manager
+                .verify(self.get_key(), message, signature)
+                .unwrap_or(false)
+        };
 
-        let verified = dsa
-            .verify(self.get_key(), message, signature)
-            .unwrap_or(false);
-
-        Ok(verified)
+        Ok(result)
     }
 
     /// Encapsulate to get a shared secret and a ciphertext based on this public key
@@ -278,6 +285,23 @@ impl PublicKey {
 
         Ok((ct, ss))
     }
+
+    /// Save the public key to a file in PEM format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::FileWriteError` will be returned if there is an error writing to the file
+    pub fn to_pem_file(&self, path: &str) -> Result<()> {
+        let pem = self
+            .to_pem()
+            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        std::fs::write(path, pem).map_err(|_| QuantCryptError::FileWriteError)?;
+        Ok(())
+    }
 }
 
 impl EncodePublicKey for PublicKey {
@@ -293,7 +317,7 @@ impl EncodePublicKey for PublicKey {
 #[cfg(test)]
 mod test {
     use crate::dsa::common::config::oids::Oid;
-    use crate::dsa::common::dsa_type::DsaType;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
     use super::*;
 
@@ -304,7 +328,10 @@ mod test {
         let pk = PublicKey::from_pem(pem).unwrap();
 
         assert!(pk.is_composite());
-        assert_eq!(pk.get_oid(), DsaType::MlDsa44EcdsaP256SHA256.get_oid());
+        assert_eq!(
+            pk.get_oid(),
+            PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid()
+        );
 
         let key_bytes = pk.get_key();
         let pk2 = CompositePublicKey::from_der(&pk.oid, &key_bytes).unwrap();
@@ -315,7 +342,7 @@ mod test {
         let pem2 = pk2.to_pem().unwrap();
         assert_eq!(pem, pem2.trim());
 
-        let oid = DsaType::MlDsa44EcdsaP256SHA256.get_oid();
+        let oid = PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid();
         assert_eq!(pk.oid, oid);
     }
 

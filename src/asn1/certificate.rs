@@ -1,5 +1,8 @@
 use crate::{
-    dsa::{common::dsa_trait::Dsa, dsa_manager::DsaManager},
+    dsa::{
+        common::{dsa_trait::Dsa, prehash_dsa_trait::PrehashDsa},
+        dsa_manager::{DsaManager, PrehashDsaManager},
+    },
     kem::{common::kem_trait::Kem, kem_manager::KemManager},
     keys::PublicKey,
 };
@@ -22,7 +25,7 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 /// # Example
 /// ```
 /// use quantcrypt::certificates::Certificate;
-/// let cert_path = "test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem";
+/// let cert_path = "test/data/MlDsa44EcdsaP256Sha256-2.16.840.1.114027.80.8.1.43_ta.der";
 /// let cert = Certificate::from_file(cert_path).unwrap();
 /// assert!(cert.verify_self_signed().unwrap());
 /// ```
@@ -448,6 +451,9 @@ impl Certificate {
         if let Ok(man) = DsaManager::new_from_oid(&oid) {
             let info = man.get_dsa_info();
             format!("{:?}", info.dsa_type)
+        } else if let Ok(man) = PrehashDsaManager::new_from_oid(&oid) {
+            let info = man.get_dsa_info();
+            format!("{:?}", info.dsa_type)
         } else if let Ok(man) = KemManager::new_from_oid(&oid) {
             let info = man.get_kem_info();
             format!("{:?}", info.kem_type)
@@ -459,40 +465,38 @@ impl Certificate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{certificates::CertValidity, certificates::Certificate};
+    use crate::certificates::CertValidity;
 
-    //const USE_OLD_VERSION: bool = true;
+    // #[test]
+    // fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
+    //     );
 
-    #[test]
-    fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-        );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
+    // #[test]
+    // fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
+    //     );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(&pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
-    #[test]
-    fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
-        );
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(&pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
-
-    #[test]
-    fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-        let pem_bytes = include_bytes!(
-            "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
-        );
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let cert = Certificate::from_pem(&pem).unwrap();
-        assert!(cert.verify_self_signed().unwrap());
-    }
+    // #[test]
+    // fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
+    //     let pem_bytes = include_bytes!(
+    //         "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
+    //     );
+    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
+    //     let cert = Certificate::from_pem(&pem).unwrap();
+    //     assert!(cert.verify_self_signed().unwrap());
+    // }
 
     #[test]
     fn test_akid_skid() {

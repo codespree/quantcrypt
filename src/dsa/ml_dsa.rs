@@ -1,6 +1,6 @@
-use crate::dsa::common::dsa_info::DsaInfo;
-use crate::dsa::common::dsa_trait::Dsa;
-use crate::dsa::common::dsa_type::DsaType;
+use crate::dsa::common::prehash_dsa_info::PrehashDsaInfo;
+use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
+use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 use crate::QuantCryptError;
 
 use rand_core::SeedableRng;
@@ -14,7 +14,7 @@ use fips204::traits::{SerDes, Signer, Verifier};
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 macro_rules! sign_ml {
-    ($ml_type:ident, $sk:expr, $msg:expr) => {{
+    ($ml_type:ident, $sk:expr, $msg:expr, $ctx:expr) => {{
         if $sk.len() != $ml_type::SK_LEN {
             return Err(QuantCryptError::InvalidPrivateKey);
         }
@@ -29,7 +29,7 @@ macro_rules! sign_ml {
 
         // Try signing the message
         let sig = sk
-            .try_sign($msg, &[]) // Empty context
+            .try_sign($msg, $ctx)
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
@@ -39,7 +39,7 @@ macro_rules! sign_ml {
 }
 
 macro_rules! verify_ml {
-    ($ml_type:ident, $pk: expr, $msg: expr, $signature: expr) => {{
+    ($ml_type:ident, $pk: expr, $msg: expr, $signature: expr, $ctx:expr) => {{
         if $pk.len() != $ml_type::PK_LEN {
             return Err(QuantCryptError::InvalidPublicKey);
         }
@@ -58,7 +58,7 @@ macro_rules! verify_ml {
         let pk = $ml_type::PublicKey::try_from_bytes(pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        let result = Ok(pk.verify($msg, &sig_buf, &[]));
+        let result = Ok(pk.verify($msg, &sig_buf, $ctx));
 
         result
     }};
@@ -79,17 +79,17 @@ macro_rules! get_public_key {
 
 #[derive(Clone)]
 pub struct MlDsaManager {
-    pub dsa_info: DsaInfo,
+    pub dsa_info: PrehashDsaInfo,
 }
 
-impl Dsa for MlDsaManager {
+impl PrehashDsa for MlDsaManager {
     /// Create a new DSA instance
     ///
     /// # Arguments
     ///
     /// * `dsa_type` - The type of DSA to create
-    fn new(dsa_type: DsaType) -> Result<Self> {
-        let dsa_info = DsaInfo::new(dsa_type);
+    fn new(dsa_type: PrehashDsaType) -> Result<Self> {
+        let dsa_info = PrehashDsaInfo::new(dsa_type);
         Ok(Self { dsa_info })
     }
 
@@ -107,21 +107,21 @@ impl Dsa for MlDsaManager {
         rng: &mut impl rand_core::CryptoRngCore,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.dsa_info.dsa_type {
-            DsaType::MlDsa44 => {
+            PrehashDsaType::MlDsa44 => {
                 let (pk, sk) = ml_dsa_44::try_keygen_with_rng(rng)
                     .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
                 let sk = sk.into_bytes().to_vec();
                 Ok((pk, sk))
             }
-            DsaType::MlDsa65 => {
+            PrehashDsaType::MlDsa65 => {
                 let (pk, sk) = ml_dsa_65::try_keygen_with_rng(rng)
                     .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
                 let sk = sk.into_bytes().to_vec();
                 Ok((pk, sk))
             }
-            DsaType::MlDsa87 => {
+            PrehashDsaType::MlDsa87 => {
                 let (pk, sk) = ml_dsa_87::try_keygen_with_rng(rng)
                     .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
                 let pk = pk.into_bytes().to_vec();
@@ -148,15 +148,17 @@ impl Dsa for MlDsaManager {
     ///
     /// * `msg` - The message to sign
     /// * `sk` - The secret key
+    /// * `ctx` - The context
     ///
     /// # Returns
     ///
     /// The signature
-    fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+    fn sign_with_ctx(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
+        let ctx = ctx.unwrap_or(&[]);
         match self.dsa_info.dsa_type {
-            DsaType::MlDsa44 => sign_ml!(ml_dsa_44, sk, msg),
-            DsaType::MlDsa65 => sign_ml!(ml_dsa_65, sk, msg),
-            DsaType::MlDsa87 => sign_ml!(ml_dsa_87, sk, msg),
+            PrehashDsaType::MlDsa44 => sign_ml!(ml_dsa_44, sk, msg, ctx),
+            PrehashDsaType::MlDsa65 => sign_ml!(ml_dsa_65, sk, msg, ctx),
+            PrehashDsaType::MlDsa87 => sign_ml!(ml_dsa_87, sk, msg, ctx),
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -168,20 +170,28 @@ impl Dsa for MlDsaManager {
     /// * `msg` - The message to verify
     /// * `pk` - The public key
     /// * `sig` - The signature
+    /// * `ctx` - The context
     ///
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
+    fn verify_with_ctx(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+    ) -> Result<bool> {
+        let ctx = ctx.unwrap_or(&[]);
         match self.dsa_info.dsa_type {
-            DsaType::MlDsa44 => {
-                verify_ml!(ml_dsa_44, pk, msg, signature)
+            PrehashDsaType::MlDsa44 => {
+                verify_ml!(ml_dsa_44, pk, msg, signature, ctx)
             }
-            DsaType::MlDsa65 => {
-                verify_ml!(ml_dsa_65, pk, msg, signature)
+            PrehashDsaType::MlDsa65 => {
+                verify_ml!(ml_dsa_65, pk, msg, signature, ctx)
             }
-            DsaType::MlDsa87 => {
-                verify_ml!(ml_dsa_87, pk, msg, signature)
+            PrehashDsaType::MlDsa87 => {
+                verify_ml!(ml_dsa_87, pk, msg, signature, ctx)
             }
             _ => Err(QuantCryptError::NotImplemented),
         }
@@ -189,15 +199,15 @@ impl Dsa for MlDsaManager {
 
     /// Get DSA metadata information such as the key lengths,
     /// size of signature, etc.
-    fn get_dsa_info(&self) -> DsaInfo {
+    fn get_dsa_info(&self) -> PrehashDsaInfo {
         self.dsa_info.clone()
     }
 
     fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
         match self.dsa_info.dsa_type {
-            DsaType::MlDsa44 => get_public_key!(ml_dsa_44, sk),
-            DsaType::MlDsa65 => get_public_key!(ml_dsa_65, sk),
-            DsaType::MlDsa87 => get_public_key!(ml_dsa_87, sk),
+            PrehashDsaType::MlDsa44 => get_public_key!(ml_dsa_44, sk),
+            PrehashDsaType::MlDsa65 => get_public_key!(ml_dsa_65, sk),
+            PrehashDsaType::MlDsa87 => get_public_key!(ml_dsa_87, sk),
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -206,24 +216,24 @@ impl Dsa for MlDsaManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dsa::common::dsa_type::DsaType;
-    use crate::dsa::common::macros::test_dsa;
+    use crate::dsa::common::macros::test_prehash_dsa;
+    use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
 
     #[test]
     fn test_ml_dsa_44() {
-        let dsa = MlDsaManager::new(DsaType::MlDsa44);
-        test_dsa!(dsa);
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa44);
+        test_prehash_dsa!(dsa);
     }
 
     #[test]
     fn test_ml_dsa_65() {
-        let dsa = MlDsaManager::new(DsaType::MlDsa65);
-        test_dsa!(dsa);
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa65);
+        test_prehash_dsa!(dsa);
     }
 
     #[test]
     fn test_ml_dsa_87() {
-        let dsa = MlDsaManager::new(DsaType::MlDsa87);
-        test_dsa!(dsa);
+        let dsa = MlDsaManager::new(PrehashDsaType::MlDsa87);
+        test_prehash_dsa!(dsa);
     }
 }

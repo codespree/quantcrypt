@@ -25,7 +25,7 @@ pub struct EcDsaManager {
     pub dsa_info: DsaInfo,
     ec_based_nid: Option<Nid>,
     pk_based_id: Option<Id>,
-    digest: MessageDigest,
+    digest: Option<MessageDigest>,
 }
 
 impl Dsa for EcDsaManager {
@@ -35,24 +35,24 @@ impl Dsa for EcDsaManager {
     {
         let dsa_info = DsaInfo::new(dsa_type.clone());
         let (ec_based_nid, pk_based_id, digest) = match dsa_type {
-            DsaType::EcdsaP256SHA256 => {
-                (Some(Nid::X9_62_PRIME256V1), None, MessageDigest::sha256())
-            }
-            DsaType::EcdsaP256SHA512 => {
-                (Some(Nid::X9_62_PRIME256V1), None, MessageDigest::sha512())
-            }
-            DsaType::EcdsaP384SHA512 => (Some(Nid::SECP384R1), None, MessageDigest::sha512()),
-            DsaType::EcdsaBrainpoolP256r1SHA256 => {
-                (Some(Nid::BRAINPOOL_P256R1), None, MessageDigest::sha256())
-            }
-            DsaType::EcdsaBrainpoolP256r1SHA512 => {
-                (Some(Nid::BRAINPOOL_P256R1), None, MessageDigest::sha512())
-            }
-            DsaType::EcdsaBrainpoolP384r1SHA512 => {
-                (Some(Nid::BRAINPOOL_P384R1), None, MessageDigest::sha512())
-            }
-            DsaType::Ed25519SHA512 => (None, Some(Id::ED25519), MessageDigest::sha512()),
-            DsaType::Ed448SHA512 => (None, Some(Id::ED448), MessageDigest::sha512()),
+            DsaType::EcdsaP256SHA256 => (
+                Some(Nid::X9_62_PRIME256V1),
+                None,
+                Some(MessageDigest::sha256()),
+            ),
+            DsaType::EcdsaBrainpoolP256r1SHA256 => (
+                Some(Nid::BRAINPOOL_P256R1),
+                None,
+                Some(MessageDigest::sha256()),
+            ),
+            DsaType::Ed25519 => (None, Some(Id::ED25519), None),
+            DsaType::Ed448 => (None, Some(Id::ED448), None),
+            DsaType::EcdsaP384SHA384 => (Some(Nid::SECP384R1), None, Some(MessageDigest::sha384())),
+            DsaType::EcdsaBrainpoolP384r1SHA384 => (
+                Some(Nid::BRAINPOOL_P384R1),
+                None,
+                Some(MessageDigest::sha384()),
+            ),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -109,7 +109,7 @@ impl Dsa for EcDsaManager {
 
     fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
         let result = if let Some(nid) = self.ec_based_nid {
-            sign_ec_based(nid, sk, msg, self.digest)
+            sign_ec_based(nid, sk, msg, self.digest.unwrap())
         } else if let Some(id) = self.pk_based_id {
             sign_pkey_based(id, sk, msg)
         } else {
@@ -121,7 +121,7 @@ impl Dsa for EcDsaManager {
 
     fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
         let result = if let Some(nid) = self.ec_based_nid {
-            verify_ec_based(nid, pk, msg, signature, self.digest)
+            verify_ec_based(nid, pk, msg, signature, self.digest.unwrap())
         } else if let Some(id) = self.pk_based_id {
             verify_pkey_based(id, pk, msg, signature)
         } else {
@@ -158,14 +158,8 @@ mod tests {
     }
 
     #[test]
-    fn test_ecdsa_p256_sha512() {
-        let dsa = EcDsaManager::new(DsaType::EcdsaP256SHA512);
-        test_dsa!(dsa);
-    }
-
-    #[test]
-    fn test_ecdsa_p384_sha512() {
-        let dsa = EcDsaManager::new(DsaType::EcdsaP384SHA512);
+    fn test_ecdsa_p384_sha384() {
+        let dsa = EcDsaManager::new(DsaType::EcdsaP384SHA384);
         test_dsa!(dsa);
     }
 
@@ -176,26 +170,20 @@ mod tests {
     }
 
     #[test]
-    fn test_ecdsa_brainpool_p256r1_sha512() {
-        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP256r1SHA512);
+    fn test_ecdsa_brainpool_384r1_sha384() {
+        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA384);
         test_dsa!(dsa);
     }
 
     #[test]
-    fn test_ecdsa_brainpool_p384r1_sha512() {
-        let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA512);
+    fn test_ed25519() {
+        let dsa = EcDsaManager::new(DsaType::Ed25519);
         test_dsa!(dsa);
     }
 
     #[test]
-    fn test_ed25519_sha512() {
-        let dsa = EcDsaManager::new(DsaType::Ed25519SHA512);
-        test_dsa!(dsa);
-    }
-
-    #[test]
-    fn test_ed448_sha512() {
-        let dsa = EcDsaManager::new(DsaType::Ed448SHA512);
+    fn test_ed448() {
+        let dsa = EcDsaManager::new(DsaType::Ed448);
         test_dsa!(dsa);
     }
 }

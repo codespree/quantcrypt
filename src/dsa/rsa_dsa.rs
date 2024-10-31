@@ -62,6 +62,8 @@ impl Dsa for RsaDsaManager {
             DsaType::Rsa2048PssSHA256 => 2048,
             DsaType::Rsa3072Pkcs15SHA512 => 3072,
             DsaType::Rsa3072PssSHA512 => 3072,
+            DsaType::Rsa4096Pkcs15Sha512 => 4096,
+            DsaType::Rsa4096PssSha512 => 4096,
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -116,6 +118,14 @@ impl Dsa for RsaDsaManager {
                 openssl::rsa::Padding::PKCS1,
             ),
             DsaType::Rsa3072PssSHA512 => (
+                openssl::hash::MessageDigest::sha512(),
+                openssl::rsa::Padding::PKCS1_PSS,
+            ),
+            DsaType::Rsa4096Pkcs15Sha512 => (
+                openssl::hash::MessageDigest::sha512(),
+                openssl::rsa::Padding::PKCS1,
+            ),
+            DsaType::Rsa4096PssSha512 => (
                 openssl::hash::MessageDigest::sha512(),
                 openssl::rsa::Padding::PKCS1_PSS,
             ),
@@ -182,6 +192,14 @@ impl Dsa for RsaDsaManager {
                 openssl::rsa::Padding::PKCS1,
             ),
             DsaType::Rsa3072PssSHA512 => (
+                openssl::hash::MessageDigest::sha512(),
+                openssl::rsa::Padding::PKCS1_PSS,
+            ),
+            DsaType::Rsa4096Pkcs15Sha512 => (
+                openssl::hash::MessageDigest::sha512(),
+                openssl::rsa::Padding::PKCS1,
+            ),
+            DsaType::Rsa4096PssSha512 => (
                 openssl::hash::MessageDigest::sha512(),
                 openssl::rsa::Padding::PKCS1_PSS,
             ),
@@ -264,6 +282,18 @@ mod tests {
     #[test]
     fn test_rsa_3072_pss_sha512() {
         let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa3072PssSHA512);
+        test_dsa!(rsa_dsa_manager);
+    }
+
+    #[test]
+    fn test_rsa_4096_pkcs15_sha512() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096Pkcs15Sha512);
+        test_dsa!(rsa_dsa_manager);
+    }
+
+    #[test]
+    fn test_rsa_4096_pss_sha512() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096PssSha512);
         test_dsa!(rsa_dsa_manager);
     }
 }
