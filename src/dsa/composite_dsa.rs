@@ -116,13 +116,13 @@ impl PrehashDsa for CompositeDsaManager {
         let result = match dsa_type {
             PrehashDsaType::MlDsa44Rsa2048Pss | PrehashDsaType::MlDsa44Rsa2048PssSha256 => Self {
                 dsa_info,
-                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048PssSHA256)?),
+                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048PssSha256)?),
                 pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
             },
             PrehashDsaType::MlDsa44Rsa2048Pkcs15 | PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256 => {
                 Self {
                     dsa_info,
-                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048Pkcs15SHA256)?),
+                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa2048Pkcs15Sha256)?),
                     pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa44)?),
                 }
             }
@@ -138,25 +138,25 @@ impl PrehashDsa for CompositeDsaManager {
             },
             PrehashDsaType::MlDsa65Rsa3072Pss | PrehashDsaType::MlDsa65Rsa3072PssSha512 => Self {
                 dsa_info,
-                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072PssSHA512)?),
+                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072PssSha256)?),
                 pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
             },
             PrehashDsaType::MlDsa65Rsa3072Pkcs15 | PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512 => {
                 Self {
                     dsa_info,
-                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072Pkcs15SHA512)?),
+                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa3072Pkcs15Sha256)?),
                     pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 }
             }
             PrehashDsaType::MlDsa65Rsa4096Pss | PrehashDsaType::MlDsa65Rsa4096PssSha512 => Self {
                 dsa_info,
-                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa4096PssSha512)?),
+                trad_dsa: Box::new(DsaManager::new(DsaType::Rsa4096PssSha384)?),
                 pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
             },
             PrehashDsaType::MlDsa65Rsa4096Pkcs15 | PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512 => {
                 Self {
                     dsa_info,
-                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa4096Pkcs15Sha512)?),
+                    trad_dsa: Box::new(DsaManager::new(DsaType::Rsa4096Pkcs15Sha384)?),
                     pq_dsa: Box::new(PrehashDsaManager::new(PrehashDsaType::MlDsa65)?),
                 }
             }

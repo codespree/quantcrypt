@@ -14,13 +14,13 @@ impl PKLen for DsaType {
     /// The length of the public key in bytes or `None` if the length is not fixed
     fn get_pk_len(&self) -> Option<usize> {
         match self {
-            DsaType::Rsa2048Pkcs15SHA256 => Some(270),
-            DsaType::Rsa2048PssSHA256 => Some(270),
-            DsaType::Rsa3072Pkcs15SHA512 => Some(398),
-            DsaType::Rsa3072PssSHA512 => Some(398),
+            DsaType::Rsa2048Pkcs15Sha256 => Some(270),
+            DsaType::Rsa2048PssSha256 => Some(270),
+            DsaType::Rsa3072Pkcs15Sha256 => Some(398),
+            DsaType::Rsa3072PssSha256 => Some(398),
             // TODO: Fill in the rest of the public key lengths
-            DsaType::Rsa4096Pkcs15Sha512 => None,
-            DsaType::Rsa4096PssSha512 => None,
+            DsaType::Rsa4096Pkcs15Sha384 => None,
+            DsaType::Rsa4096PssSha384 => None,
 
             DsaType::EcdsaP256SHA256 => Some(65),
             DsaType::EcdsaBrainpoolP256r1SHA256 => Some(65),

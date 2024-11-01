@@ -1,3 +1,5 @@
+use openssl::hash::MessageDigest;
+use openssl::rsa::Padding;
 use openssl::sign::RsaPssSaltlen;
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
@@ -14,6 +16,40 @@ type Result<T> = std::result::Result<T, QuantCryptError>;
 #[derive(Clone)]
 pub struct RsaDsaManager {
     pub dsa_info: DsaInfo,
+}
+
+impl RsaDsaManager {
+    fn get_hash_and_padding(&self) -> (MessageDigest, Padding) {
+        match self.dsa_info.dsa_type {
+            DsaType::Rsa2048Pkcs15Sha256 => (
+                openssl::hash::MessageDigest::sha256(),
+                openssl::rsa::Padding::PKCS1,
+            ),
+            DsaType::Rsa2048PssSha256 => (
+                openssl::hash::MessageDigest::sha256(),
+                openssl::rsa::Padding::PKCS1_PSS,
+            ),
+            DsaType::Rsa3072Pkcs15Sha256 => (
+                openssl::hash::MessageDigest::sha256(),
+                openssl::rsa::Padding::PKCS1,
+            ),
+            DsaType::Rsa3072PssSha256 => (
+                openssl::hash::MessageDigest::sha256(),
+                openssl::rsa::Padding::PKCS1_PSS,
+            ),
+            DsaType::Rsa4096Pkcs15Sha384 => (
+                openssl::hash::MessageDigest::sha384(),
+                openssl::rsa::Padding::PKCS1,
+            ),
+            DsaType::Rsa4096PssSha384 => (
+                openssl::hash::MessageDigest::sha384(),
+                openssl::rsa::Padding::PKCS1_PSS,
+            ),
+            _ => {
+                panic!("Not implemented");
+            }
+        }
+    }
 }
 
 impl Dsa for RsaDsaManager {
@@ -58,12 +94,12 @@ impl Dsa for RsaDsaManager {
         rng: &mut impl rand_core::CryptoRngCore,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         let bits = match self.dsa_info.dsa_type {
-            DsaType::Rsa2048Pkcs15SHA256 => 2048,
-            DsaType::Rsa2048PssSHA256 => 2048,
-            DsaType::Rsa3072Pkcs15SHA512 => 3072,
-            DsaType::Rsa3072PssSHA512 => 3072,
-            DsaType::Rsa4096Pkcs15Sha512 => 4096,
-            DsaType::Rsa4096PssSha512 => 4096,
+            DsaType::Rsa2048Pkcs15Sha256 => 2048,
+            DsaType::Rsa2048PssSha256 => 2048,
+            DsaType::Rsa3072Pkcs15Sha256 => 3072,
+            DsaType::Rsa3072PssSha256 => 3072,
+            DsaType::Rsa4096Pkcs15Sha384 => 4096,
+            DsaType::Rsa4096PssSha384 => 4096,
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -104,35 +140,7 @@ impl Dsa for RsaDsaManager {
         let pkey =
             openssl::pkey::PKey::from_rsa(rsa_sk).map_err(|_| QuantCryptError::SignatureFailed)?;
 
-        let (hash, padding) = match self.dsa_info.dsa_type {
-            DsaType::Rsa2048Pkcs15SHA256 => (
-                openssl::hash::MessageDigest::sha256(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa2048PssSHA256 => (
-                openssl::hash::MessageDigest::sha256(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            DsaType::Rsa3072Pkcs15SHA512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa3072PssSHA512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            DsaType::Rsa4096Pkcs15Sha512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa4096PssSha512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            _ => {
-                panic!("Not implemented");
-            }
-        };
+        let (hash, padding) = self.get_hash_and_padding();
 
         // Createa a signer
         let mut signer = openssl::sign::Signer::new(hash, &pkey)
@@ -178,35 +186,7 @@ impl Dsa for RsaDsaManager {
         let pkey = openssl::pkey::PKey::from_rsa(rsa_pk)
             .map_err(|_| QuantCryptError::SignatureVerificationFailed)?;
 
-        let (hash, padding) = match self.dsa_info.dsa_type {
-            DsaType::Rsa2048Pkcs15SHA256 => (
-                openssl::hash::MessageDigest::sha256(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa2048PssSHA256 => (
-                openssl::hash::MessageDigest::sha256(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            DsaType::Rsa3072Pkcs15SHA512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa3072PssSHA512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            DsaType::Rsa4096Pkcs15Sha512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1,
-            ),
-            DsaType::Rsa4096PssSha512 => (
-                openssl::hash::MessageDigest::sha512(),
-                openssl::rsa::Padding::PKCS1_PSS,
-            ),
-            _ => {
-                panic!("Not implemented");
-            }
-        };
+        let (hash, padding) = self.get_hash_and_padding();
 
         // Create a verifier
         let mut verifier = openssl::sign::Verifier::new(hash, &pkey)
@@ -263,37 +243,37 @@ mod tests {
 
     #[test]
     fn test_rsa_2048_pkcs15_sha256() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa2048Pkcs15SHA256);
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa2048Pkcs15Sha256);
         test_dsa!(rsa_dsa_manager);
     }
 
     #[test]
     fn test_rsa_2048_pss_sha256() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa2048PssSHA256);
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa2048PssSha256);
         test_dsa!(rsa_dsa_manager);
     }
 
     #[test]
-    fn test_rsa_3072_pkcs15_sha512() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa3072Pkcs15SHA512);
+    fn test_rsa_3072_pkcs15_sha256() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa3072Pkcs15Sha256);
         test_dsa!(rsa_dsa_manager);
     }
 
     #[test]
-    fn test_rsa_3072_pss_sha512() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa3072PssSHA512);
+    fn test_rsa_3072_pss_sha256() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa3072PssSha256);
         test_dsa!(rsa_dsa_manager);
     }
 
     #[test]
-    fn test_rsa_4096_pkcs15_sha512() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096Pkcs15Sha512);
+    fn test_rsa_4096_pkcs15_sha384() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096Pkcs15Sha384);
         test_dsa!(rsa_dsa_manager);
     }
 
     #[test]
-    fn test_rsa_4096_pss_sha512() {
-        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096PssSha512);
+    fn test_rsa_4096_pss_sha384() {
+        let rsa_dsa_manager = RsaDsaManager::new(DsaType::Rsa4096PssSha384);
         test_dsa!(rsa_dsa_manager);
     }
 }

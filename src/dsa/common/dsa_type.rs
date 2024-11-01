@@ -6,12 +6,12 @@ use super::config::oids::Oid;
 #[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum DsaType {
     // RSA
-    Rsa2048PssSHA256,
-    Rsa2048Pkcs15SHA256,
-    Rsa3072PssSHA512,
-    Rsa3072Pkcs15SHA512,
-    Rsa4096PssSha512,
-    Rsa4096Pkcs15Sha512,
+    Rsa2048PssSha256,
+    Rsa2048Pkcs15Sha256,
+    Rsa3072PssSha256,
+    Rsa3072Pkcs15Sha256,
+    Rsa4096PssSha384,
+    Rsa4096Pkcs15Sha384,
 
     // ECDSA
     EcdsaP256SHA256,

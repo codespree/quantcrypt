@@ -19,14 +19,15 @@ impl Oid for DsaType {
     /// The OID for the DSA
     fn get_oid(&self) -> String {
         match self {
-            // RSA PSS with SHA512
-            DsaType::Rsa2048PssSHA256 | DsaType::Rsa3072PssSHA512 | DsaType::Rsa4096PssSha512 => {
+            // rsassa-pss(10)
+            // [other identifier: id-RSASSA-PSS]
+            DsaType::Rsa2048PssSha256 | DsaType::Rsa3072PssSha256 | DsaType::Rsa4096PssSha384 => {
                 "1.2.840.113549.1.1.10"
             }
-            // RSA PKCS#1 v1.5 with SHA256
-            DsaType::Rsa2048Pkcs15SHA256 => "1.2.840.113549.1.1.11",
-            // RSA PKCS#1 v1.5 with SHA512
-            DsaType::Rsa3072Pkcs15SHA512 | DsaType::Rsa4096Pkcs15Sha512 => "1.2.840.113549.1.1.13",
+            // sha256WithRSAEncryption(11)
+            DsaType::Rsa2048Pkcs15Sha256 | DsaType::Rsa3072Pkcs15Sha256 => "1.2.840.113549.1.1.11",
+            // sha384WithRSAEncryption(12)
+            DsaType::Rsa4096Pkcs15Sha384 => "1.2.840.113549.1.1.12",
             // ECDSA with SHA256
             DsaType::EcdsaBrainpoolP256r1SHA256 | DsaType::EcdsaP256SHA256 => "1.2.840.10045.4.3.2",
             // ECDSA with SHA384

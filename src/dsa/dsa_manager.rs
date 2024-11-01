@@ -21,12 +21,12 @@ const ML_DSA_TYPES: [PrehashDsaType; 3] = [
 ];
 
 const RSA_DSA_TYPES: [DsaType; 6] = [
-    DsaType::Rsa2048Pkcs15SHA256,
-    DsaType::Rsa2048PssSHA256,
-    DsaType::Rsa3072Pkcs15SHA512,
-    DsaType::Rsa3072PssSHA512,
-    DsaType::Rsa4096Pkcs15Sha512,
-    DsaType::Rsa4096PssSha512,
+    DsaType::Rsa2048Pkcs15Sha256,
+    DsaType::Rsa2048PssSha256,
+    DsaType::Rsa3072Pkcs15Sha256,
+    DsaType::Rsa3072PssSha256,
+    DsaType::Rsa4096Pkcs15Sha384,
+    DsaType::Rsa4096PssSha384,
 ];
 
 const EC_DSA_TYPES: [DsaType; 6] = [

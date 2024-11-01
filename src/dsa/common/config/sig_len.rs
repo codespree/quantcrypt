@@ -14,13 +14,13 @@ impl SigLen for DsaType {
     /// The length of the signature in bytes
     fn get_sig_len(&self) -> Option<usize> {
         match self {
-            DsaType::Rsa2048Pkcs15SHA256 => Some(256),
-            DsaType::Rsa2048PssSHA256 => Some(256),
-            DsaType::Rsa3072Pkcs15SHA512 => Some(384),
-            DsaType::Rsa3072PssSHA512 => Some(384),
+            DsaType::Rsa2048Pkcs15Sha256 => Some(256),
+            DsaType::Rsa2048PssSha256 => Some(256),
+            DsaType::Rsa3072Pkcs15Sha256 => Some(384),
+            DsaType::Rsa3072PssSha256 => Some(384),
             // TODO: Fill in the rest of the public key lengths
-            DsaType::Rsa4096Pkcs15Sha512 => None,
-            DsaType::Rsa4096PssSha512 => None,
+            DsaType::Rsa4096Pkcs15Sha384 => None,
+            DsaType::Rsa4096PssSha384 => None,
 
             // P256 and P384 variations do not have a fixed sig_len
             DsaType::EcdsaP256SHA256 => None,

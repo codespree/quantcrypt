@@ -15,13 +15,13 @@ impl SKLen for DsaType {
     fn get_sk_len(&self) -> Option<usize> {
         match self {
             // RSAs do not have a fixed sk length
-            DsaType::Rsa2048Pkcs15SHA256 => None,
-            DsaType::Rsa2048PssSHA256 => None,
-            DsaType::Rsa3072Pkcs15SHA512 => None,
-            DsaType::Rsa3072PssSHA512 => None,
+            DsaType::Rsa2048Pkcs15Sha256 => None,
+            DsaType::Rsa2048PssSha256 => None,
+            DsaType::Rsa3072Pkcs15Sha256 => None,
+            DsaType::Rsa3072PssSha256 => None,
             // TODO: Fill in the rest of the public key lengths
-            DsaType::Rsa4096Pkcs15Sha512 => None,
-            DsaType::Rsa4096PssSha512 => None,
+            DsaType::Rsa4096Pkcs15Sha384 => None,
+            DsaType::Rsa4096PssSha384 => None,
 
             DsaType::EcdsaP256SHA256 => Some(32),
             DsaType::EcdsaBrainpoolP256r1SHA256 => Some(32),
