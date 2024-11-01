@@ -9,9 +9,8 @@ use crate::hash::common::hash_trait::Hash;
 use crate::hash::hash_manager::HashManager;
 use crate::QuantCryptError;
 
+use der::asn1::OctetString;
 use der::{Decode, Encode};
-use pkcs8::ObjectIdentifier;
-use pkcs8::{AlgorithmIdentifierRef, PrivateKeyInfo};
 
 use super::common::dsa_trait::Dsa;
 use super::common::{
@@ -92,41 +91,15 @@ impl CompositeDsaManager {
             .to_der()
             .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
 
-        // Create the OneAsymmetricKey objects for the tradition secret key
-        let oid: ObjectIdentifier = self
-            .trad_dsa
-            .get_dsa_info()
-            .oid
-            .parse()
-            .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
-        let t_sk_pkcs8 = PrivateKeyInfo {
-            algorithm: AlgorithmIdentifierRef {
-                oid,
-                parameters: None,
-            },
-            private_key: t_sk,
-            public_key: None,
-        };
+        // Create the OctetString objects for the secret keys
+        let pq_sk_der =
+            OctetString::new(pq_sk).map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
 
-        let oid: ObjectIdentifier = self
-            .pq_dsa
-            .get_dsa_info()
-            .oid
-            .parse()
-            .map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
-
-        // Create the OneAsymmetricKey objects for the post-quantum secret key
-        let pq_sk_pkcs8 = PrivateKeyInfo {
-            algorithm: AlgorithmIdentifierRef {
-                oid,
-                parameters: None,
-            },
-            private_key: pq_sk,
-            public_key: None,
-        };
+        let t_sk_der =
+            OctetString::new(t_sk).map_err(|_| QuantCryptError::KeyPairGenerationFailed)?;
 
         // Create the composite secret key
-        let c_sk = CompositePrivateKey::new(&self.dsa_info.oid, &pq_sk_pkcs8, &t_sk_pkcs8)?;
+        let c_sk = CompositePrivateKey::new_dsa(&self.dsa_info.oid, &pq_sk_der, &t_sk_der)?;
         let sk = c_sk.to_der()?;
 
         Ok((pk, sk))
@@ -251,8 +224,12 @@ impl PrehashDsa for CompositeDsaManager {
         let msg = self.get_tbs_message(msg, ctx)?;
 
         let c_key = CompositePrivateKey::from_der(&self.dsa_info.oid, sk)?;
-        let sk_trad = c_key.get_trad_sk()?.private_key;
-        let sk_pq = c_key.get_pq_sk()?.private_key;
+
+        let sk_trad_os: OctetString = c_key.get_dsa_trad_sk()?;
+        let sk_pq_os = c_key.get_dsa_pq_sk()?;
+
+        let sk_trad = sk_trad_os.as_bytes();
+        let sk_pq = sk_pq_os.as_bytes();
 
         let trad_sig = self.trad_dsa.sign(sk_trad, &msg)?;
 
@@ -308,8 +285,12 @@ impl PrehashDsa for CompositeDsaManager {
     fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
         // Decompose the composite secret key
         let c_key = CompositePrivateKey::from_der(&self.dsa_info.oid, sk)?;
-        let sk_trad = c_key.get_trad_sk()?.private_key;
-        let sk_pq = c_key.get_pq_sk()?.private_key;
+
+        let sk_trad_os = c_key.get_dsa_trad_sk()?;
+        let sk_pq_os = c_key.get_dsa_pq_sk()?;
+
+        let sk_trad = sk_trad_os.as_bytes();
+        let sk_pq = sk_pq_os.as_bytes();
 
         let pk_trad = self.trad_dsa.get_public_key(sk_trad)?;
         let pk_pq = self.pq_dsa.get_public_key(sk_pq)?;

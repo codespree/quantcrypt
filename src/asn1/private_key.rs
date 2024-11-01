@@ -374,6 +374,11 @@ mod test {
 
     #[test]
     fn test_composite_private_key() {
+        // let mut keygen = crate::dsa::api::key_generator::DsaKeyGenerator::new(
+        //     crate::dsa::api::algorithm::DsaAlgorithm::MlDsa44EcdsaP256Sha256,
+        // );
+        // let (pk, sk) = keygen.generate().unwrap();
+        // sk.to_pem_file("test/data/mldsa44_ecdsa_p256_sha256_sk.pem").unwrap();
         let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_sk.pem");
         let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
         let pk = PrivateKey::from_pem(pem).unwrap();

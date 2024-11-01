@@ -131,7 +131,7 @@ impl CompositeKemManager {
         };
 
         // Create the composite secret key
-        let c_sk = CompositePrivateKey::new(&self.kem_info.oid, &pq_sk_pkcs8, &t_sk_pkcs8)?;
+        let c_sk = CompositePrivateKey::new_kem(&self.kem_info.oid, &pq_sk_pkcs8, &t_sk_pkcs8)?;
         let sk = c_sk.to_der()?;
 
         Ok((pk, sk))
@@ -356,16 +356,16 @@ impl Kem for CompositeKemManager {
         // Decapsulate the ciphertext for the traditional KEM
         let t_ss = self
             .trad_kem
-            .decap(c_sk.get_trad_sk()?.private_key, &c_ct.get_trad_ct())?;
+            .decap(c_sk.get_kem_trad_sk()?.private_key, &c_ct.get_trad_ct())?;
 
         // Decapsulate the ciphertext for the post-quantum KEM
         let pq_ss = self
             .pq_kem
-            .decap(c_sk.get_pq_sk()?.private_key, &c_ct.get_pq_ct())?;
+            .decap(c_sk.get_kem_pq_sk()?.private_key, &c_ct.get_pq_ct())?;
 
         // Get the trad PK
         let t_pk = c_sk
-            .get_trad_sk()?
+            .get_kem_trad_sk()?
             .public_key
             .ok_or(QuantCryptError::DecapFailed)?;
 
