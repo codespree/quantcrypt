@@ -467,37 +467,6 @@ impl Certificate {
 mod tests {
     use crate::certificates::CertValidity;
 
-    // #[test]
-    // fn test_ml_dsa44_ecdsa_p256_sha256_self_signed_cert() {
-    //     let pem_bytes = include_bytes!(
-    //         "../../test/data/MlDsa44EcdsaP256SHA256-2.16.840.1.114027.80.8.1.4_ta.pem"
-    //     );
-
-    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-    //     let cert = Certificate::from_pem(pem).unwrap();
-    //     assert!(cert.verify_self_signed().unwrap());
-    // }
-
-    // #[test]
-    // fn test_ml_dsa_44_rsa2048_pss_sha256_self_signed_cert() {
-    //     let pem_bytes = include_bytes!(
-    //         "../../test/data/MlDsa44Rsa2048PssSha256-2.16.840.1.114027.80.8.1.1_ta.pem"
-    //     );
-    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-    //     let cert = Certificate::from_pem(&pem).unwrap();
-    //     assert!(cert.verify_self_signed().unwrap());
-    // }
-
-    // #[test]
-    // fn test_ml_dsa_44_rsa2048_pkcs15_sha256_self_signed_cert() {
-    //     let pem_bytes = include_bytes!(
-    //         "../../test/data/MlDsa44Rsa2048Pkcs15Sha256-2.16.840.1.114027.80.8.1.2_ta.pem"
-    //     );
-    //     let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-    //     let cert = Certificate::from_pem(&pem).unwrap();
-    //     assert!(cert.verify_self_signed().unwrap());
-    // }
-
     #[test]
     fn test_akid_skid() {
         // First generate a TA cert
@@ -577,5 +546,61 @@ mod tests {
         // sleep for 3 seconds
         std::thread::sleep(std::time::Duration::from_secs(5));
         assert!(!cert.is_valid());
+    }
+
+    #[test]
+    fn test_bc_cert_artifacts() {
+        let base_folder_path = "test/data/bc_artifacts_certs_r4/";
+
+        // Check all the certificates that start with MLDSA
+        let files = std::fs::read_dir(base_folder_path).unwrap();
+
+        let ml_dsa_composites_prefix = "MLDSA";
+        let ml_dsa_pure_prefix = "ml-dsa";
+        let slh_dsa_prefix = "slh-dsa";
+        let dsa_prehash = "-with-";
+        for file in files {
+            let file = file.unwrap();
+            let path = file.path();
+            let path = path.to_str().unwrap();
+
+            if !path.contains(ml_dsa_composites_prefix)
+                && !path.contains(slh_dsa_prefix)
+                && !path.contains(ml_dsa_pure_prefix)
+            {
+                continue;
+            }
+
+            // TODO: Add support for pre hash SLH DSA / ML DSA
+            if path.contains(dsa_prehash) {
+                continue;
+            }
+
+            let cert = crate::certificates::Certificate::from_file(path).unwrap();
+
+            assert!(cert.verify_self_signed().unwrap());
+            println!("Verified: {}", path);
+        }
+
+        // Test the ml-kem certificates
+        let ta_paths = [
+            "test/data/bc_artifacts_certs_r4/ml-dsa-44-2.16.840.1.101.3.4.3.17_ta.der",
+            "test/data/bc_artifacts_certs_r4/ml-dsa-65-2.16.840.1.101.3.4.3.18_ta.der",
+            "test/data/bc_artifacts_certs_r4/ml-dsa-87-2.16.840.1.101.3.4.3.19_ta.der",
+        ];
+
+        let ee_paths = [
+            "test/data/bc_artifacts_certs_r4/ml-kem-512-2.16.840.1.101.3.4.4.1_ee.der",
+            "test/data/bc_artifacts_certs_r4/ml-kem-768-2.16.840.1.101.3.4.4.2_ee.der",
+            "test/data/bc_artifacts_certs_r4/ml-kem-1024-2.16.840.1.101.3.4.4.3_ee.der",
+        ];
+
+        for i in 0..ta_paths.len() {
+            let ta_cert = crate::certificates::Certificate::from_file(ta_paths[i]).unwrap();
+            let ee_cert = crate::certificates::Certificate::from_file(ee_paths[i]).unwrap();
+
+            assert!(ta_cert.verify_child(&ee_cert).unwrap());
+            println!("Verified: EE {} with TA {}", ee_paths[i], ta_paths[i]);
+        }
     }
 }

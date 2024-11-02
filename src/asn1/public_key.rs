@@ -302,6 +302,54 @@ impl PublicKey {
         std::fs::write(path, pem).map_err(|_| QuantCryptError::FileWriteError)?;
         Ok(())
     }
+
+    /// Save the public key to a file in DER format
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Errors
+    ///
+    /// `QuantCryptError::FileWriteError` will be returned if there is an error writing to the file
+    /// `QuantCryptError::InvalidPublicKey` will be returned if the public key is invalid
+    pub fn to_der_file(&self, path: &str) -> Result<()> {
+        let der = self
+            .to_der()
+            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
+        std::fs::write(path, der).map_err(|_| QuantCryptError::FileWriteError)?;
+        Ok(())
+    }
+
+    /// Load a public key from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Returns
+    ///
+    /// A new public key
+    pub fn from_file(path: &str) -> Result<Self> {
+        // Read the contents of the file as bytes
+        let contents = std::fs::read(path).map_err(|_| QuantCryptError::FileReadError)?;
+
+        // Try to interpret as DER
+        let result = PublicKey::from_der(&contents);
+
+        if let Ok(sk) = result {
+            Ok(sk)
+        } else {
+            // Try to interpret as PEM
+            let pem =
+                std::str::from_utf8(&contents).map_err(|_| QuantCryptError::InvalidCertificate)?;
+            if let Ok(sk) = PublicKey::from_pem(pem) {
+                Ok(sk)
+            } else {
+                Err(QuantCryptError::InvalidPrivateKey)
+            }
+        }
+    }
 }
 
 impl EncodePublicKey for PublicKey {
@@ -409,5 +457,14 @@ mod test {
             pk.err().unwrap(),
             errors::QuantCryptError::InvalidPublicKey
         ));
+    }
+
+    #[test]
+    fn test_pk_from_file() {
+        let pk = PublicKey::from_file(
+            "test/data/bc_artifacts_certs_r4/external_ml-kem-512-2.16.840.1.101.3.4.4.1_public.der",
+        )
+        .unwrap();
+        pk.encap().unwrap();
     }
 }
