@@ -10,60 +10,42 @@ import zipfile
 import shutil
 
 """
-    Funnction to prepare submission zip with specified version.
-
-    Version should be either r3 or r4.
-
-    For the current version on PQC hackerthon:
-    - ML-KEM composites are taken from the IPD version;
-    - Pure KEM for both IPD and non-IPD are kept;
-    - SLH algorithms are only available in non-IPD.
-
-    Essentially the submission contains:
-    - Pure KEM for both ipd (oid = 1.3.xxx) and non-ipd (oid = 2.16.xxx)
-    - ML-KEM composites from ipd
-    - SLH from non-ipd
-
+    Function to prepare submission zip with r4 certificates.
+    Contains only the der format certificates.
 """
-def extract_correct_certs(version):
-    assert version in ["r3", "r4"], "Unknown submission version"
-    cert_format = "pem" if version == "r3" else "der"
+def extract_correct_certs(cert_format=".der"):
 
-    cert_path = f"./artifacts/{version}_certs"
+    print("Preparing submission zip file with correct certificates")
+
+    cert_path = f"./artifacts/r4_certs"
     assert os.path.exists(cert_path), "Certificates not generated, please run Rust test cases first"
 
     submission_dir = "./artifacts/submission"
     os.makedirs(submission_dir, exist_ok=True)
 
-    # Directory to temporarily hold the r3 certs
-    artifacts_certs = os.path.join(submission_dir, f"artifacts_{version}_certs")
+    # Create temporary folder for submission certificates
+    artifacts_certs = os.path.join(submission_dir, "artifacts_certs")
     os.makedirs(artifacts_certs, exist_ok=True)
-   
-    ipd_certs_path = os.path.join(cert_path, "ipd")
-    non_ipd_certs_path = os.path.join(cert_path, "non-ipd")
-    # Copy files from ipd that end with .der
-    for cert in os.listdir(ipd_certs_path):
-        if cert.endswith(f".{cert_format}"):
-            shutil.copy(os.path.join(ipd_certs_path, cert), artifacts_certs)
 
-    # Copy files from non-ipd only if they do not exist in the r3_certs already
-    for cert in os.listdir(non_ipd_certs_path):
-        cert_in_r3 = os.path.join(artifacts_certs, cert)
-        if not os.path.exists(cert_in_r3) and cert.endswith(f".{cert_format}"):
-            shutil.copy(os.path.join(non_ipd_certs_path, cert), artifacts_certs)
+    # Copy the DER certificates in cert_path to artifacts_certs
+    for root, dirs, files in os.walk(cert_path):
+        for file in files:
+            if file.endswith(cert_format):
+                shutil.copy(os.path.join(root, file), artifacts_certs)
 
-    # Zip all files in artifacts_certs for correct version
-    zip_filename = os.path.join(submission_dir, f"artifacts_{version}_certs.zip")
-    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+
+    # Zip all files in artifacts_certs
+    zip_file = os.path.join(submission_dir, "artifacts_cert_r4.zip")
+    with zipfile.ZipFile(zip_file, 'w') as zipf:
         for root, dirs, files in os.walk(artifacts_certs):
             for file in files:
-                full_path = os.path.join(root, file)
-                relative_path = os.path.relpath(full_path, artifacts_certs)
-                zipf.write(full_path, relative_path)
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), artifacts_certs))
+
 
     # Remove the temporary folder after zipping
     shutil.rmtree(artifacts_certs)
+
+    print(f"Submission zip file created at {zip_file}")
     
 if __name__ == "__main__":
-    extract_correct_certs("r3")
-    extract_correct_certs("r4")
+    extract_correct_certs()
