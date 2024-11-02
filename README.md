@@ -22,7 +22,7 @@ quantcrypt = "0.2.0"
 cargo test gen_pq_hackathon_artifacts_r4 --release # generate artifacts in r4 format
 ```
 
-To generate submissios zips:
+To generate submission zips:
 ```ignore
 python prepare_submission.py # Select appropriate certificates and archive them as zips for submission
 ```
