@@ -29,30 +29,18 @@ impl PKLen for KemType {
             KemType::RsaOAEP2048 => Some(270),
             KemType::RsaOAEP3072 => Some(398),
             KemType::RsaOAEP4096 => Some(526),
-            // Composite types from old version
+
             // KEM Pk + Trad Pk + ASN.1 overhead
-            KemType::MlKem512P256 => Some(800 + 65 + 12),
-            KemType::MlKem512BrainpoolP256r1 => Some(800 + 65 + 12),
-            KemType::MlKem512X25519 => Some(800 + 32 + 12),
-            KemType::MlKem512Rsa2048 => Some(800 + 270 + 14),
-            KemType::MlKem512Rsa3072 => Some(800 + 398 + 14),
-            KemType::MlKem768P256 => Some(1184 + 65 + 12),
             KemType::MlKem768BrainpoolP256r1 => Some(1184 + 65 + 12),
             KemType::MlKem768X25519 => Some(1184 + 32 + 12),
             KemType::MlKem1024P384 => Some(1568 + 97 + 12),
             KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 12),
             KemType::MlKem1024X448 => Some(1568 + 56 + 12),
-            // Composite types from editor's draft. Skipped ones are also present in old version
-            // KEM Pk + Trad Pk + ASN.1 overhead
             KemType::MlKem768Rsa2048 => Some(1184 + 270 + 14),
             KemType::MlKem768Rsa3072 => Some(1184 + 398 + 14),
             KemType::MlKem768Rsa4096 => Some(1184 + 526 + 14),
-            // KemType::MlKem768X25519 => Some(1184 + 32 + 12),
             KemType::MlKem768P384 => Some(1184 + 97 + 12),
-            // KemType::MlKem768BrainpoolP256r1 => Some(1184 + 65 + 12),
-            // KemType::MlKem1024P384 => Some(1568 + 97 + 12),
-            // KemType::MlKem1024BrainpoolP384r1 => Some(1568 + 97 + 12),
-            // KemType::MlKem1024X448 => Some(1568 + 56 + 12),
+
             KemType::XWing => Some(1216),
         }
     }

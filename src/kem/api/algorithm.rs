@@ -10,16 +10,6 @@ pub enum KemAlgorithm {
     MlKem768,
     MlKem1024,
 
-    // The composite algorithm list from the old version
-    MlKem512P256,
-    MlKem512BrainpoolP256r1,
-    MlKem512X25519,
-    MlKem512Rsa2048,
-    MlKem512Rsa3072,
-    MlKem768P256,
-
-    // The compsite algorithm list is from the latest editor's draft:
-    //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
     MlKem768Rsa2048,
     MlKem768Rsa3072,
     MlKem768Rsa4096,
@@ -45,16 +35,6 @@ impl KemAlgorithm {
             KemAlgorithm::MlKem768 => KemType::MlKem768,
             KemAlgorithm::MlKem1024 => KemType::MlKem1024,
 
-            // The composite algorithm list from the old version
-            KemAlgorithm::MlKem512P256 => KemType::MlKem512P256,
-            KemAlgorithm::MlKem512BrainpoolP256r1 => KemType::MlKem512BrainpoolP256r1,
-            KemAlgorithm::MlKem512X25519 => KemType::MlKem512X25519,
-            KemAlgorithm::MlKem512Rsa2048 => KemType::MlKem512Rsa2048,
-            KemAlgorithm::MlKem512Rsa3072 => KemType::MlKem512Rsa3072,
-            KemAlgorithm::MlKem768P256 => KemType::MlKem768P256,
-
-            // The compsite algorithm list is from the latest editor's draft:
-            //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html
             KemAlgorithm::MlKem768Rsa2048 => KemType::MlKem768Rsa2048,
             KemAlgorithm::MlKem768Rsa3072 => KemType::MlKem768Rsa3072,
             KemAlgorithm::MlKem768Rsa4096 => KemType::MlKem768Rsa4096,
