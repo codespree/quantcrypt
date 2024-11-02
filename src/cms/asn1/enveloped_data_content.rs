@@ -16,6 +16,7 @@ use const_oid::db::rfc5911::ID_ENVELOPED_DATA;
 use crate::cms::enveloped_data_builder::EnvelopedDataBuilder;
 
 /// The content encryption algorithm used to encrypt the content
+#[derive(Clone)]
 pub enum ContentEncryptionAlgorithm {
     /// AES 128 bit encryption in CBC mode
     Aes128Cbc,

@@ -2,7 +2,7 @@ use crate::kem::common::{config::oids::Oid, kem_type::KemType};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
-#[derive(Clone, Debug, PartialEq, EnumIter, Display, Copy)]
+#[derive(Clone, Debug, PartialEq, EnumIter, Display, Copy, Eq, Hash)]
 /// The permissible algorithms for the `AlgorithmIdentifier` type.
 pub enum KemAlgorithm {
     /// Pure KEMs

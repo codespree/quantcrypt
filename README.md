@@ -20,6 +20,7 @@ quantcrypt = "0.2.0"
 
 ```ignore
 cargo test gen_pq_hackathon_artifacts_r4 --release # generate artifacts in r4 format
+cargo test gen_cms_artifacts --release # generate CMS artifacts
 ```
 
 To generate submission zips:

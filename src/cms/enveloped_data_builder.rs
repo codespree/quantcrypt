@@ -472,12 +472,18 @@ impl<'a> EnvelopedDataBuilder<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+    use std::vec;
+
+    use crate::content::{AuthEnvelopedDataContent, EnvelopedDataContent};
     use crate::dsa::common::config::oids::Oid;
     use crate::dsa::common::prehash_dsa_trait::PrehashDsa;
     use crate::dsa::common::prehash_dsa_type::PrehashDsaType;
     use crate::dsa::dsa_manager::PrehashDsaManager;
+    use crate::dsas::{DsaAlgorithm, DsaKeyGenerator};
     use crate::kem::common::config::oids::Oid as _;
     use crate::kem::common::kem_type::KemType;
+    use crate::kems::{KemAlgorithm, KemKeyGenerator};
     use crate::{
         certificates::{CertValidity, CertificateBuilder},
         keys::{PrivateKey, PublicKey},
@@ -696,97 +702,302 @@ mod tests {
         assert_eq!(pt, plaintext);
     }
 
-    // #[test]
-    // fn gen_cms_test_data() {
-    //     // Generate a TA key pair
-    //     let mut dsa = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
-    //     let (pk, sk) = dsa.generate().unwrap();
+    #[test]
+    fn gen_cms_artifacts() {
+        let ta_types = vec![DsaAlgorithm::MlDsa65, DsaAlgorithm::MlDsa87];
 
-    //     // Generate the TA certificate
-    //     let pk_clone = pk.clone();
-    //     let oid = pk_clone.get_oid();
-    //     let friendly_name = DsaAlgorithm::MlDsa44.to_string();
+        let kem_types = vec![
+            vec![
+                KemAlgorithm::MlKem768,
+                KemAlgorithm::MlKem768Rsa2048,
+                KemAlgorithm::MlKem768Rsa3072,
+                KemAlgorithm::MlKem768Rsa4096,
+                KemAlgorithm::MlKem768X25519,
+                KemAlgorithm::MlKem768P384,
+                KemAlgorithm::MlKem768BrainpoolP256r1,
+            ],
+            vec![
+                KemAlgorithm::MlKem1024,
+                KemAlgorithm::MlKem1024P384,
+                KemAlgorithm::MlKem1024BrainpoolP384r1,
+                KemAlgorithm::MlKem1024X448,
+            ],
+        ];
 
-    //     let builder = CertificateBuilder::new(
-    //         Profile::Root,
-    //         None,
-    //         CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
-    //         "CN=test.com".to_string(),
-    //         pk,
-    //         &sk,
-    //     ).unwrap();
+        let kdf_friendly_name_map = HashMap::from([
+            (KdfType::HkdfWithSha256, "id-alg-hkdf-with-sha256"),
+            (KdfType::Kmac256, "id-kmac256"),
+        ]);
 
-    //     let ta_cert = builder.build().unwrap();
-    //     let ta_cert_path = format!("test/data/cms/{}_{}_ta.der", oid, friendly_name);
-    //     ta_cert.to_der_file(&ta_cert_path).unwrap();
+        use crate::content::ContentEncryptionAlgorithm;
+        use crate::content::ContentEncryptionAlgorithmAead;
 
-    //     let mut kg = KemKeyGenerator::new(KemAlgorithm::MlKem512);
-    //     let (pk_ee, sk_ee) = kg.generate().unwrap();
+        struct KdfWrapCaeTriple {
+            kdf: KdfType,
+            wrap: WrapType,
+            cae: (ContentEncryptionAlgorithm, ContentEncryptionAlgorithmAead),
+        }
 
-    //     let pk_clone = pk_ee.clone();
-    //     let oid = pk_clone.get_oid();
-    //     let friendly_name = KemAlgorithm::MlKem512.to_string();
+        let kdf_wrap_cae_triple_map_data = vec![
+            // Pure: https://datatracker.ietf.org/doc/draft-ietf-lamps-cms-kyber/
+            (
+                KemAlgorithm::MlKem768,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem1024,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            // Composites: https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/05/
+            // Section 8.1
+            (
+                KemAlgorithm::MlKem768Rsa2048,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes128,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes128Cbc,
+                        ContentEncryptionAlgorithmAead::Aes128Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem768Rsa3072,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes128,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes128Cbc,
+                        ContentEncryptionAlgorithmAead::Aes128Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem768Rsa4096,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes128,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes128Cbc,
+                        ContentEncryptionAlgorithmAead::Aes128Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem768X25519,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::Kmac256,
+                    wrap: WrapType::Aes128,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes128Cbc,
+                        ContentEncryptionAlgorithmAead::Aes128Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem768P384,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem768BrainpoolP256r1,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::HkdfWithSha256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem1024P384,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::Kmac256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem1024BrainpoolP384r1,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::Kmac256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+            (
+                KemAlgorithm::MlKem1024X448,
+                KdfWrapCaeTriple {
+                    kdf: KdfType::Kmac256,
+                    wrap: WrapType::Aes256,
+                    cae: (
+                        ContentEncryptionAlgorithm::Aes256Cbc,
+                        ContentEncryptionAlgorithmAead::Aes256Gcm,
+                    ),
+                },
+            ),
+        ];
 
-    //     let sk_path = format!("test/data/cms/{}_{}_priv.der", oid, friendly_name);
+        let mut kdf_wrap_cae_triple_map: HashMap<KemAlgorithm, KdfWrapCaeTriple> = HashMap::new();
+        for (kem_type, kdf_wrap_cae_triple) in kdf_wrap_cae_triple_map_data {
+            kdf_wrap_cae_triple_map.insert(kem_type, kdf_wrap_cae_triple);
+        }
 
-    //     // Write the private key to a file
-    //     sk_ee.to_der_file(&sk_path).unwrap();
+        for i in 0..ta_types.len() {
+            let ta_type = ta_types[i];
+            let ta_oid = ta_type.get_oid();
+            let ta_friendly_name = ta_type.to_string();
 
-    //     // Generate the ee certificate
-    //     let builder = CertificateBuilder::new(
-    //         Profile::Leaf {
-    //             issuer: ta_cert.get_subject(),
-    //             enable_key_agreement: false,
-    //             enable_key_encipherment: true,
-    //         },
-    //         None,
-    //         CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
-    //         "CN=sub.test.com".to_string(),
-    //         pk_ee,
-    //         &sk,
-    //     ).unwrap();
+            let mut ta_key_gen = DsaKeyGenerator::new(ta_type);
+            let (ta_pk, ta_sk) = ta_key_gen.generate().unwrap();
 
-    //     let ee_cert = builder.build().unwrap();
-    //     let ee_cert_path = format!("test/data/cms/{}_{}_ee.der", oid, friendly_name);
-    //     ee_cert.to_der_file(&ee_cert_path).unwrap();
+            let ta_cert_builder = CertificateBuilder::new(
+                Profile::Root,
+                None,
+                CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+                "CN=IETF Hackathon".to_string(),
+                ta_pk,
+                &ta_sk,
+            )
+            .unwrap();
 
-    //     let ukim = b"This is some User Keying Material";
+            let ta_cert = ta_cert_builder.build().unwrap();
+            let ta_cert_path = format!("artifacts/v2_cms/{}_{}_ta.der", ta_oid, ta_friendly_name);
+            ta_cert.to_der_file(&ta_cert_path).unwrap();
 
-    //     let path = format!("test/data/cms/{}_{}_kemri_auth_id-alg-hkdf-with-sha256_ukm.der", oid, friendly_name);
+            let kem_types = &kem_types[i];
+            for j in 0..kem_types.len() {
+                let kem_type = kem_types[j];
+                let kem_oid = kem_type.get_oid();
+                let kem_friendly_name = kem_type.to_string();
 
-    //     let mut auth_builder = AuthEnvelopedDataContent::get_builder(ContentEncryptionAlgorithmAead::Aes128Gcm).unwrap();
-    //     let kdf = KdfType::HkdfWithSha256;
-    //     let wrap_type = WrapType::Aes128;
-    //     let ukm: der::asn1::OctetString = UserKeyingMaterial::new(ukim.to_vec()).unwrap();
-    //     auth_builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm.clone())).unwrap();
-    //     auth_builder.content(b"abc").unwrap();
+                let kdf_wrap_cae_triple = kdf_wrap_cae_triple_map.get(&kem_type).unwrap();
+                let kdf = kdf_wrap_cae_triple.kdf.clone();
+                let wrap = kdf_wrap_cae_triple.wrap.clone();
+                let cae_enveloped = kdf_wrap_cae_triple.cae.0.clone();
+                let cae_auth_enveloped = kdf_wrap_cae_triple.cae.1.clone();
 
-    //     auth_builder.build_to_file(&path).unwrap();
+                let kdf_friendly_name = kdf_friendly_name_map.get(&kdf).unwrap();
 
-    //     // Build the same without auth
-    //     let path = format!("test/data/cms/{}_{}_kemri_id-alg-hkdf-with-sha256_ukm.der", oid, friendly_name);
-    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
-    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm.clone())).unwrap();
-    //     builder.content(b"abc").unwrap();
+                let mut kem_key_gen = KemKeyGenerator::new(kem_type);
+                let (ee_pk, ee_sk) = kem_key_gen.generate().unwrap();
 
-    //     builder.build_to_file(&path).unwrap();
+                let ee_cert_builder = CertificateBuilder::new(
+                    Profile::Leaf {
+                        issuer: ta_cert.get_subject(),
+                        enable_key_agreement: false,
+                        enable_key_encipherment: true,
+                    },
+                    None,
+                    CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+                    "CN=IETF Hackathon".to_string(),
+                    ee_pk,
+                    &ta_sk,
+                )
+                .unwrap();
 
-    //     // Build the same without auth and UKIM
-    //     let path = format!("test/data/cms/{}_{}_kemri_id-alg-hkdf-with-sha256.der", oid, friendly_name);
-    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
-    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, None).unwrap();
-    //     builder.content(b"abc").unwrap();
+                let ee_cert = ee_cert_builder.build().unwrap();
+                let ee_cert_path =
+                    format!("artifacts/v2_cms/{}_{}_ee.der", kem_oid, kem_friendly_name);
+                ee_cert.to_der_file(&ee_cert_path).unwrap();
 
-    //     builder.build_to_file(&path).unwrap();
+                assert!(ta_cert.verify_child(&ee_cert).unwrap());
 
-    //     // Build the same without auth and using kmac
-    //     let kdf = KdfType::Kmac128;
-    //     let path = format!("test/data/cms/{}_{}_kemri_id-kmac128_ukm.der", oid, friendly_name);
-    //     let mut builder = EnvelopedDataContent::get_builder(crate::content::ContentEncryptionAlgorithm::Aes128Cbc).unwrap();
-    //     builder.kem_recipient(&ee_cert, &kdf, &wrap_type, Some(ukm)).unwrap();
-    //     builder.content(b"abc").unwrap();
+                // Write the private key to a file
+                ee_sk
+                    .to_der_file(&format!(
+                        "artifacts/v2_cms/{}_{}_priv.der",
+                        kem_oid, kem_friendly_name
+                    ))
+                    .unwrap();
 
-    //     builder.build_to_file(&path).unwrap();
+                // Build enveloped data
+                let path = format!(
+                    "artifacts/v2_cms/{}_{}_kemri_{}.der",
+                    kem_oid, kem_friendly_name, kdf_friendly_name
+                );
 
-    // }
+                let mut builder = EnvelopedDataContent::get_builder(cae_enveloped.clone()).unwrap();
+                builder.kem_recipient(&ee_cert, &kdf, &wrap, None).unwrap();
+                let plain_text = include_bytes!("../../artifacts/v2_cms/expected_plaintext.txt");
+                builder.content(plain_text).unwrap();
+
+                builder.build_to_file(&path).unwrap();
+                println!("Generated: {}", path);
+
+                let enveloped_data =
+                    EnvelopedDataContent::from_file_for_kem_recipient(&path, &ee_cert, &ee_sk)
+                        .unwrap();
+                let pt = enveloped_data.get_content();
+                assert_eq!(pt, plain_text);
+
+                let path = format!(
+                    "artifacts/v2_cms/{}_{}_kemri_{}_ukm.der",
+                    kem_oid, kem_friendly_name, kdf_friendly_name
+                );
+                let ukm = include_bytes!("../../artifacts/v2_cms/ukm.txt");
+                let ukm_os = der::asn1::OctetString::new(ukm.to_vec()).unwrap();
+                let mut builder = EnvelopedDataContent::get_builder(cae_enveloped).unwrap();
+                builder
+                    .kem_recipient(&ee_cert, &kdf, &wrap, Some(ukm_os))
+                    .unwrap();
+                builder.content(plain_text).unwrap();
+
+                builder.build_to_file(&path).unwrap();
+                println!("Generated: {}", path);
+
+                let enveloped_data =
+                    EnvelopedDataContent::from_file_for_kem_recipient(&path, &ee_cert, &ee_sk)
+                        .unwrap();
+                let pt = enveloped_data.get_content();
+                assert_eq!(pt, plain_text);
+
+                let path = format!(
+                    "artifacts/v2_cms/{}_{}_kemri_{}_auth.der",
+                    kem_oid, kem_friendly_name, kdf_friendly_name
+                );
+
+                let mut builder =
+                    AuthEnvelopedDataContent::get_builder(cae_auth_enveloped).unwrap();
+                builder.kem_recipient(&ee_cert, &kdf, &wrap, None).unwrap();
+                builder.content(plain_text).unwrap();
+
+                builder.build_to_file(&path).unwrap();
+                println!("Generated: {}", path);
+
+                let auth_enveloped_data =
+                    AuthEnvelopedDataContent::from_file_for_kem_recipient(&path, &ee_cert, &ee_sk)
+                        .unwrap();
+                let pt = auth_enveloped_data.get_content();
+                assert_eq!(pt, plain_text);
+            }
+        }
+    }
 }

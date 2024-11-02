@@ -3,7 +3,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 /// Define the KDF types
-#[derive(Clone, Debug, PartialEq, EnumIter)]
+#[derive(Clone, Debug, PartialEq, EnumIter, Eq, Hash)]
 pub enum KdfType {
     /// Hkdf with SHA-256
     HkdfWithSha256,
