@@ -19,7 +19,6 @@ quantcrypt = "0.2.0"
 ## Generating PQC Hackathon Artifacts for [IETF Hackathon - PQC Certificates](https://github.com/IETF-Hackathon/pqc-certificates)
 
 ```ignore
-cargo test gen_pq_hackathon_artifacts_r3 --release # generate artifacts in r3 format
 cargo test gen_pq_hackathon_artifacts_r4 --release # generate artifacts in r4 format
 ```
 

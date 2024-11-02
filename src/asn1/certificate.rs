@@ -601,6 +601,10 @@ mod tests {
 
             assert!(ta_cert.verify_child(&ee_cert).unwrap());
             println!("Verified: EE {} with TA {}", ee_paths[i], ta_paths[i]);
+
+            // Test encap
+            let pk = ee_cert.get_public_key().unwrap();
+            let _ = pk.encap().unwrap();
         }
     }
 }
