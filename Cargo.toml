@@ -45,6 +45,7 @@ tiny-keccak = {version="2.0.2", features=["kmac"]}
 cms = {version="0.2.3", features=["builder", "alloc"]}
 spki = "0.7.3"
 const-oid = "0.9.6"
+base64 = "0.22.1"
 
 [profile.dev]
 opt-level = 1

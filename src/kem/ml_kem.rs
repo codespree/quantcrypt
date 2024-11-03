@@ -210,9 +210,16 @@ impl Kem for MlKemManager {
 
 #[cfg(test)]
 mod tests {
+    use x509_cert::builder::Profile;
+
     use super::*;
+    use crate::certificates::{CertValidity, CertificateBuilder};
+    use crate::content::EnvelopedDataContent;
+    use crate::dsas::{DsaAlgorithm, DsaKeyGenerator};
     use crate::kem::common::kem_type::KemType;
     use crate::kem::common::macros::test_kem;
+    use crate::keys::{PrivateKey, PublicKey};
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
 
     #[test]
     fn test_ml_kem_512() {
@@ -230,5 +237,60 @@ mod tests {
     fn test_ml_kem_1024() {
         let kem = MlKemManager::new(KemType::MlKem1024);
         test_kem!(kem);
+    }
+
+    #[test]
+    fn test_ml_kem_512_draft_vectors() {
+        let ee_pk = PublicKey::from_file("test/data/mlkem512_pk.pem").unwrap();
+        let ee_sk = PrivateKey::from_file("test/data/mlkem512_sk.pem").unwrap();
+
+        // Test encap decap with the keys
+        let (ss, ct) = ee_pk.encap().unwrap();
+        let ss2 = ee_sk.decap(&ct).unwrap();
+        assert_eq!(ss, ss2);
+
+        //TODO: Add a mechanism to decrypt directly using the public key in addition to certificate. For now create a certificate to test
+        let mut keygen_ta = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44);
+        let (ta_pk, ta_sk) = keygen_ta.generate().unwrap();
+        let ta_cert_builder = CertificateBuilder::new(
+            Profile::Root,
+            None,
+            CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+            "CN=IETF Hackathon".to_string(),
+            ta_pk,
+            &ta_sk,
+        )
+        .unwrap();
+
+        let ta_cert = ta_cert_builder.build().unwrap();
+        let ee_cert_builder = CertificateBuilder::new(
+            Profile::Leaf {
+                issuer: ta_cert.get_subject(),
+                enable_key_agreement: false,
+                enable_key_encipherment: true,
+            },
+            None,
+            CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap(),
+            "CN=IETF Hackathon".to_string(),
+            ee_pk,
+            &ta_sk,
+        )
+        .unwrap();
+
+        let ee_cert = ee_cert_builder.build().unwrap();
+
+        // Test decrypt with the keys
+        let enveloped_data_base64 = include_bytes!("../../test/data/mlkem512_enveloped_data.pem");
+        // Remove all newlines
+        let enveloped_data_base64 = std::str::from_utf8(enveloped_data_base64)
+            .unwrap()
+            .replace("\n", "");
+        let enveloped_data = STANDARD.decode(enveloped_data_base64).unwrap();
+        let content =
+            EnvelopedDataContent::from_bytes_for_kem_recipient(&enveloped_data, &ee_cert, &ee_sk)
+                .unwrap();
+        let decrypted = content.get_content();
+
+        assert_eq!(decrypted, b"Hello, world!");
     }
 }
