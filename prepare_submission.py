@@ -13,9 +13,9 @@ import shutil
     Function to prepare submission zip with r4 certificates.
     Contains only the der format certificates.
 """
-def extract_correct_certs(cert_format=".der"):
+def prepare_dsa_submission(cert_format=".der"):
 
-    print("Preparing submission zip file with correct certificates")
+    print("Preparing dsa submission zip file")
 
     cert_path = f"./artifacts/r4_certs"
     assert os.path.exists(cert_path), "Certificates not generated, please run Rust test cases first"
@@ -46,6 +46,40 @@ def extract_correct_certs(cert_format=".der"):
     shutil.rmtree(artifacts_certs)
 
     print(f"Submission zip file created at {zip_file}")
+
+def prepare_cms_submission(cert_format: str = ".der"):
+
+    print("Preparing cms submission zip file")
+
+    cert_path = f"./artifacts/v2_cms"
+    assert os.path.exists(cert_path), "Certificates not generated, please run Rust test cases first"
+
+    submission_dir = "./artifacts/submission"
+    os.makedirs(submission_dir, exist_ok=True)
+
+    # Create temporary folder for submission certificates
+    artifacts_certs = os.path.join(submission_dir, "artifacts_certs_cms")
+    os.makedirs(artifacts_certs, exist_ok=True)
+
+    # Copy the DER certificates in cert_path to artifacts_certs
+    for root, dirs, files in os.walk(cert_path):
+        for file in files:
+            if file.endswith(cert_format):
+                shutil.copy(os.path.join(root, file), artifacts_certs)
+
+
+    # Zip all files in artifacts_certs
+    zip_file = os.path.join(submission_dir, "artifacts_cms_v2.zip")
+    with zipfile.ZipFile(zip_file, 'w') as zipf:
+        for root, dirs, files in os.walk(artifacts_certs):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), artifacts_certs))
+
+    # Remove the temporary folder after zipping
+    shutil.rmtree(artifacts_certs)
+
+    print(f"Submission zip file created at {zip_file}")
     
 if __name__ == "__main__":
-    extract_correct_certs()
+    prepare_dsa_submission()
+    prepare_cms_submission()
