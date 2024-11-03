@@ -1000,4 +1000,134 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_cw_cms_artifacts() {
+        let security_levels = vec!["512", "768", "1024"];
+        let oids = vec!["1", "2", "3"]; // Last digit of OID
+
+        // Materials shared across all test combinations
+        let expected_plaintext =
+            include_bytes!("../../artifacts/cms_cw/expected_plaintext.txt").to_vec();
+
+        // Function to generate paths for a given base filename
+        fn generate_paths(base_filename: &str) -> Vec<String> {
+            let base_path = format!("artifacts/cms_cw/{}", base_filename);
+
+            let kemri_path = base_path.clone();
+            let kemri_ukm_path = format!("{}_ukm.der", base_path.trim_end_matches(".der"));
+            let kemri_auth_path = base_path.replace("kemri", "kemri_auth");
+            let kemri_auth_ukm_path =
+                format!("{}_ukm.der", kemri_auth_path.trim_end_matches(".der"));
+
+            vec![
+                kemri_path,
+                kemri_ukm_path,
+                kemri_auth_path,
+                kemri_auth_ukm_path,
+            ]
+        }
+
+        // Iterate pairwise over security_levels and oids
+        for (security_level, oid) in security_levels.iter().zip(oids.iter()) {
+            // Update ee_path and priv_path based on the security level and oid
+            let ee_path = format!(
+                "artifacts/cms_cw/2.16.840.1.101.3.4.4.{}_ML-KEM-{}_ee.der",
+                oid, security_level
+            );
+            let priv_path = format!(
+                "artifacts/cms_cw/2.16.840.1.101.3.4.4.{}_ML-KEM-{}_priv.der",
+                oid, security_level
+            );
+
+            // Update base_filenames to contain the corresponding security level and oid
+            let base_filenames = vec![
+                format!(
+                    "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-alg-hkdf-with-sha256.der",
+                    oid, security_level
+                ),
+                format!(
+                    "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-alg-hkdf-with-sha384.der",
+                    oid, security_level
+                ),
+                format!(
+                    "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-alg-hkdf-with-sha512.der",
+                    oid, security_level
+                ),
+                format!(
+                    "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-kmac128.der",
+                    oid, security_level
+                ),
+                format!(
+                    "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-kmac256.der",
+                    oid, security_level
+                ),
+            ];
+
+            // Generate a list of tuples containing the filename and its corresponding paths
+            let tuples_list: Vec<(String, Vec<String>)> = base_filenames
+                .iter()
+                .map(|filename| (filename.clone(), generate_paths(filename)))
+                .collect();
+
+            // Load the certificates and keys
+            let ee_cert = Certificate::from_file(&ee_path).unwrap();
+            let ee_sk = PrivateKey::from_file(&priv_path).unwrap();
+
+            // Iterate through the list of tuples and process each set of paths
+            for (_filename, paths) in tuples_list {
+                // Destructure the vector of paths to name each component
+                if paths.len() != 4 {
+                    panic!("Expected 4 paths, but got {}", paths.len());
+                }
+
+                // Manually destructure using indexing
+                let kemri_path = &paths[0];
+                let kemri_ukm_path = &paths[1];
+                let kemri_auth_path = &paths[2];
+                let kemri_auth_ukm_path = &paths[3];
+
+                // Enveloped data
+                let enveloped_data = EnvelopedDataContent::from_file_for_kem_recipient(
+                    &kemri_path,
+                    &ee_cert,
+                    &ee_sk,
+                )
+                .unwrap();
+                let pt = enveloped_data.get_content();
+                assert_eq!(pt, expected_plaintext);
+
+                // With ukm
+                let enveloped_data_with_ukm = EnvelopedDataContent::from_file_for_kem_recipient(
+                    &kemri_ukm_path,
+                    &ee_cert,
+                    &ee_sk,
+                )
+                .unwrap();
+                let pt = enveloped_data_with_ukm.get_content();
+                assert_eq!(pt, expected_plaintext);
+
+                // Auth
+                let auth_enveloped_data = AuthEnvelopedDataContent::from_file_for_kem_recipient(
+                    &kemri_auth_path,
+                    &ee_cert,
+                    &ee_sk,
+                )
+                .unwrap();
+                let pt = auth_enveloped_data.get_content();
+                assert_eq!(pt, expected_plaintext);
+
+                // Auth with ukm
+                let auth_enveloped_data_with_ukm =
+                    AuthEnvelopedDataContent::from_file_for_kem_recipient(
+                        &kemri_auth_ukm_path,
+                        &ee_cert,
+                        &ee_sk,
+                    )
+                    .unwrap();
+                let pt = auth_enveloped_data_with_ukm.get_content();
+                assert_eq!(pt, expected_plaintext);
+            }
+        }
+    }
 }
