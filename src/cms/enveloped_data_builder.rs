@@ -732,20 +732,20 @@ mod tests {
         use crate::content::ContentEncryptionAlgorithm;
         use crate::content::ContentEncryptionAlgorithmAead;
 
-        struct KdfWrapCaeTriple {
+        struct KdfWrapCeaTriple {
             kdf: KdfType,
             wrap: WrapType,
-            cae: (ContentEncryptionAlgorithm, ContentEncryptionAlgorithmAead),
+            cea: (ContentEncryptionAlgorithm, ContentEncryptionAlgorithmAead),
         }
 
-        let kdf_wrap_cae_triple_map_data = vec![
+        let kdf_wrap_cea_triple_map_data = vec![
             // Pure: https://datatracker.ietf.org/doc/draft-ietf-lamps-cms-kyber/
             (
                 KemAlgorithm::MlKem768,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -753,10 +753,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem1024,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -766,10 +766,10 @@ mod tests {
             // Section 8.1
             (
                 KemAlgorithm::MlKem768Rsa2048,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes128,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes128Cbc,
                         ContentEncryptionAlgorithmAead::Aes128Gcm,
                     ),
@@ -777,10 +777,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem768Rsa3072,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes128,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes128Cbc,
                         ContentEncryptionAlgorithmAead::Aes128Gcm,
                     ),
@@ -788,10 +788,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem768Rsa4096,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes128,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes128Cbc,
                         ContentEncryptionAlgorithmAead::Aes128Gcm,
                     ),
@@ -799,10 +799,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem768X25519,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::Kmac256,
                     wrap: WrapType::Aes128,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes128Cbc,
                         ContentEncryptionAlgorithmAead::Aes128Gcm,
                     ),
@@ -810,10 +810,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem768P384,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -821,10 +821,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem768BrainpoolP256r1,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::HkdfWithSha256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -832,10 +832,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem1024P384,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::Kmac256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -843,10 +843,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem1024BrainpoolP384r1,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::Kmac256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -854,10 +854,10 @@ mod tests {
             ),
             (
                 KemAlgorithm::MlKem1024X448,
-                KdfWrapCaeTriple {
+                KdfWrapCeaTriple {
                     kdf: KdfType::Kmac256,
                     wrap: WrapType::Aes256,
-                    cae: (
+                    cea: (
                         ContentEncryptionAlgorithm::Aes256Cbc,
                         ContentEncryptionAlgorithmAead::Aes256Gcm,
                     ),
@@ -865,9 +865,9 @@ mod tests {
             ),
         ];
 
-        let mut kdf_wrap_cae_triple_map: HashMap<KemAlgorithm, KdfWrapCaeTriple> = HashMap::new();
-        for (kem_type, kdf_wrap_cae_triple) in kdf_wrap_cae_triple_map_data {
-            kdf_wrap_cae_triple_map.insert(kem_type, kdf_wrap_cae_triple);
+        let mut kdf_wrap_cea_triple_map: HashMap<KemAlgorithm, KdfWrapCeaTriple> = HashMap::new();
+        for (kem_type, kdf_wrap_cea_triple) in kdf_wrap_cea_triple_map_data {
+            kdf_wrap_cea_triple_map.insert(kem_type, kdf_wrap_cea_triple);
         }
 
         for i in 0..ta_types.len() {
@@ -898,11 +898,11 @@ mod tests {
                 let kem_oid = kem_type.get_oid();
                 let kem_friendly_name = kem_type.to_string();
 
-                let kdf_wrap_cae_triple = kdf_wrap_cae_triple_map.get(&kem_type).unwrap();
-                let kdf = kdf_wrap_cae_triple.kdf.clone();
-                let wrap = kdf_wrap_cae_triple.wrap.clone();
-                let cae_enveloped = kdf_wrap_cae_triple.cae.0.clone();
-                let cae_auth_enveloped = kdf_wrap_cae_triple.cae.1.clone();
+                let kdf_wrap_cea_triple = kdf_wrap_cea_triple_map.get(&kem_type).unwrap();
+                let kdf = kdf_wrap_cea_triple.kdf.clone();
+                let wrap = kdf_wrap_cea_triple.wrap.clone();
+                let cea_enveloped = kdf_wrap_cea_triple.cea.0.clone();
+                let cea_auth_enveloped = kdf_wrap_cea_triple.cea.1.clone();
 
                 let kdf_friendly_name = kdf_friendly_name_map.get(&kdf).unwrap();
 
@@ -944,7 +944,7 @@ mod tests {
                     kem_oid, kem_friendly_name, kdf_friendly_name
                 );
 
-                let mut builder = EnvelopedDataContent::get_builder(cae_enveloped.clone()).unwrap();
+                let mut builder = EnvelopedDataContent::get_builder(cea_enveloped.clone()).unwrap();
                 builder.kem_recipient(&ee_cert, &kdf, &wrap, None).unwrap();
                 let plain_text = include_bytes!("../../artifacts/v2_cms/expected_plaintext.txt");
                 builder.content(plain_text).unwrap();
@@ -964,7 +964,7 @@ mod tests {
                 );
                 let ukm = include_bytes!("../../artifacts/v2_cms/ukm.txt");
                 let ukm_os = der::asn1::OctetString::new(ukm.to_vec()).unwrap();
-                let mut builder = EnvelopedDataContent::get_builder(cae_enveloped).unwrap();
+                let mut builder = EnvelopedDataContent::get_builder(cea_enveloped).unwrap();
                 builder
                     .kem_recipient(&ee_cert, &kdf, &wrap, Some(ukm_os))
                     .unwrap();
@@ -985,7 +985,7 @@ mod tests {
                 );
 
                 let mut builder =
-                    AuthEnvelopedDataContent::get_builder(cae_auth_enveloped).unwrap();
+                    AuthEnvelopedDataContent::get_builder(cea_auth_enveloped).unwrap();
                 builder.kem_recipient(&ee_cert, &kdf, &wrap, None).unwrap();
                 builder.content(plain_text).unwrap();
 
