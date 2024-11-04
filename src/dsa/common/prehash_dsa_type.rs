@@ -5,10 +5,15 @@ use super::config::oids::Oid;
 
 #[derive(Clone, Debug, PartialEq, EnumIter)]
 pub enum PrehashDsaType {
-    // ML DSA
+    // Pure ML DSA
     MlDsa44,
     MlDsa65,
     MlDsa87,
+
+    // Hash ML DSA
+    HashMlDsa44,
+    HashMlDsa65,
+    HashMlDsa87,
 
     // Pure ML-DSA Composite Signature Algorithms
     MlDsa44Rsa2048Pss,
@@ -27,20 +32,20 @@ pub enum PrehashDsaType {
     MlDsa87Ed448,
 
     // Hash ML-DSA Composite Signature Algorithms
-    MlDsa44Rsa2048PssSha256,
-    MlDsa44Rsa2048Pkcs15Sha256,
-    MlDsa44Ed25519Sha512,
-    MlDsa44EcdsaP256Sha256,
-    MlDsa65Rsa3072PssSha512,
-    MlDsa65Rsa3072Pkcs15Sha512,
-    MlDsa65Rsa4096PssSha512,
-    MlDsa65Rsa4096Pkcs15Sha512,
-    MlDsa65EcdsaP384Sha512,
-    MlDsa65EcdsaBrainpoolP256r1Sha512,
-    MlDsa65Ed25519Sha512,
-    MlDsa87EcdsaP384Sha512,
-    MlDsa87EcdsaBrainpoolP384r1Sha512,
-    MlDsa87Ed448Sha512,
+    HashMlDsa44Rsa2048PssSha256,
+    HashMlDsa44Rsa2048Pkcs15Sha256,
+    HashMlDsa44Ed25519Sha512,
+    HashMlDsa44EcdsaP256Sha256,
+    HashMlDsa65Rsa3072PssSha512,
+    HashMlDsa65Rsa3072Pkcs15Sha512,
+    HashMlDsa65Rsa4096PssSha512,
+    HashMlDsa65Rsa4096Pkcs15Sha512,
+    HashMlDsa65EcdsaP384Sha512,
+    HashMlDsa65EcdsaBrainpoolP256r1Sha512,
+    HashMlDsa65Ed25519Sha512,
+    HashMlDsa87EcdsaP384Sha512,
+    HashMlDsa87EcdsaBrainpoolP384r1Sha512,
+    HashMlDsa87Ed448Sha512,
 }
 
 impl PrehashDsaType {

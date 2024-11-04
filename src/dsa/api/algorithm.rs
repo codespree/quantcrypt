@@ -6,10 +6,15 @@ use strum_macros::{Display, EnumIter};
 #[derive(Clone, Debug, PartialEq, EnumIter, Display, Copy)]
 /// The permissible algorithms for the `AlgorithmIdentifier` type.
 pub enum DsaAlgorithm {
-    // ML DSA
+    // ML DSA Pure
     MlDsa44,
     MlDsa65,
     MlDsa87,
+
+    // ML DSA Prehash
+    HashMlDsa44,
+    HashMlDsa65,
+    HashMlDsa87,
 
     // Composite DSAs
     MlDsa44Rsa2048Pss,
@@ -28,20 +33,20 @@ pub enum DsaAlgorithm {
     MlDsa65Rsa4096Pkcs15,
 
     // Composite DSAs Prehash
-    MlDsa44Rsa2048PssSha256,
-    MlDsa44Rsa2048Pkcs15Sha256,
-    MlDsa44Ed25519Sha512,
-    MlDsa44EcdsaP256Sha256,
-    MlDsa65Rsa3072PssSha512,
-    MlDsa65Rsa3072Pkcs15Sha512,
-    MlDsa65Rsa4096PssSha512,
-    MlDsa65Rsa4096Pkcs15Sha512,
-    MlDsa65EcdsaP384Sha512,
-    MlDsa65EcdsaBrainpoolP256r1Sha512,
-    MlDsa65Ed25519Sha512,
-    MlDsa87EcdsaP384Sha512,
-    MlDsa87EcdsaBrainpoolP384r1Sha512,
-    MlDsa87Ed448Sha512,
+    HashMlDsa44Rsa2048PssSha256,
+    HashMlDsa44Rsa2048Pkcs15Sha256,
+    HashMlDsa44Ed25519Sha512,
+    HashMlDsa44EcdsaP256Sha256,
+    HashMlDsa65Rsa3072PssSha512,
+    HashMlDsa65Rsa3072Pkcs15Sha512,
+    HashMlDsa65Rsa4096PssSha512,
+    HashMlDsa65Rsa4096Pkcs15Sha512,
+    HashMlDsa65EcdsaP384Sha512,
+    HashMlDsa65EcdsaBrainpoolP256r1Sha512,
+    HashMlDsa65Ed25519Sha512,
+    HashMlDsa87EcdsaP384Sha512,
+    HashMlDsa87EcdsaBrainpoolP384r1Sha512,
+    HashMlDsa87Ed448Sha512,
 
     // Pure DSAs
     SlhDsaSha2_128s,
@@ -91,6 +96,11 @@ impl DsaAlgorithm {
             DsaAlgorithm::MlDsa65 => Some(PrehashDsaType::MlDsa65),
             DsaAlgorithm::MlDsa87 => Some(PrehashDsaType::MlDsa87),
 
+            // Hash ML DSA
+            DsaAlgorithm::HashMlDsa44 => Some(PrehashDsaType::HashMlDsa44),
+            DsaAlgorithm::HashMlDsa65 => Some(PrehashDsaType::HashMlDsa65),
+            DsaAlgorithm::HashMlDsa87 => Some(PrehashDsaType::HashMlDsa87),
+
             // Composite DSAs
             DsaAlgorithm::MlDsa44Rsa2048Pss => Some(PrehashDsaType::MlDsa44Rsa2048Pss),
             DsaAlgorithm::MlDsa44Rsa2048Pkcs15 => Some(PrehashDsaType::MlDsa44Rsa2048Pkcs15),
@@ -112,30 +122,46 @@ impl DsaAlgorithm {
             DsaAlgorithm::MlDsa65Rsa4096Pkcs15 => Some(PrehashDsaType::MlDsa65Rsa4096Pkcs15),
 
             // Composite DSAs Prehash
-            DsaAlgorithm::MlDsa44Rsa2048PssSha256 => Some(PrehashDsaType::MlDsa44Rsa2048PssSha256),
-            DsaAlgorithm::MlDsa44Rsa2048Pkcs15Sha256 => {
-                Some(PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256)
+            DsaAlgorithm::HashMlDsa44Rsa2048PssSha256 => {
+                Some(PrehashDsaType::HashMlDsa44Rsa2048PssSha256)
             }
-            DsaAlgorithm::MlDsa44Ed25519Sha512 => Some(PrehashDsaType::MlDsa44Ed25519Sha512),
-            DsaAlgorithm::MlDsa44EcdsaP256Sha256 => Some(PrehashDsaType::MlDsa44EcdsaP256Sha256),
-            DsaAlgorithm::MlDsa65Rsa3072PssSha512 => Some(PrehashDsaType::MlDsa65Rsa3072PssSha512),
-            DsaAlgorithm::MlDsa65Rsa3072Pkcs15Sha512 => {
-                Some(PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512)
+            DsaAlgorithm::HashMlDsa44Rsa2048Pkcs15Sha256 => {
+                Some(PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256)
             }
-            DsaAlgorithm::MlDsa65Rsa4096PssSha512 => Some(PrehashDsaType::MlDsa65Rsa4096PssSha512),
-            DsaAlgorithm::MlDsa65Rsa4096Pkcs15Sha512 => {
-                Some(PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512)
+            DsaAlgorithm::HashMlDsa44Ed25519Sha512 => {
+                Some(PrehashDsaType::HashMlDsa44Ed25519Sha512)
             }
-            DsaAlgorithm::MlDsa65EcdsaP384Sha512 => Some(PrehashDsaType::MlDsa65EcdsaP384Sha512),
-            DsaAlgorithm::MlDsa65EcdsaBrainpoolP256r1Sha512 => {
-                Some(PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512)
+            DsaAlgorithm::HashMlDsa44EcdsaP256Sha256 => {
+                Some(PrehashDsaType::HashMlDsa44EcdsaP256Sha256)
             }
-            DsaAlgorithm::MlDsa65Ed25519Sha512 => Some(PrehashDsaType::MlDsa65Ed25519Sha512),
-            DsaAlgorithm::MlDsa87EcdsaP384Sha512 => Some(PrehashDsaType::MlDsa87EcdsaP384Sha512),
-            DsaAlgorithm::MlDsa87EcdsaBrainpoolP384r1Sha512 => {
-                Some(PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512)
+            DsaAlgorithm::HashMlDsa65Rsa3072PssSha512 => {
+                Some(PrehashDsaType::HashMlDsa65Rsa3072PssSha512)
             }
-            DsaAlgorithm::MlDsa87Ed448Sha512 => Some(PrehashDsaType::MlDsa87Ed448Sha512),
+            DsaAlgorithm::HashMlDsa65Rsa3072Pkcs15Sha512 => {
+                Some(PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512)
+            }
+            DsaAlgorithm::HashMlDsa65Rsa4096PssSha512 => {
+                Some(PrehashDsaType::HashMlDsa65Rsa4096PssSha512)
+            }
+            DsaAlgorithm::HashMlDsa65Rsa4096Pkcs15Sha512 => {
+                Some(PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512)
+            }
+            DsaAlgorithm::HashMlDsa65EcdsaP384Sha512 => {
+                Some(PrehashDsaType::HashMlDsa65EcdsaP384Sha512)
+            }
+            DsaAlgorithm::HashMlDsa65EcdsaBrainpoolP256r1Sha512 => {
+                Some(PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512)
+            }
+            DsaAlgorithm::HashMlDsa65Ed25519Sha512 => {
+                Some(PrehashDsaType::HashMlDsa65Ed25519Sha512)
+            }
+            DsaAlgorithm::HashMlDsa87EcdsaP384Sha512 => {
+                Some(PrehashDsaType::HashMlDsa87EcdsaP384Sha512)
+            }
+            DsaAlgorithm::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => {
+                Some(PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512)
+            }
+            DsaAlgorithm::HashMlDsa87Ed448Sha512 => Some(PrehashDsaType::HashMlDsa87Ed448Sha512),
             _ => None,
         }
     }
@@ -148,7 +174,12 @@ impl DsaAlgorithm {
     pub fn is_composite(&self) -> bool {
         !matches!(
             self,
-            DsaAlgorithm::MlDsa44 | DsaAlgorithm::MlDsa65 | DsaAlgorithm::MlDsa87
+            DsaAlgorithm::MlDsa44
+                | DsaAlgorithm::MlDsa65
+                | DsaAlgorithm::MlDsa87
+                | DsaAlgorithm::HashMlDsa44
+                | DsaAlgorithm::HashMlDsa65
+                | DsaAlgorithm::HashMlDsa87
         )
     }
 

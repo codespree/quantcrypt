@@ -14,10 +14,13 @@ use crate::dsa::slh_dsa::SlhDsaManager;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-const ML_DSA_TYPES: [PrehashDsaType; 3] = [
+const ML_DSA_TYPES: [PrehashDsaType; 6] = [
     PrehashDsaType::MlDsa44,
     PrehashDsaType::MlDsa65,
     PrehashDsaType::MlDsa87,
+    PrehashDsaType::HashMlDsa44,
+    PrehashDsaType::HashMlDsa65,
+    PrehashDsaType::HashMlDsa87,
 ];
 
 const RSA_DSA_TYPES: [DsaType; 6] = [
@@ -53,20 +56,20 @@ const COMPOSITE_DSA_TYPES: [PrehashDsaType; 28] = [
     PrehashDsaType::MlDsa87Ed448,
     PrehashDsaType::MlDsa65Rsa4096Pss,
     PrehashDsaType::MlDsa65Rsa4096Pkcs15,
-    PrehashDsaType::MlDsa44Rsa2048PssSha256,
-    PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256,
-    PrehashDsaType::MlDsa44Ed25519Sha512,
-    PrehashDsaType::MlDsa44EcdsaP256Sha256,
-    PrehashDsaType::MlDsa65Rsa3072PssSha512,
-    PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512,
-    PrehashDsaType::MlDsa65EcdsaP384Sha512,
-    PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512,
-    PrehashDsaType::MlDsa65Ed25519Sha512,
-    PrehashDsaType::MlDsa87EcdsaP384Sha512,
-    PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512,
-    PrehashDsaType::MlDsa87Ed448Sha512,
-    PrehashDsaType::MlDsa65Rsa4096PssSha512,
-    PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512,
+    PrehashDsaType::HashMlDsa44Rsa2048PssSha256,
+    PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256,
+    PrehashDsaType::HashMlDsa44Ed25519Sha512,
+    PrehashDsaType::HashMlDsa44EcdsaP256Sha256,
+    PrehashDsaType::HashMlDsa65Rsa3072PssSha512,
+    PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512,
+    PrehashDsaType::HashMlDsa65EcdsaP384Sha512,
+    PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512,
+    PrehashDsaType::HashMlDsa65Ed25519Sha512,
+    PrehashDsaType::HashMlDsa87EcdsaP384Sha512,
+    PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512,
+    PrehashDsaType::HashMlDsa87Ed448Sha512,
+    PrehashDsaType::HashMlDsa65Rsa4096PssSha512,
+    PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512,
 ];
 
 const SLH_DSA_TYPES: [DsaType; 12] = [

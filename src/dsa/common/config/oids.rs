@@ -65,6 +65,10 @@ impl Oid for PrehashDsaType {
             PrehashDsaType::MlDsa65 => "2.16.840.1.101.3.4.3.18",
             PrehashDsaType::MlDsa87 => "2.16.840.1.101.3.4.3.19",
 
+            PrehashDsaType::HashMlDsa44 => "2.16.840.1.101.3.4.3.32",
+            PrehashDsaType::HashMlDsa65 => "2.16.840.1.101.3.4.3.33",
+            PrehashDsaType::HashMlDsa87 => "2.16.840.1.101.3.4.3.34",
+
             // Pure ML-DSA Composite Signature Algorithms
             PrehashDsaType::MlDsa44Rsa2048Pss => "2.16.840.1.114027.80.8.1.21",
             PrehashDsaType::MlDsa44Rsa2048Pkcs15 => "2.16.840.1.114027.80.8.1.22",
@@ -82,20 +86,20 @@ impl Oid for PrehashDsaType {
             PrehashDsaType::MlDsa87Ed448 => "2.16.840.1.114027.80.8.1.33",
 
             // Hash ML-DSA Composite Signature Algorithms
-            PrehashDsaType::MlDsa44Rsa2048PssSha256 => "2.16.840.1.114027.80.8.1.40",
-            PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256 => "2.16.840.1.114027.80.8.1.41",
-            PrehashDsaType::MlDsa44Ed25519Sha512 => "2.16.840.1.114027.80.8.1.42",
-            PrehashDsaType::MlDsa44EcdsaP256Sha256 => "2.16.840.1.114027.80.8.1.43",
-            PrehashDsaType::MlDsa65Rsa3072PssSha512 => "2.16.840.1.114027.80.8.1.44",
-            PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512 => "2.16.840.1.114027.80.8.1.45",
-            PrehashDsaType::MlDsa65Rsa4096PssSha512 => "2.16.840.1.114027.80.8.1.46",
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512 => "2.16.840.1.114027.80.8.1.47",
-            PrehashDsaType::MlDsa65EcdsaP384Sha512 => "2.16.840.1.114027.80.8.1.48",
-            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512 => "2.16.840.1.114027.80.8.1.49",
-            PrehashDsaType::MlDsa65Ed25519Sha512 => "2.16.840.1.114027.80.8.1.50",
-            PrehashDsaType::MlDsa87EcdsaP384Sha512 => "2.16.840.1.114027.80.8.1.51",
-            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512 => "2.16.840.1.114027.80.8.1.52",
-            PrehashDsaType::MlDsa87Ed448Sha512 => "2.16.840.1.114027.80.8.1.53",
+            PrehashDsaType::HashMlDsa44Rsa2048PssSha256 => "2.16.840.1.114027.80.8.1.40",
+            PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256 => "2.16.840.1.114027.80.8.1.41",
+            PrehashDsaType::HashMlDsa44Ed25519Sha512 => "2.16.840.1.114027.80.8.1.42",
+            PrehashDsaType::HashMlDsa44EcdsaP256Sha256 => "2.16.840.1.114027.80.8.1.43",
+            PrehashDsaType::HashMlDsa65Rsa3072PssSha512 => "2.16.840.1.114027.80.8.1.44",
+            PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512 => "2.16.840.1.114027.80.8.1.45",
+            PrehashDsaType::HashMlDsa65Rsa4096PssSha512 => "2.16.840.1.114027.80.8.1.46",
+            PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512 => "2.16.840.1.114027.80.8.1.47",
+            PrehashDsaType::HashMlDsa65EcdsaP384Sha512 => "2.16.840.1.114027.80.8.1.48",
+            PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512 => "2.16.840.1.114027.80.8.1.49",
+            PrehashDsaType::HashMlDsa65Ed25519Sha512 => "2.16.840.1.114027.80.8.1.50",
+            PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => "2.16.840.1.114027.80.8.1.51",
+            PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => "2.16.840.1.114027.80.8.1.52",
+            PrehashDsaType::HashMlDsa87Ed448Sha512 => "2.16.840.1.114027.80.8.1.53",
         }
         .to_string()
     }

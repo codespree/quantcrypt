@@ -378,7 +378,7 @@ mod test {
         assert!(pk.is_composite());
         assert_eq!(
             pk.get_oid(),
-            PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid()
+            PrehashDsaType::HashMlDsa44EcdsaP256Sha256.get_oid()
         );
 
         let key_bytes = pk.get_key();
@@ -390,7 +390,7 @@ mod test {
         let pem2 = pk2.to_pem().unwrap();
         assert_eq!(pem, pem2.trim());
 
-        let oid = PrehashDsaType::MlDsa44EcdsaP256Sha256.get_oid();
+        let oid = PrehashDsaType::HashMlDsa44EcdsaP256Sha256.get_oid();
         assert_eq!(pk.oid, oid);
     }
 

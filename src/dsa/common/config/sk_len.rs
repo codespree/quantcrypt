@@ -58,6 +58,10 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::MlDsa65 => Some(4032),
             PrehashDsaType::MlDsa87 => Some(4896),
 
+            PrehashDsaType::HashMlDsa44 => None,
+            PrehashDsaType::HashMlDsa65 => None,
+            PrehashDsaType::HashMlDsa87 => None,
+
             // pq_sk + trad_sk + overhead of sequence of two octet strings
             PrehashDsaType::MlDsa44Rsa2048Pss => None, // None
             PrehashDsaType::MlDsa44Rsa2048Pkcs15 => None, // None
@@ -74,20 +78,20 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Some(4896 + 48 + 10), // 4954
             PrehashDsaType::MlDsa87Ed448 => Some(4896 + 57 + 10), // 4963
 
-            PrehashDsaType::MlDsa44Rsa2048PssSha256 => None, // None
-            PrehashDsaType::MlDsa44Rsa2048Pkcs15Sha256 => None, // None
-            PrehashDsaType::MlDsa44Ed25519Sha512 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::MlDsa44EcdsaP256Sha256 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::MlDsa65Rsa3072PssSha512 => None, // None
-            PrehashDsaType::MlDsa65Rsa3072Pkcs15Sha512 => None, // None
-            PrehashDsaType::MlDsa65Rsa4096PssSha512 => None, // None
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15Sha512 => None, // None
-            PrehashDsaType::MlDsa65EcdsaP384Sha512 => Some(4032 + 48 + 10), // 4090
-            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1Sha512 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::MlDsa65Ed25519Sha512 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::MlDsa87EcdsaP384Sha512 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1Sha512 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::MlDsa87Ed448Sha512 => Some(4896 + 57 + 10), // 4963
+            PrehashDsaType::HashMlDsa44Rsa2048PssSha256 => None, // None
+            PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256 => None, // None
+            PrehashDsaType::HashMlDsa44Ed25519Sha512 => Some(2560 + 32 + 10), // 2602
+            PrehashDsaType::HashMlDsa44EcdsaP256Sha256 => Some(2560 + 32 + 10), // 2602
+            PrehashDsaType::HashMlDsa65Rsa3072PssSha512 => None, // None
+            PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512 => None, // None
+            PrehashDsaType::HashMlDsa65Rsa4096PssSha512 => None, // None
+            PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512 => None, // None
+            PrehashDsaType::HashMlDsa65EcdsaP384Sha512 => Some(4032 + 48 + 10), // 4090
+            PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512 => Some(4032 + 32 + 10), // 4074
+            PrehashDsaType::HashMlDsa65Ed25519Sha512 => Some(4032 + 32 + 10), // 4074
+            PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => Some(4896 + 48 + 10), // 4954
+            PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => Some(4896 + 48 + 10), // 4954
+            PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(4896 + 57 + 10), // 4963
         }
     }
 }
