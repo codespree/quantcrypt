@@ -602,7 +602,7 @@ mod tests {
             let path = file.path();
             let path = path.to_str().unwrap();
 
-            let cert = crate::certificates::Certificate::from_file(path).unwrap();         
+            let cert = crate::certificates::Certificate::from_file(path).unwrap();
 
             assert!(cert.verify_self_signed().unwrap());
             println!("Verified: {}", path);
