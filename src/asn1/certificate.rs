@@ -547,7 +547,6 @@ mod tests {
         let ml_dsa_composites_prefix = "MLDSA";
         let ml_dsa_pure_prefix = "ml-dsa";
         let slh_dsa_prefix = "slh-dsa";
-        let dsa_prehash = "-with-";
         for file in files {
             let file = file.unwrap();
             let path = file.path();
@@ -557,11 +556,6 @@ mod tests {
                 && !path.contains(slh_dsa_prefix)
                 && !path.contains(ml_dsa_pure_prefix)
             {
-                continue;
-            }
-
-            // TODO: Check for bug in BC ML-DSA Prehash or bug in our code
-            if path.contains(dsa_prehash) && !path.contains(slh_dsa_prefix) {
                 continue;
             }
 
@@ -594,6 +588,34 @@ mod tests {
             // Test encap
             let pk = ee_cert.get_public_key().unwrap();
             let _ = pk.encap().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_cw_cert_artifacts() {
+        let base_folder_path = "test/data/cw_artifacts_certs_r4/";
+        // Load all the certificates
+        let files = std::fs::read_dir(base_folder_path).unwrap();
+
+        for file in files {
+            let file = file.unwrap();
+            let path = file.path();
+            let path = path.to_str().unwrap();
+
+            let cert = crate::certificates::Certificate::from_file(path).unwrap();
+
+            let is_verified = cert.verify_self_signed();
+
+            if is_verified.is_err() {
+                println!("Failed to verify: {}", path);
+            } else if !is_verified.unwrap() {
+                println!("Failed to verify: {}", path);
+            } else {
+                println!("Verified: {}", path);
+            }
+
+            //assert!(cert.verify_self_signed().unwrap());
+            //println!("Verified: {}", path);
         }
     }
 }

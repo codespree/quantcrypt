@@ -28,7 +28,8 @@ der_derive = "0.7.3"
 sha3 = "0.10.8"
 hkdf = "0.12.4"
 hex = "0.4.3"
-fips204 = { package = "fips204", version = "0.4.4" }
+#TODO: Switch to original repository once the bug is fixed
+fips204 = { git="https://github.com/codespree/fips204" }
 fips205 = { package = "fips205", version = "0.4.0" }
 ed25519-dalek = { version="2.1.1", features=["rand_core"]}
 ed448-rust = "0.1.1"
