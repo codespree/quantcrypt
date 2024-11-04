@@ -72,6 +72,20 @@ impl HashTypeConfig for PrehashDsaType {
             PrehashDsaType::SlhDsaShake192f => None,
             PrehashDsaType::SlhDsaShake256s => None,
             PrehashDsaType::SlhDsaShake256f => None,
+
+            // Prehash SLH-DSA
+            PrehashDsaType::HashSlhDsaSha2_128s => Some(HashType::Sha256),
+            PrehashDsaType::HashSlhDsaSha2_128f => Some(HashType::Sha256),
+            PrehashDsaType::HashSlhDsaSha2_192s => Some(HashType::Sha512),
+            PrehashDsaType::HashSlhDsaSha2_192f => Some(HashType::Sha512),
+            PrehashDsaType::HashSlhDsaSha2_256s => Some(HashType::Sha512),
+            PrehashDsaType::HashSlhDsaSha2_256f => Some(HashType::Sha512),
+            PrehashDsaType::HashSlhDsaShake128s => Some(HashType::Shake128),
+            PrehashDsaType::HashSlhDsaShake128f => Some(HashType::Shake128),
+            PrehashDsaType::HashSlhDsaShake192s => Some(HashType::Shake256),
+            PrehashDsaType::HashSlhDsaShake192f => Some(HashType::Shake256),
+            PrehashDsaType::HashSlhDsaShake256s => Some(HashType::Shake256),
+            PrehashDsaType::HashSlhDsaShake256f => Some(HashType::Shake256),
         }
     }
 }

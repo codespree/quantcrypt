@@ -100,6 +100,20 @@ impl Oid for PrehashDsaType {
             PrehashDsaType::SlhDsaShake192f => "2.16.840.1.101.3.4.3.29",
             PrehashDsaType::SlhDsaShake256s => "2.16.840.1.101.3.4.3.30",
             PrehashDsaType::SlhDsaShake256f => "2.16.840.1.101.3.4.3.31",
+
+            // Prehash SLH-DSA
+            PrehashDsaType::HashSlhDsaSha2_128s => "2.16.840.1.101.3.4.3.35",
+            PrehashDsaType::HashSlhDsaSha2_128f => "2.16.840.1.101.3.4.3.36",
+            PrehashDsaType::HashSlhDsaSha2_192s => "2.16.840.1.101.3.4.3.37",
+            PrehashDsaType::HashSlhDsaSha2_192f => "2.16.840.1.101.3.4.3.38",
+            PrehashDsaType::HashSlhDsaSha2_256s => "2.16.840.1.101.3.4.3.39",
+            PrehashDsaType::HashSlhDsaSha2_256f => "2.16.840.1.101.3.4.3.40",
+            PrehashDsaType::HashSlhDsaShake128s => "2.16.840.1.101.3.4.3.41",
+            PrehashDsaType::HashSlhDsaShake128f => "2.16.840.1.101.3.4.3.42",
+            PrehashDsaType::HashSlhDsaShake192s => "2.16.840.1.101.3.4.3.43",
+            PrehashDsaType::HashSlhDsaShake192f => "2.16.840.1.101.3.4.3.44",
+            PrehashDsaType::HashSlhDsaShake256s => "2.16.840.1.101.3.4.3.45",
+            PrehashDsaType::HashSlhDsaShake256f => "2.16.840.1.101.3.4.3.46",
         }
         .to_string()
     }

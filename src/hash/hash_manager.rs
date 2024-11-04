@@ -21,7 +21,9 @@ impl Hash for HashManager {
         Self: Sized,
     {
         match hash_type {
-            HashType::Sha256 | HashType::Sha512 => Ok(HashManager::Sha(ShaHash::new(hash_type)?)),
+            HashType::Sha256 | HashType::Sha512 | HashType::Shake128 | HashType::Shake256 => {
+                Ok(HashManager::Sha(ShaHash::new(hash_type)?))
+            }
         }
     }
 

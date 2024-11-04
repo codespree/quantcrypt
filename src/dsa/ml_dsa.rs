@@ -33,6 +33,7 @@ macro_rules! sign_ml {
             let ph = match (hash_type) {
                 HashType::Sha256 => Ph::SHA256,
                 HashType::Sha512 => Ph::SHA512,
+                _ => return Err(QuantCryptError::NotImplemented),
             };
             // Try signing the message
             sk.try_hash_sign($msg, $ctx, &ph)
@@ -72,6 +73,7 @@ macro_rules! verify_ml {
             let ph = match (hash_type) {
                 HashType::Sha256 => Ph::SHA256,
                 HashType::Sha512 => Ph::SHA512,
+                _ => return Err(QuantCryptError::NotImplemented),
             };
 
             Ok(pk.hash_verify($msg, &sig_buf, $ctx, &ph))

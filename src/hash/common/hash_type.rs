@@ -7,4 +7,8 @@ pub enum HashType {
     Sha256,
     /// SHA512
     Sha512,
+    /// Shake 128
+    Shake128,
+    /// Shake 256
+    Shake256,
 }

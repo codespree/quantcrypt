@@ -560,8 +560,8 @@ mod tests {
                 continue;
             }
 
-            // TODO: Add support for pre hash SLH DSA / ML DSA
-            if path.contains(dsa_prehash) {
+            // TODO: Check for bug in BC ML-DSA Prehash or bug in our code
+            if path.contains(dsa_prehash) && !path.contains(slh_dsa_prefix) {
                 continue;
             }
 

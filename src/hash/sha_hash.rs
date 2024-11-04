@@ -22,6 +22,8 @@ impl Hash for ShaHash {
         let digest = match hash_type {
             HashType::Sha256 => MessageDigest::sha256(),
             HashType::Sha512 => MessageDigest::sha512(),
+            HashType::Shake128 => MessageDigest::shake_128(),
+            HashType::Shake256 => MessageDigest::shake_256(),
         };
 
         Ok(ShaHash { hash_type, digest })

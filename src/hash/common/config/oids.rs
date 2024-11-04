@@ -20,6 +20,8 @@ impl Oid for HashType {
         match self {
             HashType::Sha256 => "2.16.840.1.101.3.4.2.1",
             HashType::Sha512 => "2.16.840.1.101.3.4.2.3",
+            HashType::Shake128 => "2.16.840.1.101.3.4.2.11",
+            HashType::Shake256 => "2.16.840.1.101.3.4.2.12",
         }
         .to_string()
     }

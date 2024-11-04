@@ -92,6 +92,20 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::SlhDsaShake192f => Some(48 * 2),
             PrehashDsaType::SlhDsaShake256s => Some(64 * 2),
             PrehashDsaType::SlhDsaShake256f => Some(64 * 2),
+
+            // Prehash SLH-DSA
+            PrehashDsaType::HashSlhDsaSha2_128s => None,
+            PrehashDsaType::HashSlhDsaSha2_128f => None,
+            PrehashDsaType::HashSlhDsaSha2_192s => None,
+            PrehashDsaType::HashSlhDsaSha2_192f => None,
+            PrehashDsaType::HashSlhDsaSha2_256s => None,
+            PrehashDsaType::HashSlhDsaSha2_256f => None,
+            PrehashDsaType::HashSlhDsaShake128s => None,
+            PrehashDsaType::HashSlhDsaShake128f => None,
+            PrehashDsaType::HashSlhDsaShake192s => None,
+            PrehashDsaType::HashSlhDsaShake192f => None,
+            PrehashDsaType::HashSlhDsaShake256s => None,
+            PrehashDsaType::HashSlhDsaShake256f => None,
         }
     }
 }

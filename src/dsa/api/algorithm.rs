@@ -48,7 +48,7 @@ pub enum DsaAlgorithm {
     HashMlDsa87EcdsaBrainpoolP384r1Sha512,
     HashMlDsa87Ed448Sha512,
 
-    // Pure DSAs
+    // Pure SLH-DSAs
     SlhDsaSha2_128s,
     SlhDsaSha2_128f,
     SlhDsaSha2_192s,
@@ -61,6 +61,20 @@ pub enum DsaAlgorithm {
     SlhDsaShake192f,
     SlhDsaShake256s,
     SlhDsaShake256f,
+
+    // Prehash SLH-DSAs
+    HashSlhDsaSha2_128s,
+    HashSlhDsaSha2_128f,
+    HashSlhDsaSha2_192s,
+    HashSlhDsaSha2_192f,
+    HashSlhDsaSha2_256s,
+    HashSlhDsaSha2_256f,
+    HashSlhDsaShake128s,
+    HashSlhDsaShake128f,
+    HashSlhDsaShake192s,
+    HashSlhDsaShake192f,
+    HashSlhDsaShake256s,
+    HashSlhDsaShake256f,
 }
 
 impl DsaAlgorithm {
@@ -161,6 +175,19 @@ impl DsaAlgorithm {
             DsaAlgorithm::SlhDsaShake192f => Some(PrehashDsaType::SlhDsaShake192f),
             DsaAlgorithm::SlhDsaShake256s => Some(PrehashDsaType::SlhDsaShake256s),
             DsaAlgorithm::SlhDsaShake256f => Some(PrehashDsaType::SlhDsaShake256f),
+
+            DsaAlgorithm::HashSlhDsaSha2_128s => Some(PrehashDsaType::HashSlhDsaSha2_128s),
+            DsaAlgorithm::HashSlhDsaSha2_128f => Some(PrehashDsaType::HashSlhDsaSha2_128f),
+            DsaAlgorithm::HashSlhDsaSha2_192s => Some(PrehashDsaType::HashSlhDsaSha2_192s),
+            DsaAlgorithm::HashSlhDsaSha2_192f => Some(PrehashDsaType::HashSlhDsaSha2_192f),
+            DsaAlgorithm::HashSlhDsaSha2_256s => Some(PrehashDsaType::HashSlhDsaSha2_256s),
+            DsaAlgorithm::HashSlhDsaSha2_256f => Some(PrehashDsaType::HashSlhDsaSha2_256f),
+            DsaAlgorithm::HashSlhDsaShake128s => Some(PrehashDsaType::HashSlhDsaShake128s),
+            DsaAlgorithm::HashSlhDsaShake128f => Some(PrehashDsaType::HashSlhDsaShake128f),
+            DsaAlgorithm::HashSlhDsaShake192s => Some(PrehashDsaType::HashSlhDsaShake192s),
+            DsaAlgorithm::HashSlhDsaShake192f => Some(PrehashDsaType::HashSlhDsaShake192f),
+            DsaAlgorithm::HashSlhDsaShake256s => Some(PrehashDsaType::HashSlhDsaShake256s),
+            DsaAlgorithm::HashSlhDsaShake256f => Some(PrehashDsaType::HashSlhDsaShake256f),
         }
     }
 
@@ -178,6 +205,30 @@ impl DsaAlgorithm {
                 | DsaAlgorithm::HashMlDsa44
                 | DsaAlgorithm::HashMlDsa65
                 | DsaAlgorithm::HashMlDsa87
+                | DsaAlgorithm::SlhDsaSha2_128s
+                | DsaAlgorithm::SlhDsaSha2_128f
+                | DsaAlgorithm::SlhDsaSha2_192s
+                | DsaAlgorithm::SlhDsaSha2_192f
+                | DsaAlgorithm::SlhDsaSha2_256s
+                | DsaAlgorithm::SlhDsaSha2_256f
+                | DsaAlgorithm::SlhDsaShake128s
+                | DsaAlgorithm::SlhDsaShake128f
+                | DsaAlgorithm::SlhDsaShake192s
+                | DsaAlgorithm::SlhDsaShake192f
+                | DsaAlgorithm::SlhDsaShake256s
+                | DsaAlgorithm::SlhDsaShake256f
+                | DsaAlgorithm::HashSlhDsaSha2_128s
+                | DsaAlgorithm::HashSlhDsaSha2_128f
+                | DsaAlgorithm::HashSlhDsaSha2_192s
+                | DsaAlgorithm::HashSlhDsaSha2_192f
+                | DsaAlgorithm::HashSlhDsaSha2_256s
+                | DsaAlgorithm::HashSlhDsaSha2_256f
+                | DsaAlgorithm::HashSlhDsaShake128s
+                | DsaAlgorithm::HashSlhDsaShake128f
+                | DsaAlgorithm::HashSlhDsaShake192s
+                | DsaAlgorithm::HashSlhDsaShake192f
+                | DsaAlgorithm::HashSlhDsaShake256s
+                | DsaAlgorithm::HashSlhDsaShake256f
         )
     }
 

@@ -72,7 +72,7 @@ const COMPOSITE_DSA_TYPES: [PrehashDsaType; 28] = [
     PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512,
 ];
 
-const SLH_DSA_TYPES: [PrehashDsaType; 12] = [
+const SLH_DSA_TYPES: [PrehashDsaType; 24] = [
     PrehashDsaType::SlhDsaSha2_128s,
     PrehashDsaType::SlhDsaSha2_128f,
     PrehashDsaType::SlhDsaSha2_192s,
@@ -85,6 +85,18 @@ const SLH_DSA_TYPES: [PrehashDsaType; 12] = [
     PrehashDsaType::SlhDsaShake192f,
     PrehashDsaType::SlhDsaShake256s,
     PrehashDsaType::SlhDsaShake256f,
+    PrehashDsaType::HashSlhDsaSha2_128s,
+    PrehashDsaType::HashSlhDsaSha2_128f,
+    PrehashDsaType::HashSlhDsaSha2_192s,
+    PrehashDsaType::HashSlhDsaSha2_192f,
+    PrehashDsaType::HashSlhDsaSha2_256s,
+    PrehashDsaType::HashSlhDsaSha2_256f,
+    PrehashDsaType::HashSlhDsaShake128s,
+    PrehashDsaType::HashSlhDsaShake128f,
+    PrehashDsaType::HashSlhDsaShake192s,
+    PrehashDsaType::HashSlhDsaShake192f,
+    PrehashDsaType::HashSlhDsaShake256s,
+    PrehashDsaType::HashSlhDsaShake256f,
 ];
 
 // Implement clone
