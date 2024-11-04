@@ -602,20 +602,10 @@ mod tests {
             let path = file.path();
             let path = path.to_str().unwrap();
 
-            let cert = crate::certificates::Certificate::from_file(path).unwrap();
+            let cert = crate::certificates::Certificate::from_file(path).unwrap();         
 
-            let is_verified = cert.verify_self_signed();
-
-            if is_verified.is_err() {
-                println!("Failed to verify: {}", path);
-            } else if !is_verified.unwrap() {
-                println!("Failed to verify: {}", path);
-            } else {
-                println!("Verified: {}", path);
-            }
-
-            //assert!(cert.verify_self_signed().unwrap());
-            //println!("Verified: {}", path);
+            assert!(cert.verify_self_signed().unwrap());
+            println!("Verified: {}", path);
         }
     }
 }
