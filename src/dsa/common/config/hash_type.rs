@@ -59,6 +59,19 @@ impl HashTypeConfig for PrehashDsaType {
             PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => Some(HashType::Sha512),
             PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => Some(HashType::Sha512),
             PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(HashType::Sha512),
+
+            PrehashDsaType::SlhDsaSha2_128s => None,
+            PrehashDsaType::SlhDsaSha2_128f => None,
+            PrehashDsaType::SlhDsaSha2_192s => None,
+            PrehashDsaType::SlhDsaSha2_192f => None,
+            PrehashDsaType::SlhDsaSha2_256s => None,
+            PrehashDsaType::SlhDsaSha2_256f => None,
+            PrehashDsaType::SlhDsaShake128s => None,
+            PrehashDsaType::SlhDsaShake128f => None,
+            PrehashDsaType::SlhDsaShake192s => None,
+            PrehashDsaType::SlhDsaShake192f => None,
+            PrehashDsaType::SlhDsaShake256s => None,
+            PrehashDsaType::SlhDsaShake256f => None,
         }
     }
 }

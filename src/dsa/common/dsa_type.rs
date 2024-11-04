@@ -20,20 +20,6 @@ pub enum DsaType {
     Ed25519,
     Ed448,
     EcdsaBrainpoolP384r1SHA384,
-
-    // SLH DSA
-    SlhDsaSha2_128s,
-    SlhDsaSha2_128f,
-    SlhDsaSha2_192s,
-    SlhDsaSha2_192f,
-    SlhDsaSha2_256s,
-    SlhDsaSha2_256f,
-    SlhDsaShake128s,
-    SlhDsaShake128f,
-    SlhDsaShake192s,
-    SlhDsaShake192f,
-    SlhDsaShake256s,
-    SlhDsaShake256f,
 }
 
 impl DsaType {

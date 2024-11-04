@@ -34,19 +34,6 @@ impl Oid for DsaType {
             DsaType::EcdsaP384SHA384 | DsaType::EcdsaBrainpoolP384r1SHA384 => "1.2.840.10045.4.3.3",
             DsaType::Ed25519 => "1.3.101.112",
             DsaType::Ed448 => "1.3.101.113",
-
-            DsaType::SlhDsaSha2_128s => "2.16.840.1.101.3.4.3.20",
-            DsaType::SlhDsaSha2_128f => "2.16.840.1.101.3.4.3.21",
-            DsaType::SlhDsaSha2_192s => "2.16.840.1.101.3.4.3.22",
-            DsaType::SlhDsaSha2_192f => "2.16.840.1.101.3.4.3.23",
-            DsaType::SlhDsaSha2_256s => "2.16.840.1.101.3.4.3.24",
-            DsaType::SlhDsaSha2_256f => "2.16.840.1.101.3.4.3.25",
-            DsaType::SlhDsaShake128s => "2.16.840.1.101.3.4.3.26",
-            DsaType::SlhDsaShake128f => "2.16.840.1.101.3.4.3.27",
-            DsaType::SlhDsaShake192s => "2.16.840.1.101.3.4.3.28",
-            DsaType::SlhDsaShake192f => "2.16.840.1.101.3.4.3.29",
-            DsaType::SlhDsaShake256s => "2.16.840.1.101.3.4.3.30",
-            DsaType::SlhDsaShake256f => "2.16.840.1.101.3.4.3.31",
         }
         .to_string()
     }
@@ -100,6 +87,19 @@ impl Oid for PrehashDsaType {
             PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => "2.16.840.1.114027.80.8.1.51",
             PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => "2.16.840.1.114027.80.8.1.52",
             PrehashDsaType::HashMlDsa87Ed448Sha512 => "2.16.840.1.114027.80.8.1.53",
+
+            PrehashDsaType::SlhDsaSha2_128s => "2.16.840.1.101.3.4.3.20",
+            PrehashDsaType::SlhDsaSha2_128f => "2.16.840.1.101.3.4.3.21",
+            PrehashDsaType::SlhDsaSha2_192s => "2.16.840.1.101.3.4.3.22",
+            PrehashDsaType::SlhDsaSha2_192f => "2.16.840.1.101.3.4.3.23",
+            PrehashDsaType::SlhDsaSha2_256s => "2.16.840.1.101.3.4.3.24",
+            PrehashDsaType::SlhDsaSha2_256f => "2.16.840.1.101.3.4.3.25",
+            PrehashDsaType::SlhDsaShake128s => "2.16.840.1.101.3.4.3.26",
+            PrehashDsaType::SlhDsaShake128f => "2.16.840.1.101.3.4.3.27",
+            PrehashDsaType::SlhDsaShake192s => "2.16.840.1.101.3.4.3.28",
+            PrehashDsaType::SlhDsaShake192f => "2.16.840.1.101.3.4.3.29",
+            PrehashDsaType::SlhDsaShake256s => "2.16.840.1.101.3.4.3.30",
+            PrehashDsaType::SlhDsaShake256f => "2.16.840.1.101.3.4.3.31",
         }
         .to_string()
     }

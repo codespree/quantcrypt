@@ -1,6 +1,3 @@
-use crate::dsa::common::dsa_info::DsaInfo;
-use crate::dsa::common::dsa_trait::Dsa;
-use crate::dsa::common::dsa_type::DsaType;
 use crate::QuantCryptError;
 
 use rand_core::SeedableRng;
@@ -20,10 +17,14 @@ use fips205::slh_dsa_shake_256f;
 use fips205::slh_dsa_shake_256s;
 use fips205::traits::{SerDes, Signer, Verifier};
 
+use super::common::prehash_dsa_info::PrehashDsaInfo;
+use super::common::prehash_dsa_trait::PrehashDsa;
+use super::common::prehash_dsa_type::PrehashDsaType;
+
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
 macro_rules! sign_slh {
-    ($sig_type:ident, $sk:expr, $msg:expr) => {{
+    ($sig_type:ident, $sk:expr, $msg:expr, $ctx:expr) => {{
         if $sk.len() != $sig_type::SK_LEN {
             return Err(QuantCryptError::InvalidPrivateKey);
         }
@@ -38,7 +39,7 @@ macro_rules! sign_slh {
 
         // Try signing the message
         let sig = sk
-            .try_sign($msg, &[], true) // Empty context
+            .try_sign($msg, $ctx, true)
             .map_err(|_| QuantCryptError::SignatureFailed)?;
 
         // Convert the signature to a Vec<u8> and return it
@@ -48,7 +49,7 @@ macro_rules! sign_slh {
 }
 
 macro_rules! verify_slh {
-    ($sig_type:ident, $pk: expr, $msg: expr, $signature: expr) => {{
+    ($sig_type:ident, $pk: expr, $msg: expr, $signature: expr, $ctx: expr) => {{
         if $pk.len() != $sig_type::PK_LEN {
             return Err(QuantCryptError::InvalidPublicKey);
         }
@@ -67,7 +68,7 @@ macro_rules! verify_slh {
         let pk = $sig_type::PublicKey::try_from_bytes(&pk_buf)
             .map_err(|_| QuantCryptError::InvalidPublicKey)?;
 
-        let result = Ok(pk.verify($msg, &sig_buf, &[]));
+        let result = Ok(pk.verify($msg, &sig_buf, $ctx));
 
         result
     }};
@@ -99,17 +100,17 @@ macro_rules! get_public_key {
 
 #[derive(Clone)]
 pub struct SlhDsaManager {
-    pub dsa_info: DsaInfo,
+    pub dsa_info: PrehashDsaInfo,
 }
 
-impl Dsa for SlhDsaManager {
+impl PrehashDsa for SlhDsaManager {
     /// Create a new DSA instance
     ///
     /// # Arguments
     ///
     /// * `dsa_type` - The type of DSA to create
-    fn new(dsa_type: DsaType) -> Result<Self> {
-        let dsa_info = DsaInfo::new(dsa_type);
+    fn new(dsa_type: PrehashDsaType) -> Result<Self> {
+        let dsa_info = PrehashDsaInfo::new(dsa_type);
         Ok(Self { dsa_info })
     }
 
@@ -127,18 +128,18 @@ impl Dsa for SlhDsaManager {
         rng: &mut impl rand_core::CryptoRngCore,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.dsa_info.dsa_type {
-            DsaType::SlhDsaSha2_128s => keygen_slh!(slh_dsa_sha2_128s, rng),
-            DsaType::SlhDsaSha2_128f => keygen_slh!(slh_dsa_sha2_128f, rng),
-            DsaType::SlhDsaSha2_192s => keygen_slh!(slh_dsa_sha2_192s, rng),
-            DsaType::SlhDsaSha2_192f => keygen_slh!(slh_dsa_sha2_192f, rng),
-            DsaType::SlhDsaSha2_256s => keygen_slh!(slh_dsa_sha2_256s, rng),
-            DsaType::SlhDsaSha2_256f => keygen_slh!(slh_dsa_sha2_256f, rng),
-            DsaType::SlhDsaShake128s => keygen_slh!(slh_dsa_shake_128s, rng),
-            DsaType::SlhDsaShake128f => keygen_slh!(slh_dsa_shake_128f, rng),
-            DsaType::SlhDsaShake192s => keygen_slh!(slh_dsa_shake_192s, rng),
-            DsaType::SlhDsaShake192f => keygen_slh!(slh_dsa_shake_192f, rng),
-            DsaType::SlhDsaShake256s => keygen_slh!(slh_dsa_shake_256s, rng),
-            DsaType::SlhDsaShake256f => keygen_slh!(slh_dsa_shake_256f, rng),
+            PrehashDsaType::SlhDsaSha2_128s => keygen_slh!(slh_dsa_sha2_128s, rng),
+            PrehashDsaType::SlhDsaSha2_128f => keygen_slh!(slh_dsa_sha2_128f, rng),
+            PrehashDsaType::SlhDsaSha2_192s => keygen_slh!(slh_dsa_sha2_192s, rng),
+            PrehashDsaType::SlhDsaSha2_192f => keygen_slh!(slh_dsa_sha2_192f, rng),
+            PrehashDsaType::SlhDsaSha2_256s => keygen_slh!(slh_dsa_sha2_256s, rng),
+            PrehashDsaType::SlhDsaSha2_256f => keygen_slh!(slh_dsa_sha2_256f, rng),
+            PrehashDsaType::SlhDsaShake128s => keygen_slh!(slh_dsa_shake_128s, rng),
+            PrehashDsaType::SlhDsaShake128f => keygen_slh!(slh_dsa_shake_128f, rng),
+            PrehashDsaType::SlhDsaShake192s => keygen_slh!(slh_dsa_shake_192s, rng),
+            PrehashDsaType::SlhDsaShake192f => keygen_slh!(slh_dsa_shake_192f, rng),
+            PrehashDsaType::SlhDsaShake256s => keygen_slh!(slh_dsa_shake_256s, rng),
+            PrehashDsaType::SlhDsaShake256f => keygen_slh!(slh_dsa_shake_256f, rng),
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -153,30 +154,56 @@ impl Dsa for SlhDsaManager {
         self.key_gen_with_rng(&mut rng)
     }
 
+    /// Get DSA metadata information such as the key lengths,
+    /// size of signature, etc.
+    fn get_dsa_info(&self) -> PrehashDsaInfo {
+        self.dsa_info.clone()
+    }
+
+    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
+        match self.dsa_info.dsa_type {
+            PrehashDsaType::SlhDsaSha2_128f => get_public_key!(slh_dsa_sha2_128f, sk),
+            PrehashDsaType::SlhDsaSha2_128s => get_public_key!(slh_dsa_sha2_128s, sk),
+            PrehashDsaType::SlhDsaSha2_192f => get_public_key!(slh_dsa_sha2_192f, sk),
+            PrehashDsaType::SlhDsaSha2_192s => get_public_key!(slh_dsa_sha2_192s, sk),
+            PrehashDsaType::SlhDsaSha2_256f => get_public_key!(slh_dsa_sha2_256f, sk),
+            PrehashDsaType::SlhDsaSha2_256s => get_public_key!(slh_dsa_sha2_256s, sk),
+            PrehashDsaType::SlhDsaShake128f => get_public_key!(slh_dsa_shake_128f, sk),
+            PrehashDsaType::SlhDsaShake128s => get_public_key!(slh_dsa_shake_128s, sk),
+            PrehashDsaType::SlhDsaShake192f => get_public_key!(slh_dsa_shake_192f, sk),
+            PrehashDsaType::SlhDsaShake192s => get_public_key!(slh_dsa_shake_192s, sk),
+            PrehashDsaType::SlhDsaShake256f => get_public_key!(slh_dsa_shake_256f, sk),
+            PrehashDsaType::SlhDsaShake256s => get_public_key!(slh_dsa_shake_256s, sk),
+            _ => Err(QuantCryptError::NotImplemented),
+        }
+    }
+
     /// Sign a message
     ///
     /// # Arguments
     ///
     /// * `msg` - The message to sign
     /// * `sk` - The secret key
+    /// * `ctx` - The context
     ///
     /// # Returns
     ///
     /// The signature
-    fn sign(&self, sk: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+    fn sign_with_ctx(&self, sk: &[u8], msg: &[u8], ctx: Option<&[u8]>) -> Result<Vec<u8>> {
+        let ctx = ctx.unwrap_or(&[]);
         match self.dsa_info.dsa_type {
-            DsaType::SlhDsaSha2_128s => sign_slh!(slh_dsa_sha2_128s, &sk, msg),
-            DsaType::SlhDsaSha2_128f => sign_slh!(slh_dsa_sha2_128f, &sk, msg),
-            DsaType::SlhDsaSha2_192s => sign_slh!(slh_dsa_sha2_192s, &sk, msg),
-            DsaType::SlhDsaSha2_192f => sign_slh!(slh_dsa_sha2_192f, &sk, msg),
-            DsaType::SlhDsaSha2_256s => sign_slh!(slh_dsa_sha2_256s, &sk, msg),
-            DsaType::SlhDsaSha2_256f => sign_slh!(slh_dsa_sha2_256f, &sk, msg),
-            DsaType::SlhDsaShake128s => sign_slh!(slh_dsa_shake_128s, &sk, msg),
-            DsaType::SlhDsaShake128f => sign_slh!(slh_dsa_shake_128f, &sk, msg),
-            DsaType::SlhDsaShake192s => sign_slh!(slh_dsa_shake_192s, &sk, msg),
-            DsaType::SlhDsaShake192f => sign_slh!(slh_dsa_shake_192f, &sk, msg),
-            DsaType::SlhDsaShake256s => sign_slh!(slh_dsa_shake_256s, &sk, msg),
-            DsaType::SlhDsaShake256f => sign_slh!(slh_dsa_shake_256f, &sk, msg),
+            PrehashDsaType::SlhDsaSha2_128s => sign_slh!(slh_dsa_sha2_128s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaSha2_128f => sign_slh!(slh_dsa_sha2_128f, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaSha2_192s => sign_slh!(slh_dsa_sha2_192s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaSha2_192f => sign_slh!(slh_dsa_sha2_192f, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaSha2_256s => sign_slh!(slh_dsa_sha2_256s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaSha2_256f => sign_slh!(slh_dsa_sha2_256f, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake128s => sign_slh!(slh_dsa_shake_128s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake128f => sign_slh!(slh_dsa_shake_128f, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake192s => sign_slh!(slh_dsa_shake_192s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake192f => sign_slh!(slh_dsa_shake_192f, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake256s => sign_slh!(slh_dsa_shake_256s, &sk, msg, ctx),
+            PrehashDsaType::SlhDsaShake256f => sign_slh!(slh_dsa_shake_256f, &sk, msg, ctx),
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -188,48 +215,56 @@ impl Dsa for SlhDsaManager {
     /// * `msg` - The message to verify
     /// * `pk` - The public key
     /// * `sig` - The signature
+    /// * `ctx` - The context
     ///
     /// # Returns
     ///
     /// A boolean indicating if the signature is valid
-    fn verify(&self, pk: &[u8], msg: &[u8], signature: &[u8]) -> Result<bool> {
+    fn verify_with_ctx(
+        &self,
+        pk: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+        ctx: Option<&[u8]>,
+    ) -> Result<bool> {
+        let ctx = ctx.unwrap_or(&[]);
         match self.dsa_info.dsa_type {
-            DsaType::SlhDsaSha2_128f => verify_slh!(slh_dsa_sha2_128f, pk, msg, signature),
-            DsaType::SlhDsaSha2_128s => verify_slh!(slh_dsa_sha2_128s, pk, msg, signature),
-            DsaType::SlhDsaSha2_192f => verify_slh!(slh_dsa_sha2_192f, pk, msg, signature),
-            DsaType::SlhDsaSha2_192s => verify_slh!(slh_dsa_sha2_192s, pk, msg, signature),
-            DsaType::SlhDsaSha2_256f => verify_slh!(slh_dsa_sha2_256f, pk, msg, signature),
-            DsaType::SlhDsaSha2_256s => verify_slh!(slh_dsa_sha2_256s, pk, msg, signature),
-            DsaType::SlhDsaShake128f => verify_slh!(slh_dsa_shake_128f, pk, msg, signature),
-            DsaType::SlhDsaShake128s => verify_slh!(slh_dsa_shake_128s, pk, msg, signature),
-            DsaType::SlhDsaShake192f => verify_slh!(slh_dsa_shake_192f, pk, msg, signature),
-            DsaType::SlhDsaShake192s => verify_slh!(slh_dsa_shake_192s, pk, msg, signature),
-            DsaType::SlhDsaShake256f => verify_slh!(slh_dsa_shake_256f, pk, msg, signature),
-            DsaType::SlhDsaShake256s => verify_slh!(slh_dsa_shake_256s, pk, msg, signature),
-            _ => Err(QuantCryptError::NotImplemented),
-        }
-    }
-
-    /// Get DSA metadata information such as the key lengths,
-    /// size of signature, etc.
-    fn get_dsa_info(&self) -> DsaInfo {
-        self.dsa_info.clone()
-    }
-
-    fn get_public_key(&self, sk: &[u8]) -> Result<Vec<u8>> {
-        match self.dsa_info.dsa_type {
-            DsaType::SlhDsaSha2_128f => get_public_key!(slh_dsa_sha2_128f, sk),
-            DsaType::SlhDsaSha2_128s => get_public_key!(slh_dsa_sha2_128s, sk),
-            DsaType::SlhDsaSha2_192f => get_public_key!(slh_dsa_sha2_192f, sk),
-            DsaType::SlhDsaSha2_192s => get_public_key!(slh_dsa_sha2_192s, sk),
-            DsaType::SlhDsaSha2_256f => get_public_key!(slh_dsa_sha2_256f, sk),
-            DsaType::SlhDsaSha2_256s => get_public_key!(slh_dsa_sha2_256s, sk),
-            DsaType::SlhDsaShake128f => get_public_key!(slh_dsa_shake_128f, sk),
-            DsaType::SlhDsaShake128s => get_public_key!(slh_dsa_shake_128s, sk),
-            DsaType::SlhDsaShake192f => get_public_key!(slh_dsa_shake_192f, sk),
-            DsaType::SlhDsaShake192s => get_public_key!(slh_dsa_shake_192s, sk),
-            DsaType::SlhDsaShake256f => get_public_key!(slh_dsa_shake_256f, sk),
-            DsaType::SlhDsaShake256s => get_public_key!(slh_dsa_shake_256s, sk),
+            PrehashDsaType::SlhDsaSha2_128f => {
+                verify_slh!(slh_dsa_sha2_128f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaSha2_128s => {
+                verify_slh!(slh_dsa_sha2_128s, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaSha2_192f => {
+                verify_slh!(slh_dsa_sha2_192f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaSha2_192s => {
+                verify_slh!(slh_dsa_sha2_192s, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaSha2_256f => {
+                verify_slh!(slh_dsa_sha2_256f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaSha2_256s => {
+                verify_slh!(slh_dsa_sha2_256s, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake128f => {
+                verify_slh!(slh_dsa_shake_128f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake128s => {
+                verify_slh!(slh_dsa_shake_128s, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake192f => {
+                verify_slh!(slh_dsa_shake_192f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake192s => {
+                verify_slh!(slh_dsa_shake_192s, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake256f => {
+                verify_slh!(slh_dsa_shake_256f, pk, msg, signature, ctx)
+            }
+            PrehashDsaType::SlhDsaShake256s => {
+                verify_slh!(slh_dsa_shake_256s, pk, msg, signature, ctx)
+            }
             _ => Err(QuantCryptError::NotImplemented),
         }
     }
@@ -239,12 +274,11 @@ impl Dsa for SlhDsaManager {
 mod tests {
     use super::*;
     use crate::certificates::Certificate;
-    use crate::dsa::common::dsa_type::DsaType;
     use crate::dsa::common::macros::test_dsa;
 
     #[test]
     fn test_slh_dsa_sha2_128s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_128s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_128s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -255,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_sha2_128f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_128f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_128f);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -266,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_sha2_192s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_192s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_192s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -277,7 +311,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_sha2_192f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_192f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_192f);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -288,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_sha2_256s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_256s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_256s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -299,7 +333,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_sha2_256f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaSha2_256f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaSha2_256f);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -310,7 +344,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_128s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake128s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake128s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -321,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_128f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake128f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake128f);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -332,7 +366,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_192s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake192s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake192s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -343,7 +377,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_192f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake192f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake192f);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -354,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_256s() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake256s);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake256s);
         test_dsa!(dsa);
 
         let cert_bytes =
@@ -365,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_slh_dsa_shake_256f() {
-        let dsa = SlhDsaManager::new(DsaType::SlhDsaShake256f);
+        let dsa = SlhDsaManager::new(PrehashDsaType::SlhDsaShake256f);
         test_dsa!(dsa);
 
         let cert_bytes =

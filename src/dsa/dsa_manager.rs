@@ -72,19 +72,19 @@ const COMPOSITE_DSA_TYPES: [PrehashDsaType; 28] = [
     PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512,
 ];
 
-const SLH_DSA_TYPES: [DsaType; 12] = [
-    DsaType::SlhDsaSha2_128s,
-    DsaType::SlhDsaSha2_128f,
-    DsaType::SlhDsaSha2_192s,
-    DsaType::SlhDsaSha2_192f,
-    DsaType::SlhDsaSha2_256s,
-    DsaType::SlhDsaSha2_256f,
-    DsaType::SlhDsaShake128s,
-    DsaType::SlhDsaShake128f,
-    DsaType::SlhDsaShake192s,
-    DsaType::SlhDsaShake192f,
-    DsaType::SlhDsaShake256s,
-    DsaType::SlhDsaShake256f,
+const SLH_DSA_TYPES: [PrehashDsaType; 12] = [
+    PrehashDsaType::SlhDsaSha2_128s,
+    PrehashDsaType::SlhDsaSha2_128f,
+    PrehashDsaType::SlhDsaSha2_192s,
+    PrehashDsaType::SlhDsaSha2_192f,
+    PrehashDsaType::SlhDsaSha2_256s,
+    PrehashDsaType::SlhDsaSha2_256f,
+    PrehashDsaType::SlhDsaShake128s,
+    PrehashDsaType::SlhDsaShake128f,
+    PrehashDsaType::SlhDsaShake192s,
+    PrehashDsaType::SlhDsaShake192f,
+    PrehashDsaType::SlhDsaShake256s,
+    PrehashDsaType::SlhDsaShake256f,
 ];
 
 // Implement clone
@@ -95,14 +95,14 @@ pub enum DsaManager {
     Rsa(RsaDsaManager),
     /// EC DSA manager
     Ec(EcDsaManager),
-    /// SLH DSA manager
-    Slh(SlhDsaManager),
 }
 
 // Implement clone
 #[derive(Clone)]
 /// Enum to represent the different types of pre-hash DSA managers
 pub enum PrehashDsaManager {
+    /// SLH DSA manager
+    Slh(SlhDsaManager),
     /// ML DSA manager
     Ml(MlDsaManager),
     /// Composite DSA manager
@@ -118,9 +118,6 @@ impl Dsa for DsaManager {
             _ if RSA_DSA_TYPES.contains(&dsa_type) => {
                 DsaManager::Rsa(RsaDsaManager::new(dsa_type)?)
             }
-            _ if SLH_DSA_TYPES.contains(&dsa_type) => {
-                DsaManager::Slh(SlhDsaManager::new(dsa_type)?)
-            }
             _ if EC_DSA_TYPES.contains(&dsa_type) => DsaManager::Ec(EcDsaManager::new(dsa_type)?),
             _ => {
                 panic!("Not implemented");
@@ -133,7 +130,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.key_gen(),
             DsaManager::Ec(ec) => ec.key_gen(),
-            DsaManager::Slh(slh) => slh.key_gen(),
         }
     }
 
@@ -141,7 +137,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.key_gen_with_rng(rng),
             DsaManager::Ec(ec) => ec.key_gen_with_rng(rng),
-            DsaManager::Slh(slh) => slh.key_gen_with_rng(rng),
         }
     }
 
@@ -149,7 +144,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.sign(sk, msg),
             DsaManager::Ec(ec) => ec.sign(sk, msg),
-            DsaManager::Slh(slh) => slh.sign(sk, msg),
         }
     }
 
@@ -157,7 +151,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.verify(pk, msg, sig),
             DsaManager::Ec(ec) => ec.verify(pk, msg, sig),
-            DsaManager::Slh(slh) => slh.verify(pk, msg, sig),
         }
     }
 
@@ -165,7 +158,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.get_dsa_info(),
             DsaManager::Ec(ec) => ec.get_dsa_info(),
-            DsaManager::Slh(slh) => slh.get_dsa_info(),
         }
     }
 
@@ -173,7 +165,6 @@ impl Dsa for DsaManager {
         match self {
             DsaManager::Rsa(rsa) => rsa.get_public_key(sk),
             DsaManager::Ec(ec) => ec.get_public_key(sk),
-            DsaManager::Slh(slh) => slh.get_public_key(sk),
         }
     }
 }
@@ -190,6 +181,9 @@ impl PrehashDsa for PrehashDsaManager {
             _ if COMPOSITE_DSA_TYPES.contains(&dsa_type) => {
                 PrehashDsaManager::Composite(CompositeDsaManager::new(dsa_type)?)
             }
+            _ if SLH_DSA_TYPES.contains(&dsa_type) => {
+                PrehashDsaManager::Slh(SlhDsaManager::new(dsa_type)?)
+            }
             _ => {
                 panic!("Not implemented");
             }
@@ -201,6 +195,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.key_gen(),
             PrehashDsaManager::Composite(composite) => composite.key_gen(),
+            PrehashDsaManager::Slh(slh) => slh.key_gen(),
         }
     }
 
@@ -208,6 +203,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.key_gen_with_rng(rng),
             PrehashDsaManager::Composite(composite) => composite.key_gen_with_rng(rng),
+            PrehashDsaManager::Slh(slh) => slh.key_gen_with_rng(rng),
         }
     }
 
@@ -215,6 +211,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.sign_with_ctx(sk, msg, ctx),
             PrehashDsaManager::Composite(composite) => composite.sign_with_ctx(sk, msg, ctx),
+            PrehashDsaManager::Slh(slh) => slh.sign_with_ctx(sk, msg, ctx),
         }
     }
 
@@ -228,6 +225,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.verify_with_ctx(pk, msg, sig, ctx),
             PrehashDsaManager::Composite(composite) => composite.verify_with_ctx(pk, msg, sig, ctx),
+            PrehashDsaManager::Slh(slh) => slh.verify_with_ctx(pk, msg, sig, ctx),
         }
     }
 
@@ -235,6 +233,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.get_dsa_info(),
             PrehashDsaManager::Composite(composite) => composite.get_dsa_info(),
+            PrehashDsaManager::Slh(slh) => slh.get_dsa_info(),
         }
     }
 
@@ -242,6 +241,7 @@ impl PrehashDsa for PrehashDsaManager {
         match self {
             PrehashDsaManager::Ml(ml) => ml.get_public_key(sk),
             PrehashDsaManager::Composite(composite) => composite.get_public_key(sk),
+            PrehashDsaManager::Slh(slh) => slh.get_public_key(sk),
         }
     }
 }
@@ -256,7 +256,6 @@ mod tests {
         let mut all_dsas: Vec<DsaType> = Vec::new();
         all_dsas.extend_from_slice(&RSA_DSA_TYPES);
         all_dsas.extend_from_slice(&EC_DSA_TYPES);
-        all_dsas.extend_from_slice(&SLH_DSA_TYPES);
 
         // This is just to test that the manager can create all DSA types
         for dsa_type in all_dsas {
@@ -270,6 +269,7 @@ mod tests {
         let mut all_dsas: Vec<PrehashDsaType> = Vec::new();
         all_dsas.extend_from_slice(&ML_DSA_TYPES);
         all_dsas.extend_from_slice(&COMPOSITE_DSA_TYPES);
+        all_dsas.extend_from_slice(&SLH_DSA_TYPES);
 
         // This is just to test that the manager can create all DSA types
         for dsa_type in all_dsas {

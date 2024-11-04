@@ -71,21 +71,7 @@ impl DsaAlgorithm {
 
     /// Get the corresponding `DsaType` for the algorithm
     pub(crate) fn get_dsa_type(&self) -> Option<DsaType> {
-        match self {
-            DsaAlgorithm::SlhDsaSha2_128s => Some(DsaType::SlhDsaSha2_128s),
-            DsaAlgorithm::SlhDsaSha2_128f => Some(DsaType::SlhDsaSha2_128f),
-            DsaAlgorithm::SlhDsaSha2_192s => Some(DsaType::SlhDsaSha2_192s),
-            DsaAlgorithm::SlhDsaSha2_192f => Some(DsaType::SlhDsaSha2_192f),
-            DsaAlgorithm::SlhDsaSha2_256s => Some(DsaType::SlhDsaSha2_256s),
-            DsaAlgorithm::SlhDsaSha2_256f => Some(DsaType::SlhDsaSha2_256f),
-            DsaAlgorithm::SlhDsaShake128s => Some(DsaType::SlhDsaShake128s),
-            DsaAlgorithm::SlhDsaShake128f => Some(DsaType::SlhDsaShake128f),
-            DsaAlgorithm::SlhDsaShake192s => Some(DsaType::SlhDsaShake192s),
-            DsaAlgorithm::SlhDsaShake192f => Some(DsaType::SlhDsaShake192f),
-            DsaAlgorithm::SlhDsaShake256s => Some(DsaType::SlhDsaShake256s),
-            DsaAlgorithm::SlhDsaShake256f => Some(DsaType::SlhDsaShake256f),
-            _ => None,
-        }
+        None
     }
 
     /// Get the corresponding `PrehashDsaType` for the algorithm
@@ -162,7 +148,19 @@ impl DsaAlgorithm {
                 Some(PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512)
             }
             DsaAlgorithm::HashMlDsa87Ed448Sha512 => Some(PrehashDsaType::HashMlDsa87Ed448Sha512),
-            _ => None,
+
+            DsaAlgorithm::SlhDsaSha2_128s => Some(PrehashDsaType::SlhDsaSha2_128s),
+            DsaAlgorithm::SlhDsaSha2_128f => Some(PrehashDsaType::SlhDsaSha2_128f),
+            DsaAlgorithm::SlhDsaSha2_192s => Some(PrehashDsaType::SlhDsaSha2_192s),
+            DsaAlgorithm::SlhDsaSha2_192f => Some(PrehashDsaType::SlhDsaSha2_192f),
+            DsaAlgorithm::SlhDsaSha2_256s => Some(PrehashDsaType::SlhDsaSha2_256s),
+            DsaAlgorithm::SlhDsaSha2_256f => Some(PrehashDsaType::SlhDsaSha2_256f),
+            DsaAlgorithm::SlhDsaShake128s => Some(PrehashDsaType::SlhDsaShake128s),
+            DsaAlgorithm::SlhDsaShake128f => Some(PrehashDsaType::SlhDsaShake128f),
+            DsaAlgorithm::SlhDsaShake192s => Some(PrehashDsaType::SlhDsaShake192s),
+            DsaAlgorithm::SlhDsaShake192f => Some(PrehashDsaType::SlhDsaShake192f),
+            DsaAlgorithm::SlhDsaShake256s => Some(PrehashDsaType::SlhDsaShake256s),
+            DsaAlgorithm::SlhDsaShake256f => Some(PrehashDsaType::SlhDsaShake256f),
         }
     }
 

@@ -25,19 +25,6 @@ impl SKLen for DsaType {
             DsaType::EcdsaP256SHA256 => Some(32),
             DsaType::EcdsaBrainpoolP256r1SHA256 => Some(32),
 
-            DsaType::SlhDsaSha2_128s => Some(32 * 2),
-            DsaType::SlhDsaSha2_128f => Some(32 * 2),
-            DsaType::SlhDsaSha2_192s => Some(48 * 2),
-            DsaType::SlhDsaSha2_192f => Some(48 * 2),
-            DsaType::SlhDsaSha2_256s => Some(64 * 2),
-            DsaType::SlhDsaSha2_256f => Some(64 * 2),
-            DsaType::SlhDsaShake128s => Some(32 * 2),
-            DsaType::SlhDsaShake128f => Some(32 * 2),
-            DsaType::SlhDsaShake192s => Some(48 * 2),
-            DsaType::SlhDsaShake192f => Some(48 * 2),
-            DsaType::SlhDsaShake256s => Some(64 * 2),
-            DsaType::SlhDsaShake256f => Some(64 * 2),
-
             DsaType::EcdsaP384SHA384 => Some(48),
             DsaType::EcdsaBrainpoolP384r1SHA384 => Some(48),
             DsaType::Ed25519 => Some(32),
@@ -92,6 +79,19 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => Some(4896 + 48 + 10), // 4954
             PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => Some(4896 + 48 + 10), // 4954
             PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(4896 + 57 + 10), // 4963
+
+            PrehashDsaType::SlhDsaSha2_128s => Some(32 * 2),
+            PrehashDsaType::SlhDsaSha2_128f => Some(32 * 2),
+            PrehashDsaType::SlhDsaSha2_192s => Some(48 * 2),
+            PrehashDsaType::SlhDsaSha2_192f => Some(48 * 2),
+            PrehashDsaType::SlhDsaSha2_256s => Some(64 * 2),
+            PrehashDsaType::SlhDsaSha2_256f => Some(64 * 2),
+            PrehashDsaType::SlhDsaShake128s => Some(32 * 2),
+            PrehashDsaType::SlhDsaShake128f => Some(32 * 2),
+            PrehashDsaType::SlhDsaShake192s => Some(48 * 2),
+            PrehashDsaType::SlhDsaShake192f => Some(48 * 2),
+            PrehashDsaType::SlhDsaShake256s => Some(64 * 2),
+            PrehashDsaType::SlhDsaShake256f => Some(64 * 2),
         }
     }
 }

@@ -46,6 +46,21 @@ pub enum PrehashDsaType {
     HashMlDsa87EcdsaP384Sha512,
     HashMlDsa87EcdsaBrainpoolP384r1Sha512,
     HashMlDsa87Ed448Sha512,
+
+    // Pure SLH-DSA
+    // SLH DSA
+    SlhDsaSha2_128s,
+    SlhDsaSha2_128f,
+    SlhDsaSha2_192s,
+    SlhDsaSha2_192f,
+    SlhDsaSha2_256s,
+    SlhDsaSha2_256f,
+    SlhDsaShake128s,
+    SlhDsaShake128f,
+    SlhDsaShake192s,
+    SlhDsaShake192f,
+    SlhDsaShake256s,
+    SlhDsaShake256f,
 }
 
 impl PrehashDsaType {
