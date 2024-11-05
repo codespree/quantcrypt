@@ -47,7 +47,7 @@ macro_rules! sign_slh {
                 HashType::Shake128 => Ph::SHAKE128,
                 HashType::Shake256 => Ph::SHAKE256,
             };
-            // Try signing the message
+            // Try signing the message with prehashing
             sk.try_hash_sign($msg, $ctx, &ph, true)
                 .map_err(|_| QuantCryptError::SignatureFailed)?
         } else {
