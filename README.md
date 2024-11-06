@@ -8,6 +8,10 @@ interface for generating key pairs, certificates, signing and verifying messages
 
 A secondary goal is to provide a set of cryptographic algorithms that are compatible with existing X.509, PKIX, and CMS data structures and protocols and to support the efforts of the [LAMPS Working Group](https://datatracker.ietf.org/wg/lamps/about/) in the IETF especially the [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) and [draft-ietf-lamps-pq-composite-kem](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/) drafts.
 
+## Warning
+
+This library follows many drafts from IETF. Drafts are subject to change as is this library. Please use with caution and for testing purposes only. This library also depends on undelying cryptographic libraries which may have their own vulnerabilities. Please use with caution. If you think something needs to be fixed, please open an issue.
+
 ## Including quantcrypt in your project
 
 Import quantcrypt into your project by adding the following lines to your Cargo.toml.
