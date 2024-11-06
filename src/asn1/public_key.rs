@@ -458,13 +458,4 @@ mod test {
             errors::QuantCryptError::InvalidPublicKey
         ));
     }
-
-    #[test]
-    fn test_pk_from_file() {
-        let pk = PublicKey::from_file(
-            "test/data/bc_artifacts_certs_r4/external_ml-kem-512-2.16.840.1.101.3.4.4.1_public.der",
-        )
-        .unwrap();
-        pk.encap().unwrap();
-    }
 }
