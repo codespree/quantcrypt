@@ -10,7 +10,7 @@ A secondary goal is to provide a set of cryptographic algorithms that are compat
 
 ## Warning
 
-This library follows many drafts from IETF. Drafts are subject to change as is this library. Please use with caution and for testing purposes only. This library also depends on undelying cryptographic libraries which may have their own vulnerabilities. Please use with caution. If you think something needs to be fixed, please open an issue.
+This library follows many drafts from IETF. Drafts are subject to change as is this library. Please use with caution and for testing purposes only. This library also depends on underlying cryptographic libraries which may have their own vulnerabilities and bugs. If you think something needs to be fixed, please open an issue.
 
 ## Including quantcrypt in your project
 
