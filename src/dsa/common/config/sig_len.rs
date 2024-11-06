@@ -24,8 +24,6 @@ impl SigLen for DsaType {
             // P256 and P384 variations do not have a fixed sig_len
             DsaType::EcdsaP256SHA256 => None,
             DsaType::EcdsaBrainpoolP256r1SHA256 => None,
-
-            // P256 and P384 variations do not have a fixed sig_len
             DsaType::EcdsaP384SHA384 => None,
             DsaType::EcdsaBrainpoolP384r1SHA384 => None,
 
@@ -47,9 +45,9 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::MlDsa65 => Some(3309),
             PrehashDsaType::MlDsa87 => Some(4627),
 
-            PrehashDsaType::HashMlDsa44 => None,
-            PrehashDsaType::HashMlDsa65 => None,
-            PrehashDsaType::HashMlDsa87 => None,
+            PrehashDsaType::HashMlDsa44 => Some(2420),
+            PrehashDsaType::HashMlDsa65 => Some(3309),
+            PrehashDsaType::HashMlDsa87 => Some(4627),
 
             // pq_pk + trad_pk + overhead
             PrehashDsaType::MlDsa44Rsa2048Pss => Some(2420 + 256 + 14), // 2690
@@ -82,6 +80,7 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => None,        // None
             PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(4627 + 114 + 12),      // 4753
 
+            // Pure SLH-DSA, aligned with fips205 implementation
             PrehashDsaType::SlhDsaSha2_128s => Some(7856),
             PrehashDsaType::SlhDsaSha2_128f => Some(17088),
             PrehashDsaType::SlhDsaSha2_192s => Some(16224),
@@ -96,18 +95,18 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::SlhDsaShake256f => Some(49856),
 
             // Prehash SLH-DSA
-            PrehashDsaType::HashSlhDsaSha2_128s => None,
-            PrehashDsaType::HashSlhDsaSha2_128f => None,
-            PrehashDsaType::HashSlhDsaSha2_192s => None,
-            PrehashDsaType::HashSlhDsaSha2_192f => None,
-            PrehashDsaType::HashSlhDsaSha2_256s => None,
-            PrehashDsaType::HashSlhDsaSha2_256f => None,
-            PrehashDsaType::HashSlhDsaShake128s => None,
-            PrehashDsaType::HashSlhDsaShake128f => None,
-            PrehashDsaType::HashSlhDsaShake192s => None,
-            PrehashDsaType::HashSlhDsaShake192f => None,
-            PrehashDsaType::HashSlhDsaShake256s => None,
-            PrehashDsaType::HashSlhDsaShake256f => None,
+            PrehashDsaType::HashSlhDsaSha2_128s => Some(7856),
+            PrehashDsaType::HashSlhDsaSha2_128f => Some(17088),
+            PrehashDsaType::HashSlhDsaSha2_192s => Some(16224),
+            PrehashDsaType::HashSlhDsaSha2_192f => Some(35664),
+            PrehashDsaType::HashSlhDsaSha2_256s => Some(29792),
+            PrehashDsaType::HashSlhDsaSha2_256f => Some(49856),
+            PrehashDsaType::HashSlhDsaShake128s => Some(7856),
+            PrehashDsaType::HashSlhDsaShake128f => Some(17088),
+            PrehashDsaType::HashSlhDsaShake192s => Some(16224),
+            PrehashDsaType::HashSlhDsaShake192f => Some(35664),
+            PrehashDsaType::HashSlhDsaShake256s => Some(29792),
+            PrehashDsaType::HashSlhDsaShake256f => Some(49856),
         }
     }
 }
