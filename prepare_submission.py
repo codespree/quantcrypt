@@ -84,3 +84,4 @@ def prepare_cms_submission(cert_format: str = ".der"):
 if __name__ == "__main__":
     prepare_dsa_submission()
     prepare_cms_submission()
+    
