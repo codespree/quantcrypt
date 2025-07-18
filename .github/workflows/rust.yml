@@ -16,14 +16,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Set up Rust
+      uses: actions/setup-rust@v1
+      with:
+        rust-version: 1.81.0
+
     - name: Install rustfmt
       run: rustup component add rustfmt
+
+    - name: Install clippy
+      run: rustup component add clippy
 
     - name: Lint
       run: cargo fmt --all -- --check
 
     - name: Clippy
-      run: cargo clippy
+      run: cargo clippy -- -D warnings
 
     - name: Check
       run: cargo check
@@ -33,4 +41,3 @@ jobs:
 
     - name: Run tests
       run: cargo test --release
-
