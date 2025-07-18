@@ -16,16 +16,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Rust
-      uses: actions/setup-rust@v1
+    - name: Set up Rust toolchain
+      uses: actions-rs/toolchain@v1
       with:
-        rust-version: 1.81.0
-
-    - name: Install rustfmt
-      run: rustup component add rustfmt
-
-    - name: Install clippy
-      run: rustup component add clippy
+        toolchain: 1.81.0
+        components: rustfmt, clippy
+        override: true
 
     - name: Lint
       run: cargo fmt --all -- --check
