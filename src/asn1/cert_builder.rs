@@ -405,7 +405,6 @@ mod test {
             let (ct, ss) = pk_kem.encap().unwrap();
             dump(format!("{save_dir}/{}_ciphertext.bin", fname), &ct);
             dump(format!("{save_dir}/{}_ss.bin", fname), &ss);
-            // assert_eq!(sk_kem.decap(&ct).unwrap(), ss);
         }
     }
 }
