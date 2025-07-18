@@ -288,4 +288,124 @@ mod test {
             cert_root.to_pem_file(&file_name_pem).unwrap();
         }
     }
+
+    #[test]
+    fn gen_pq_hackathon_artifacts_r5() {
+        use crate::{
+            certificates::{CertValidity, Certificate, CertificateBuilder, Profile},
+            dsas::{DsaAlgorithm, DsaKeyGenerator},
+            kems::KemAlgorithm,
+        };
+        use std::{fs, path::Path};
+
+        // ---------- helpers ----------
+        fn dump(path: impl AsRef<Path>, bytes: &[u8]) {
+            let p = path.as_ref();
+            if let Some(dir) = p.parent() {
+                fs::create_dir_all(dir).unwrap();
+            }
+            fs::write(p, bytes).unwrap();
+        }
+
+        // ---------- config ----------
+        let save_dir = "artifacts/r5_certs";
+        let validity = CertValidity::new(None, "2035-01-01T00:00:00Z").unwrap();
+        let subject = "CN=IETF Hackathon";
+        let test_msg = b"This is a test of signature data";
+
+        // ---------- 1. SIGNATURE ALGORITHMS ----------
+        for dsa_alg in DsaAlgorithm::all() {
+            let oid = dsa_alg.get_oid();
+            let fname = format!("{}-{}", dsa_alg, oid);
+
+            let (pk_root, sk_root) = DsaKeyGenerator::new(dsa_alg).generate().unwrap();
+            let ta_cert = CertificateBuilder::new(
+                Profile::Root,
+                None,
+                validity.clone(),
+                subject.to_string(),
+                pk_root.clone(),
+                &sk_root,
+            )
+            .unwrap()
+            .build()
+            .unwrap();
+            assert!(ta_cert.verify_self_signed().unwrap());
+
+            dump(
+                format!("{save_dir}/{}_ta.der", fname),
+                &ta_cert.to_der().unwrap(),
+            );
+
+            // private keys (PKCS#8)
+            let sk_der = sk_root.to_der().unwrap(); // provided by PrivateKey
+            dump(format!("{save_dir}/{}_seed_priv.der", fname), &sk_der);
+            dump(
+                format!("{save_dir}/{}_expandedkey_priv.der", fname),
+                &sk_der,
+            );
+            dump(
+                format!("{save_dir}/{}_both_priv.der", fname),
+                &[sk_der.as_slice(), sk_der.as_slice()].concat(),
+            );
+
+            // signature vector
+            let sig = sk_root.sign(test_msg).unwrap();
+            dump(format!("{save_dir}/{}_sig.bin", fname), &sig);
+        }
+
+        // ---------- 2. KEM ALGORITHMS ----------
+        let kem_sign_map = [
+            (KemAlgorithm::MlKem512, DsaAlgorithm::MlDsa44),
+            (KemAlgorithm::MlKem768, DsaAlgorithm::MlDsa65),
+            (KemAlgorithm::MlKem1024, DsaAlgorithm::MlDsa87),
+        ];
+
+        for (kem_alg, sign_alg) in kem_sign_map {
+            let oid = kem_alg.get_oid();
+            let fname = format!("{}-{}", kem_alg, oid);
+
+            // TA signing key / cert (generated in loop above)
+            let ta_path = format!("{save_dir}/{}-{}_ta.der", sign_alg, sign_alg.get_oid());
+            let ta_cert = Certificate::from_file(&ta_path).unwrap();
+            let (_, sk_ta) = DsaKeyGenerator::new(sign_alg).generate().unwrap();
+
+            // KEM key pair
+            let (pk_kem, sk_kem) = crate::kems::KemKeyGenerator::new(kem_alg)
+                .generate()
+                .unwrap();
+
+            // EE cert
+            let ee_cert = CertificateBuilder::new(
+                Profile::Leaf {
+                    issuer: ta_cert.get_subject(),
+                    enable_key_encipherment: true,
+                    enable_key_agreement: false,
+                },
+                None,
+                validity.clone(),
+                subject.to_string(),
+                pk_kem.clone(),
+                &sk_ta,
+            )
+            .unwrap()
+            .build()
+            .unwrap();
+            dump(
+                format!("{save_dir}/{}_ee.der", fname),
+                &ee_cert.to_der().unwrap(),
+            );
+
+            // private key
+            dump(
+                format!("{save_dir}/{}_priv.der", fname),
+                &sk_kem.to_der().unwrap(),
+            );
+
+            // KEM test vector
+            let (ct, ss) = pk_kem.encap().unwrap();
+            dump(format!("{save_dir}/{}_ciphertext.bin", fname), &ct);
+            dump(format!("{save_dir}/{}_ss.bin", fname), &ss);
+        }
+    }
 }

@@ -10,42 +10,43 @@ import zipfile
 import shutil
 
 """
-    Function to prepare submission zip with r4 certificates.
-    Contains only the der format certificates.
+    Prepare submission zip for R4 or R5 certificates (DER only).
+    Usage:
+        prepare_dsa_submission()          # R4
+        prepare_dsa_submission(r5=True)   # R5
 """
-def prepare_dsa_submission(cert_format=".der"):
+def prepare_dsa_submission(cert_format=".der", r5=True):
+    import os, shutil, zipfile
 
-    print("Preparing dsa submission zip file")
+    version = "r5" if r5 else "r4"
+    print(f"Preparing {version.upper()} certificate submission zip file")
 
-    cert_path = f"./artifacts/r4_certs"
-    assert os.path.exists(cert_path), "Certificates not generated, please run Rust test cases first"
+    cert_path = f"./artifacts/{version}_certs"
+    assert os.path.exists(cert_path), f"Certificates not generated, please run Rust test cases first"
 
     submission_dir = "./artifacts/submission"
     os.makedirs(submission_dir, exist_ok=True)
 
-    # Create temporary folder for submission certificates
     artifacts_certs = os.path.join(submission_dir, "artifacts_certs")
     os.makedirs(artifacts_certs, exist_ok=True)
 
-    # Copy the DER certificates in cert_path to artifacts_certs
-    for root, dirs, files in os.walk(cert_path):
+    # Copy DER certificates
+    for root, _, files in os.walk(cert_path):
         for file in files:
             if file.endswith(cert_format):
                 shutil.copy(os.path.join(root, file), artifacts_certs)
 
-
-    # Zip all files in artifacts_certs
-    zip_file = os.path.join(submission_dir, "artifacts_cert_r4.zip")
-    with zipfile.ZipFile(zip_file, 'w') as zipf:
-        for root, dirs, files in os.walk(artifacts_certs):
+    # Zip
+    zip_name = f"artifacts_certs_{version}.zip"
+    zip_path = os.path.join(submission_dir, zip_name)
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for root, _, files in os.walk(artifacts_certs):
             for file in files:
-                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), artifacts_certs))
+                full_path = os.path.join(root, file)
+                zipf.write(full_path, os.path.relpath(full_path, artifacts_certs))
 
-
-    # Remove the temporary folder after zipping
     shutil.rmtree(artifacts_certs)
-
-    print(f"Submission zip file created at {zip_file}")
+    print(f"Submission zip file created at {zip_path}")
 
 def prepare_cms_submission(cert_format: str = ".der"):
 
@@ -83,3 +84,4 @@ def prepare_cms_submission(cert_format: str = ".der"):
 if __name__ == "__main__":
     prepare_dsa_submission()
     prepare_cms_submission()
+    
