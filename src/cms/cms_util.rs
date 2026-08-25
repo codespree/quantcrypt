@@ -280,7 +280,7 @@ mod tests {
 
         let ee = Certificate::from_der(ee_bytes).unwrap();
         let result = ta.verify_child(&ee).unwrap();
-        assert_eq!(result, true);
+        assert!(result);
 
         let enveloped = include_bytes!("../../test/data/cms/2.16.840.1.101.3.4.4.1_MlKem512_kemri_id-alg-hkdf-with-sha256_ukm.der");
 

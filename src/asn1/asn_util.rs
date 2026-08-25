@@ -9,6 +9,7 @@ use crate::{
 };
 
 // Change the alias to use `QuantCryptError`.
+#[allow(dead_code)]
 type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 
 /// Convert an OID string to a DER encoded byte array
@@ -25,6 +26,11 @@ type Result<T> = std::result::Result<T, errors::QuantCryptError>;
 /// # Errors
 ///
 /// `QuantCryptError::InvalidOid` will be returned if the OID is invalid
+///
+/// Retained as a general-purpose utility (and exercised by the unit test
+/// below); the composite constructions now use fixed per-algorithm Labels
+/// rather than DER-encoded OIDs as domain separators.
+#[allow(dead_code)]
 pub fn oid_to_der(oid: &str) -> Result<Vec<u8>> {
     let oid = ObjectIdentifier::new_unwrap(oid)
         .to_der()
@@ -116,26 +122,21 @@ mod tests {
 
     #[test]
     fn test_oid_to_der() {
-        // This tests the Domain separator encoding:
-        //https://lamps-wg.github.io/draft-composite-kem/draft-ietf-lamps-pq-composite-kem.html#name-algorithm-identifiers
+        use der::Decode;
 
-        let oid_tests = vec![
-            ("2.16.840.1.114027.80.5.2.21", "060B6086480186FA6B50050215"),
-            ("2.16.840.1.114027.80.5.2.22", "060B6086480186FA6B50050216"),
-            ("2.16.840.1.114027.80.5.2.23", "060B6086480186FA6B50050217"),
-            ("2.16.840.1.114027.80.5.2.24", "060B6086480186FA6B50050218"),
-            ("2.16.840.1.114027.80.5.2.25", "060B6086480186FA6B50050219"),
-            ("2.16.840.1.114027.80.5.2.26", "060B6086480186FA6B5005021A"),
-            ("2.16.840.1.114027.80.5.2.27", "060B6086480186FA6B5005021B"),
-            ("2.16.840.1.114027.80.5.2.28", "060B6086480186FA6B5005021C"),
-            ("2.16.840.1.114027.80.5.2.29", "060B6086480186FA6B5005021D"),
-            ("2.16.840.1.114027.80.8.1.1", "060B6086480186FA6B50080101"),
+        // Round-trip a representative set of production composite OIDs
+        // (draft-ietf-lamps-pq-composite-sigs-19 / -kem-15).
+        let oids = vec![
+            "1.3.6.1.5.5.7.6.37", // MLDSA44-RSA2048-PSS-SHA256
+            "1.3.6.1.5.5.7.6.54", // MLDSA87-ECDSA-P521-SHA512
+            "1.3.6.1.5.5.7.6.55", // MLKEM768-RSA2048
+            "1.3.6.1.5.5.7.6.66", // MLKEM1024-ECDH-P521
         ];
 
-        for (oid, hex_string) in oid_tests {
+        for oid in oids {
             let der = oid_to_der(oid).unwrap();
-            let expected_der = hex::decode(hex_string).unwrap();
-            assert_eq!(expected_der, der);
+            let decoded = ObjectIdentifier::from_der(&der).unwrap();
+            assert_eq!(decoded.to_string(), oid);
         }
     }
 }

@@ -20,6 +20,7 @@ pub enum DsaType {
     Ed25519,
     Ed448,
     EcdsaBrainpoolP384r1SHA384,
+    EcdsaP521SHA512,
 }
 
 impl DsaType {

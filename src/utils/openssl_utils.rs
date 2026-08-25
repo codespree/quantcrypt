@@ -437,6 +437,29 @@ pub fn get_pk_from_sk_ec_based(sk: &[u8], nid: Nid) -> Result<Vec<u8>> {
     )?)
 }
 
+/// Convert a raw EC private scalar (big-endian field element, as produced by our
+/// EC key generation) into a DER-encoded RFC 5915 `ECPrivateKey` with named-curve
+/// parameters. This is the encoding required for the traditional component of a
+/// composite private key (draft-ietf-lamps-pq-composite-{sigs,kem}).
+pub fn ec_scalar_to_ec_private_key_der(nid: Nid, raw_scalar: &[u8]) -> Result<Vec<u8>> {
+    let mut ctx = BigNumContext::new()?;
+    let group = EcGroup::from_curve_name(nid)?;
+    let sk_bn = BigNum::from_slice(raw_scalar)?;
+    let pub_point = compute_public_key(&ctx, &group, &sk_bn)?;
+    // ctx is no longer needed after computing the public point.
+    let _ = &mut ctx;
+    let ec_key = EcKey::from_private_components(&group, &sk_bn, &pub_point)?;
+    Ok(ec_key.private_key_to_der()?)
+}
+
+/// Convert a DER-encoded RFC 5915 `ECPrivateKey` back into the raw private scalar
+/// (big-endian field element) understood by our EC signing/decapsulation code.
+/// Accepts keys with or without the optional public-key field.
+pub fn ec_private_key_der_to_scalar(der: &[u8]) -> Result<Vec<u8>> {
+    let ec_key = EcKey::private_key_from_der(der)?;
+    Ok(ec_key.private_key().to_vec())
+}
+
 /// Get the public key from a secret key for a PKey based method (not used currently)
 ///
 /// # Arguments
@@ -553,6 +576,7 @@ mod tests {
         let nids = [
             Nid::X9_62_PRIME256V1,
             Nid::SECP384R1,
+            Nid::SECP521R1,
             Nid::BRAINPOOL_P256R1,
             Nid::BRAINPOOL_P384R1,
         ];

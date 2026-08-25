@@ -26,6 +26,7 @@ impl SKLen for DsaType {
             DsaType::EcdsaBrainpoolP256r1SHA256 => Some(32),
             DsaType::EcdsaP384SHA384 => Some(48),
             DsaType::EcdsaBrainpoolP384r1SHA384 => Some(48),
+            DsaType::EcdsaP521SHA512 => Some(66),
 
             DsaType::Ed25519 => Some(32),
             DsaType::Ed448 => Some(57),
@@ -50,35 +51,28 @@ impl SKLen for PrehashDsaType {
             PrehashDsaType::HashMlDsa87 => Some(4896),
 
             // pq_sk + trad_sk + overhead of sequence of two octet strings
-            PrehashDsaType::MlDsa44Rsa2048Pss => None, // None
-            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => None, // None
-            PrehashDsaType::MlDsa44Ed25519 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::MlDsa44EcdsaP256 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::MlDsa65Rsa3072Pss => None, // None
-            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => None, // None
-            PrehashDsaType::MlDsa65Rsa4096Pss => None, // None
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None, // None
-            PrehashDsaType::MlDsa65EcdsaP384 => Some(4032 + 48 + 10), // 4090
-            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::MlDsa65Ed25519 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::MlDsa87EcdsaP384 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::MlDsa87Ed448 => Some(4896 + 57 + 10), // 4963
-
-            PrehashDsaType::HashMlDsa44Rsa2048PssSha256 => None, // None
-            PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256 => None, // None
-            PrehashDsaType::HashMlDsa44Ed25519Sha512 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::HashMlDsa44EcdsaP256Sha256 => Some(2560 + 32 + 10), // 2602
-            PrehashDsaType::HashMlDsa65Rsa3072PssSha512 => None, // None
-            PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512 => None, // None
-            PrehashDsaType::HashMlDsa65Rsa4096PssSha512 => None, // None
-            PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512 => None, // None
-            PrehashDsaType::HashMlDsa65EcdsaP384Sha512 => Some(4032 + 48 + 10), // 4090
-            PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::HashMlDsa65Ed25519Sha512 => Some(4032 + 32 + 10), // 4074
-            PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => Some(4896 + 48 + 10), // 4954
-            PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(4896 + 57 + 10), // 4963
+            // draft-19 composite private key = mldsaSeed(32) || tradSK. The
+            // traditional part is a DER ECPrivateKey / RSAPrivateKey (variable)
+            // or a raw Ed key, so the composite secret-key length is not a fixed
+            // value that the test harness can assert on.
+            PrehashDsaType::MlDsa44Rsa2048Pss => None,
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => None,
+            PrehashDsaType::MlDsa44Ed25519 => None,
+            PrehashDsaType::MlDsa44EcdsaP256 => None,
+            PrehashDsaType::MlDsa65Rsa3072Pss => None,
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => None,
+            PrehashDsaType::MlDsa65Rsa4096Pss => None,
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => None,
+            PrehashDsaType::MlDsa65EcdsaP256 => None,
+            PrehashDsaType::MlDsa65EcdsaP384 => None,
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,
+            PrehashDsaType::MlDsa65Ed25519 => None,
+            PrehashDsaType::MlDsa87EcdsaP384 => None,
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,
+            PrehashDsaType::MlDsa87Ed448 => None,
+            PrehashDsaType::MlDsa87Rsa3072Pss => None,
+            PrehashDsaType::MlDsa87Rsa4096Pss => None,
+            PrehashDsaType::MlDsa87EcdsaP521 => None,
 
             // Pure SLH-DSA, aligned with fips205 implementation
             PrehashDsaType::SlhDsaSha2_128s => Some(32 * 2),

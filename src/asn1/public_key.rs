@@ -371,27 +371,30 @@ mod test {
 
     #[test]
     fn test_composite_public_key() {
-        let pem_bytes = include_bytes!("../../test/data/mldsa44_ecdsa_p256_sha256_pk.pem");
-        let pem = std::str::from_utf8(pem_bytes).unwrap().trim();
-        let pk = PublicKey::from_pem(pem).unwrap();
+        use crate::dsa::api::algorithm::DsaAlgorithm;
+        use crate::dsa::api::key_generator::DsaKeyGenerator;
+
+        // Generate a fresh composite key (draft-19 MLDSA44-ECDSA-P256, OID
+        // 1.3.6.1.5.5.7.6.40) and exercise the PEM/DER round-trip.
+        let (pk, _) = DsaKeyGenerator::new(DsaAlgorithm::MlDsa44EcdsaP256)
+            .generate()
+            .unwrap();
 
         assert!(pk.is_composite());
-        assert_eq!(
-            pk.get_oid(),
-            PrehashDsaType::HashMlDsa44EcdsaP256Sha256.get_oid()
-        );
+        assert_eq!(pk.get_oid(), PrehashDsaType::MlDsa44EcdsaP256.get_oid());
 
-        let key_bytes = pk.get_key();
-        let pk2 = CompositePublicKey::from_der(&pk.oid, &key_bytes).unwrap();
+        let pem = pk.to_pem().unwrap();
+        let pk_parsed = PublicKey::from_pem(pem.trim()).unwrap();
+        assert_eq!(pk.oid, pk_parsed.oid);
 
-        assert_eq!(pk.oid, pk2.get_oid());
+        let key_bytes = pk_parsed.get_key();
+        // ML-DSA-44 public key length (the split point for the composite).
+        let pk2 = CompositePublicKey::from_der(&pk_parsed.oid, key_bytes, 1312).unwrap();
+        assert_eq!(pk_parsed.oid, pk2.get_oid());
 
         let pk2 = PublicKey::from_composite(&pk2).unwrap();
         let pem2 = pk2.to_pem().unwrap();
-        assert_eq!(pem, pem2.trim());
-
-        let oid = PrehashDsaType::HashMlDsa44EcdsaP256Sha256.get_oid();
-        assert_eq!(pk.oid, oid);
+        assert_eq!(pem.trim(), pem2.trim());
     }
 
     #[test]

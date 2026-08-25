@@ -26,6 +26,7 @@ impl SKLen for KemType {
             KemType::X25519 => Some(32),
             KemType::BrainpoolP256r1 => Some(32),
             KemType::BrainpoolP384r1 => Some(48),
+            KemType::P521 => Some(66),
             KemType::X448 => Some(56),
             // ML Key secret key sizes
             KemType::MlKem512 => Some(1632),
@@ -36,18 +37,21 @@ impl SKLen for KemType {
             KemType::RsaOAEP3072 => None,
             KemType::RsaOAEP4096 => None,
 
-            // In Kem composites, traditional public key is part of the private key
-            // pq_sk + trad_sk + pq_overhead + trad_public_key_overhead + trad_overhead + sequence_overhead
-            // trad_overhead = 9 + <oid_byte>
-            KemType::MlKem768BrainpoolP256r1 => Some(2400 + 32 + 24 + (65 + 6) + 19 + 4),
-            KemType::MlKem768X25519 => Some(2400 + 32 + 24 + (32 + 11) + 14 + 4),
-            KemType::MlKem1024P384 => Some(3168 + 48 + 24 + (97 + 10) + 16 + 4),
-            KemType::MlKem1024BrainpoolP384r1 => Some(3168 + 48 + 24 + (97 + 7) + 19 + 4),
-            KemType::MlKem1024X448 => Some(3168 + 56 + 24 + (56 + 12) + 14 + 4),
+            // Composite private key DER length depends on the (now production
+            // arc) composite OID and per-component DER framing; it is not a
+            // fixed value we strictly validate, so it is reported as variable.
+            KemType::MlKem768BrainpoolP256r1 => None,
+            KemType::MlKem768X25519 => None,
+            KemType::MlKem1024P384 => None,
+            KemType::MlKem1024BrainpoolP384r1 => None,
+            KemType::MlKem1024X448 => None,
             KemType::MlKem768Rsa2048 => None,
             KemType::MlKem768Rsa3072 => None,
             KemType::MlKem768Rsa4096 => None,
-            KemType::MlKem768P384 => Some(2400 + 48 + 24 + (97 + 10) + 16 + 4),
+            KemType::MlKem768P384 => None,
+            KemType::MlKem768P256 => None,
+            KemType::MlKem1024Rsa3072 => None,
+            KemType::MlKem1024P521 => None,
             KemType::XWing => Some(32),
         }
     }

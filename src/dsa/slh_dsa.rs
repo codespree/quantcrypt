@@ -46,6 +46,9 @@ macro_rules! sign_slh {
                 HashType::Sha512 => Ph::SHA512,
                 HashType::Shake128 => Ph::SHAKE128,
                 HashType::Shake256 => Ph::SHAKE256,
+                // SHAKE256/64 is only used by the composite ML-DSA pre-hash,
+                // never by SLH-DSA.
+                HashType::Shake256_64 => return Err(QuantCryptError::NotImplemented),
             };
             // Try signing the message with prehashing
             sk.try_hash_sign($msg, $ctx, &ph, true)
@@ -87,6 +90,9 @@ macro_rules! verify_slh {
                 HashType::Sha512 => Ph::SHA512,
                 HashType::Shake128 => Ph::SHAKE128,
                 HashType::Shake256 => Ph::SHAKE256,
+                // SHAKE256/64 is only used by the composite ML-DSA pre-hash,
+                // never by SLH-DSA.
+                HashType::Shake256_64 => return Err(QuantCryptError::NotImplemented),
             };
 
             Ok(pk.hash_verify($msg, &sig_buf, $ctx, &ph))

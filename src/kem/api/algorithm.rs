@@ -14,11 +14,14 @@ pub enum KemAlgorithm {
     MlKem768Rsa3072,
     MlKem768Rsa4096,
     MlKem768X25519,
+    MlKem768P256,
     MlKem768P384,
     MlKem768BrainpoolP256r1,
+    MlKem1024Rsa3072,
     MlKem1024P384,
     MlKem1024BrainpoolP384r1,
     MlKem1024X448,
+    MlKem1024P521,
 }
 
 impl KemAlgorithm {
@@ -39,11 +42,14 @@ impl KemAlgorithm {
             KemAlgorithm::MlKem768Rsa3072 => KemType::MlKem768Rsa3072,
             KemAlgorithm::MlKem768Rsa4096 => KemType::MlKem768Rsa4096,
             KemAlgorithm::MlKem768X25519 => KemType::MlKem768X25519,
+            KemAlgorithm::MlKem768P256 => KemType::MlKem768P256,
             KemAlgorithm::MlKem768P384 => KemType::MlKem768P384,
             KemAlgorithm::MlKem768BrainpoolP256r1 => KemType::MlKem768BrainpoolP256r1,
+            KemAlgorithm::MlKem1024Rsa3072 => KemType::MlKem1024Rsa3072,
             KemAlgorithm::MlKem1024P384 => KemType::MlKem1024P384,
             KemAlgorithm::MlKem1024BrainpoolP384r1 => KemType::MlKem1024BrainpoolP384r1,
             KemAlgorithm::MlKem1024X448 => KemType::MlKem1024X448,
+            KemAlgorithm::MlKem1024P521 => KemType::MlKem1024P521,
         }
     }
 

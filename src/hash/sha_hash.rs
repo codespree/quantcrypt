@@ -24,6 +24,7 @@ impl Hash for ShaHash {
             HashType::Sha512 => MessageDigest::sha512(),
             HashType::Shake128 => MessageDigest::shake_128(),
             HashType::Shake256 => MessageDigest::shake_256(),
+            HashType::Shake256_64 => MessageDigest::shake_256(),
         };
 
         Ok(ShaHash { hash_type, digest })
@@ -38,6 +39,15 @@ impl Hash for ShaHash {
         hasher
             .update(message)
             .map_err(|_| QuantCryptError::Unknown)?;
+        // SHAKE256/64 needs a 64-byte XOF output; the default finish() would
+        // return the digest's default length (32 bytes for SHAKE256).
+        if matches!(self.hash_type, HashType::Shake256_64) {
+            let mut buf = [0u8; 64];
+            hasher
+                .finish_xof(&mut buf)
+                .map_err(|_| QuantCryptError::Unknown)?;
+            return Ok(buf.to_vec());
+        }
         let msg = hasher.finish().map_err(|_| QuantCryptError::Unknown)?;
         Ok(msg.to_vec())
     }

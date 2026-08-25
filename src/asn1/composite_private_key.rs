@@ -1,205 +1,70 @@
-use der::asn1::OctetString;
 use der::zeroize::Zeroize;
-use der::{Decode, Encode};
-use der_derive::Sequence;
-use pkcs8::PrivateKeyInfo;
 
 use crate::QuantCryptError;
 
-use super::asn_util::is_dsa_oid;
-
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-#[derive(Debug, Clone, Sequence)]
-/// CompositeSignaturePrivateKey ::= SEQUENCE SIZE (2) OF OneAsymmetricKey
-/// CompositeKEMPrivateKey ::= SEQUENCE SIZE (2) OF OneAsymmetricKey
-struct CompositeKEMPrivateKey<'a> {
-    pq_sk: PrivateKeyInfo<'a>,
-    trad_sk: PrivateKeyInfo<'a>,
-}
-
-#[derive(Debug, Clone, Sequence)]
-/// CompositeSignaturePrivateKey ::= SEQUENCE SIZE (2) OF OctetString
-struct CompositeSignaturePrivateKey {
-    pq_sk: OctetString,
-    trad_sk: OctetString,
-}
-
-/// A private key for a composite DSA / KEM
+/// A private key for a composite DSA / KEM.
+///
+/// Per draft-ietf-lamps-pq-composite-sigs-19 §4.2 and
+/// draft-ietf-lamps-pq-composite-kem-15 §4.2, the composite private key is the
+/// raw concatenation of the post-quantum *seed* with the traditional private
+/// key: `pqSeed || tradSK`. The post-quantum seed is 32 bytes for ML-DSA and 64
+/// bytes (`d || z`) for ML-KEM. The traditional private key is in the encoding
+/// appropriate to its algorithm (raw for Ed/X, DER `ECPrivateKey` for ECDSA/ECDH,
+/// DER `RSAPrivateKey` for RSA). This byte string is carried directly in the
+/// `privateKey` OCTET STRING of the enclosing OneAsymmetricKey.
 #[derive(Zeroize)]
 pub struct CompositePrivateKey {
-    /// The private key for the post-quantum DSA / KEM
-    pq_sk_der: Vec<u8>,
-    /// The private key for the traditional DSA / KEM
-    trad_sk_der: Vec<u8>,
+    /// The post-quantum seed (32 bytes for ML-DSA, 64 bytes for ML-KEM)
+    pq_seed: Vec<u8>,
+    /// The traditional private key in its component-appropriate encoding
+    trad_sk: Vec<u8>,
     /// The OID for the composite DSA / KEM
     oid: String,
 }
 
 impl CompositePrivateKey {
-    /// Create a new composite KEM private key
-    ///
-    /// # Arguments
-    ///
-    /// * `oid` - The OID for the composite KEM
-    /// * `pq_sk` - The private key for the post-quantum KEM
-    /// * `trad_sk` - The private key for the traditional KEM
-    ///
-    /// # Returns
-    ///
-    /// A new composite KEM private key
-    pub fn new_kem(
-        oid: &str,
-        pq_sk: &PrivateKeyInfo<'_>,
-        trad_sk: &PrivateKeyInfo<'_>,
-    ) -> Result<Self> {
-        let pq_sk_der = pq_sk
-            .to_der()
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        let trad_sk_der = trad_sk
-            .to_der()
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(Self {
-            pq_sk_der,
-            trad_sk_der,
+    /// Create a new composite private key from the post-quantum seed and the
+    /// (already component-encoded) traditional private key.
+    pub fn new(oid: &str, pq_seed: &[u8], trad_sk: &[u8]) -> Self {
+        Self {
+            pq_seed: pq_seed.to_vec(),
+            trad_sk: trad_sk.to_vec(),
             oid: oid.to_string(),
-        })
-    }
-
-    /// Create a new composite DSA private key
-    ///
-    /// # Arguments
-    ///
-    /// * `oid` - The OID for the composite DSA
-    /// * `pq_sk` - The private key for the post-quantum DSA
-    /// * `trad_sk` - The private key for the traditional DSA
-    ///
-    /// # Returns
-    ///
-    /// A new composite DSA private key
-    pub fn new_dsa(oid: &str, pq_sk: &OctetString, trad_sk: &OctetString) -> Result<Self> {
-        let pq_sk_der = pq_sk
-            .to_der()
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        let trad_sk_der = trad_sk
-            .to_der()
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(Self {
-            pq_sk_der,
-            trad_sk_der,
-            oid: oid.to_string(),
-        })
+        }
     }
 
     /// Get the OID for the composite DSA / KEM
-    ///
-    /// # Returns
-    ///
-    /// The OID for the composite DSA / KEM
     pub fn get_oid(&self) -> &str {
         &self.oid
     }
 
-    /// Get the private key for the post-quantum KEM
-    ///
-    /// # Returns
-    ///
-    /// The private key for the post-quantum KEM
-    pub fn get_kem_pq_sk(&self) -> Result<PrivateKeyInfo<'_>> {
-        let res = PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(res)
+    /// Get the post-quantum seed.
+    pub fn get_pq_seed(&self) -> Vec<u8> {
+        self.pq_seed.clone()
     }
 
-    /// Get the private key for the post-quantum DSA
-    ///
-    /// # Returns
-    ///
-    /// The private key for the post-quantum DSA
-    pub fn get_dsa_pq_sk(&self) -> Result<OctetString> {
-        let res = OctetString::from_der(self.pq_sk_der.as_slice())
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(res)
+    /// Get the traditional private key (component-appropriate encoding).
+    pub fn get_trad_sk(&self) -> Vec<u8> {
+        self.trad_sk.clone()
     }
 
-    /// Get the private key for the traditional KEM
-    ///
-    /// # Returns
-    ///
-    /// The private key for the traditional KEM
-    pub fn get_kem_trad_sk(&self) -> Result<PrivateKeyInfo<'_>> {
-        let res = PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(res)
-    }
-
-    /// Get the private key for the traditional DSA
-    ///
-    /// # Returns
-    ///
-    /// The private key for the traditional DSA
-    pub fn get_dsa_trad_sk(&self) -> Result<OctetString> {
-        let res = OctetString::from_der(self.trad_sk_der.as_slice())
-            .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-        Ok(res)
-    }
-
-    /// Create a new composite private key from a DER-encoded private key
-    ///
-    /// # Arguments
-    ///
-    /// * `oid` - The OID for the composite DSA / KEM
-    /// * `der` - The DER-encoded private key
-    ///
-    /// # Returns
-    ///
-    /// A new composite private key
-    pub fn from_der(oid: &str, der: &[u8]) -> Result<Self> {
-        // Check whether this is a DSA OID or a KEM OID
-        if is_dsa_oid(oid) {
-            let key_data = CompositeSignaturePrivateKey::from_der(der)
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            let comp = CompositePrivateKey::new_dsa(oid, &key_data.pq_sk, &key_data.trad_sk)
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            Ok(comp)
-        } else {
-            let key_data = CompositeKEMPrivateKey::from_der(der)
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            let comp = CompositePrivateKey::new_kem(oid, &key_data.pq_sk, &key_data.trad_sk)
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            Ok(comp)
+    /// Deserialize `pqSeed || tradSK`, splitting at the fixed post-quantum seed
+    /// length (`pq_seed_len` = 32 for ML-DSA, 64 for ML-KEM).
+    pub fn from_der(oid: &str, der: &[u8], pq_seed_len: usize) -> Result<Self> {
+        if der.len() < pq_seed_len {
+            return Err(QuantCryptError::InvalidPrivateKey);
         }
+        let (pq_seed, trad_sk) = der.split_at(pq_seed_len);
+        Ok(Self::new(oid, pq_seed, trad_sk))
     }
 
-    /// Encode the composite private key as a DER-encoded private key
-    ///
-    /// # Returns
-    ///
-    /// The DER-encoded private key
+    /// Serialize as `pqSeed || tradSK`.
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        // Check whether this is a DSA OID or a KEM OID
-        if is_dsa_oid(&self.oid) {
-            let key_data = CompositeSignaturePrivateKey {
-                pq_sk: OctetString::from_der(self.pq_sk_der.as_slice())
-                    .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
-                trad_sk: OctetString::from_der(self.trad_sk_der.as_slice())
-                    .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
-            };
-            let res = key_data
-                .to_der()
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            Ok(res)
-        } else {
-            let key_data = CompositeKEMPrivateKey {
-                pq_sk: PrivateKeyInfo::from_der(self.pq_sk_der.as_slice())
-                    .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
-                trad_sk: PrivateKeyInfo::from_der(self.trad_sk_der.as_slice())
-                    .map_err(|_| QuantCryptError::InvalidPrivateKey)?,
-            };
-            let res = key_data
-                .to_der()
-                .map_err(|_| QuantCryptError::InvalidPrivateKey)?;
-            Ok(res)
-        }
+        let mut out = Vec::with_capacity(self.pq_seed.len() + self.trad_sk.len());
+        out.extend_from_slice(&self.pq_seed);
+        out.extend_from_slice(&self.trad_sk);
+        Ok(out)
     }
 }

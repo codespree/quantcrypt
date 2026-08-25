@@ -53,6 +53,9 @@ impl Dsa for EcDsaManager {
                 None,
                 Some(MessageDigest::sha384()),
             ),
+            DsaType::EcdsaP521SHA512 => {
+                (Some(Nid::SECP521R1), None, Some(MessageDigest::sha512()))
+            }
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }
@@ -172,6 +175,12 @@ mod tests {
     #[test]
     fn test_ecdsa_brainpool_384r1_sha384() {
         let dsa = EcDsaManager::new(DsaType::EcdsaBrainpoolP384r1SHA384);
+        test_dsa!(dsa);
+    }
+
+    #[test]
+    fn test_ecdsa_p521_sha512() {
+        let dsa = EcDsaManager::new(DsaType::EcdsaP521SHA512);
         test_dsa!(dsa);
     }
 
