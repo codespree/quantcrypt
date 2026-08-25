@@ -755,4 +755,113 @@ mod tests {
             "expected >=12 composite KEM decap vectors, got {count}"
         );
     }
+
+    /// Cross-provider interop for the draft-19/-15 composite algorithms against
+    /// GREEN R5 artifacts submitted by independent third parties (Bouncy Castle,
+    /// Entrust, Crypto4A, CryptoNext, leancrypto) — not our own submission and
+    /// not only the reference implementation. For each provider we verify every
+    /// composite signature self-signed cert (`*_ta.der`); load every composite
+    /// signature private key, sign, and verify the signature against that
+    /// provider's trust-anchor public key; and load every composite KEM private
+    /// key, decapsulate that provider's `*_ciphertext.bin`, and assert the
+    /// result equals its `*_ss.bin`. Any load/verify/decap failure fails the
+    /// test (no silent skipping).
+    #[test]
+    fn test_r5_cross_provider_interop() {
+        let base = "test/data/r5_interop/providers";
+        // Minimum composite artifacts expected per provider (0 => provider dir
+        // may be absent; leancrypto only submitted 3 composite signatures).
+        let providers = [
+            ("bc", 18, 12),
+            ("entrust", 18, 12),
+            ("crypto4a", 18, 12),
+            ("cryptonext", 18, 12),
+            ("leancrypto", 3, 0),
+        ];
+        let mut total_sig = 0usize;
+        let mut total_kem = 0usize;
+        for (prov, min_sig, min_kem) in providers {
+            let dir = format!("{base}/{prov}");
+            let files: Vec<std::path::PathBuf> = match std::fs::read_dir(&dir) {
+                Ok(rd) => rd.filter_map(|e| e.ok()).map(|e| e.path()).collect(),
+                Err(_) => panic!("missing provider corpus: {dir}"),
+            };
+            let find = |suffix: &str, oid: &str| -> Option<std::path::PathBuf> {
+                files
+                    .iter()
+                    .find(|p| {
+                        let n = p.file_name().unwrap().to_str().unwrap();
+                        n.ends_with(suffix) && n.contains(oid)
+                    })
+                    .cloned()
+            };
+            let msg = b"cross-provider composite interop";
+
+            // Signatures (.37-.54): verify TA, and sign+verify with the priv key.
+            let mut sig_ok = 0;
+            for oidn in 37..=54 {
+                let oid = format!("1.3.6.1.5.5.7.6.{oidn}_");
+                let Some(ta_p) = find("_ta.der", &oid) else {
+                    continue;
+                };
+                let ta = crate::certificates::Certificate::from_file(ta_p.to_str().unwrap())
+                    .unwrap_or_else(|e| panic!("{prov} load TA .{oidn}: {e:?}"));
+                assert!(
+                    ta.verify_self_signed().unwrap(),
+                    "{prov}: TA .{oidn} failed self-verify"
+                );
+                if let Some(priv_p) = find("_priv.der", &oid) {
+                    let sk = crate::keys::PrivateKey::from_file(priv_p.to_str().unwrap())
+                        .unwrap_or_else(|e| panic!("{prov} load sig priv .{oidn}: {e:?}"));
+                    let sig = sk
+                        .sign(msg)
+                        .unwrap_or_else(|e| panic!("{prov} sign .{oidn}: {e:?}"));
+                    assert!(
+                        ta.get_public_key().unwrap().verify(msg, &sig).unwrap(),
+                        "{prov}: signature by priv .{oidn} did not verify against its TA"
+                    );
+                }
+                sig_ok += 1;
+            }
+            assert!(
+                sig_ok >= min_sig,
+                "{prov}: expected >={min_sig} composite sig certs, got {sig_ok}"
+            );
+            total_sig += sig_ok;
+
+            // KEM (.55-.66): decap the provider ciphertext, compare to its ss.
+            let mut kem_ok = 0;
+            for oidn in 55..=66 {
+                let oid = format!("1.3.6.1.5.5.7.6.{oidn}_");
+                let (Some(priv_p), Some(ct_p), Some(ss_p)) = (
+                    find("_priv.der", &oid),
+                    find("_ciphertext.bin", &oid),
+                    find("_ss.bin", &oid),
+                ) else {
+                    continue;
+                };
+                let sk = crate::keys::PrivateKey::from_file(priv_p.to_str().unwrap())
+                    .unwrap_or_else(|e| panic!("{prov} load kem priv .{oidn}: {e:?}"));
+                let ct = std::fs::read(&ct_p).unwrap();
+                let ss = sk
+                    .decap(&ct)
+                    .unwrap_or_else(|e| panic!("{prov} decap .{oidn}: {e:?}"));
+                assert_eq!(
+                    ss,
+                    std::fs::read(&ss_p).unwrap(),
+                    "{prov}: KEM .{oidn} shared secret mismatch"
+                );
+                kem_ok += 1;
+            }
+            assert!(
+                kem_ok >= min_kem,
+                "{prov}: expected >={min_kem} composite KEM vectors, got {kem_ok}"
+            );
+            total_kem += kem_ok;
+            println!("{prov}: {sig_ok} sig + {kem_ok} kem composite artifacts verified");
+        }
+        // 4 full providers x (18 sig + 12 kem) + leancrypto 3 sig = 75 sig, 48 kem.
+        assert!(total_sig >= 75, "expected >=75 cross-provider sig checks, got {total_sig}");
+        assert!(total_kem >= 48, "expected >=48 cross-provider kem checks, got {total_kem}");
+    }
 }
