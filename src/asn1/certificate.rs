@@ -630,8 +630,7 @@ mod tests {
             if !name.ends_with("_ta.der") {
                 continue;
             }
-            let cert =
-                crate::certificates::Certificate::from_file(path.to_str().unwrap()).unwrap();
+            let cert = crate::certificates::Certificate::from_file(path.to_str().unwrap()).unwrap();
             assert!(
                 cert.verify_self_signed().unwrap(),
                 "reference-impl cert failed to verify: {name}"
@@ -664,8 +663,7 @@ mod tests {
             if !name.ends_with("_ee.der") || !name.contains("1.3.6.1.5.5.7.6.") {
                 continue;
             }
-            let cert =
-                crate::certificates::Certificate::from_file(path.to_str().unwrap()).unwrap();
+            let cert = crate::certificates::Certificate::from_file(path.to_str().unwrap()).unwrap();
             let pk = cert.get_public_key().unwrap();
             pk.encap()
                 .unwrap_or_else(|e| panic!("encap failed for {name}: {e:?}"));
@@ -861,7 +859,13 @@ mod tests {
             println!("{prov}: {sig_ok} sig + {kem_ok} kem composite artifacts verified");
         }
         // 4 full providers x (18 sig + 12 kem) + leancrypto 3 sig = 75 sig, 48 kem.
-        assert!(total_sig >= 75, "expected >=75 cross-provider sig checks, got {total_sig}");
-        assert!(total_kem >= 48, "expected >=48 cross-provider kem checks, got {total_kem}");
+        assert!(
+            total_sig >= 75,
+            "expected >=75 cross-provider sig checks, got {total_sig}"
+        );
+        assert!(
+            total_kem >= 48,
+            "expected >=48 cross-provider kem checks, got {total_kem}"
+        );
     }
 }

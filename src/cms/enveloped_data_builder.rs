@@ -706,7 +706,8 @@ mod tests {
     fn gen_cms_artifacts() {
         let ta_types = [DsaAlgorithm::MlDsa65, DsaAlgorithm::MlDsa87];
 
-        let kem_types = [vec![
+        let kem_types = [
+            vec![
                 KemAlgorithm::MlKem768,
                 KemAlgorithm::MlKem768Rsa2048,
                 KemAlgorithm::MlKem768Rsa3072,
@@ -720,7 +721,8 @@ mod tests {
                 KemAlgorithm::MlKem1024P384,
                 KemAlgorithm::MlKem1024BrainpoolP384r1,
                 KemAlgorithm::MlKem1024X448,
-            ]];
+            ],
+        ];
 
         let kdf_friendly_name_map = HashMap::from([
             (KdfType::HkdfWithSha256, "id-alg-hkdf-with-sha256"),
@@ -1038,7 +1040,8 @@ mod tests {
             );
 
             // Update base_filenames to contain the corresponding security level and oid
-            let base_filenames = [format!(
+            let base_filenames = [
+                format!(
                     "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-alg-hkdf-with-sha256.der",
                     oid, security_level
                 ),
@@ -1057,7 +1060,8 @@ mod tests {
                 format!(
                     "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-kmac256.der",
                     oid, security_level
-                )];
+                ),
+            ];
 
             // Generate a list of tuples containing the filename and its corresponding paths
             let tuples_list: Vec<(String, Vec<String>)> = base_filenames
@@ -1083,12 +1087,9 @@ mod tests {
                 let kemri_auth_ukm_path = &paths[3];
 
                 // Enveloped data
-                let enveloped_data = EnvelopedDataContent::from_file_for_kem_recipient(
-                    kemri_path,
-                    &ee_cert,
-                    &ee_sk,
-                )
-                .unwrap();
+                let enveloped_data =
+                    EnvelopedDataContent::from_file_for_kem_recipient(kemri_path, &ee_cert, &ee_sk)
+                        .unwrap();
                 let pt = enveloped_data.get_content();
                 assert_eq!(pt, expected_plaintext);
 

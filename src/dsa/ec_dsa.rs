@@ -53,9 +53,7 @@ impl Dsa for EcDsaManager {
                 None,
                 Some(MessageDigest::sha384()),
             ),
-            DsaType::EcdsaP521SHA512 => {
-                (Some(Nid::SECP521R1), None, Some(MessageDigest::sha512()))
-            }
+            DsaType::EcdsaP521SHA512 => (Some(Nid::SECP521R1), None, Some(MessageDigest::sha512())),
             _ => {
                 return Err(QuantCryptError::NotImplemented);
             }

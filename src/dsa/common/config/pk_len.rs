@@ -64,10 +64,10 @@ impl PKLen for PrehashDsaType {
             PrehashDsaType::MlDsa65EcdsaP256 => Some(1952 + 65), // 2017
             PrehashDsaType::MlDsa65EcdsaP384 => Some(1952 + 97), // 2049
             PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => Some(1952 + 65), // 2017
-            PrehashDsaType::MlDsa65Ed25519 => Some(1952 + 32),  // 1984
+            PrehashDsaType::MlDsa65Ed25519 => Some(1952 + 32),   // 1984
             PrehashDsaType::MlDsa87EcdsaP384 => Some(2592 + 97), // 2689
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => Some(2592 + 97), // 2689
-            PrehashDsaType::MlDsa87Ed448 => Some(2592 + 57),    // 2649
+            PrehashDsaType::MlDsa87Ed448 => Some(2592 + 57),     // 2649
             PrehashDsaType::MlDsa87Rsa3072Pss => None,
             PrehashDsaType::MlDsa87Rsa4096Pss => None,
             PrehashDsaType::MlDsa87EcdsaP521 => Some(2592 + 133), // 2725

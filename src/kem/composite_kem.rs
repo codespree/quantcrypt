@@ -143,12 +143,8 @@ impl CompositeKemManager {
             KemType::P256 => get_pk_from_sk_ec_based(trad_sk_raw, Nid::X9_62_PRIME256V1),
             KemType::P384 => get_pk_from_sk_ec_based(trad_sk_raw, Nid::SECP384R1),
             KemType::P521 => get_pk_from_sk_ec_based(trad_sk_raw, Nid::SECP521R1),
-            KemType::BrainpoolP256r1 => {
-                get_pk_from_sk_ec_based(trad_sk_raw, Nid::BRAINPOOL_P256R1)
-            }
-            KemType::BrainpoolP384r1 => {
-                get_pk_from_sk_ec_based(trad_sk_raw, Nid::BRAINPOOL_P384R1)
-            }
+            KemType::BrainpoolP256r1 => get_pk_from_sk_ec_based(trad_sk_raw, Nid::BRAINPOOL_P256R1),
+            KemType::BrainpoolP384r1 => get_pk_from_sk_ec_based(trad_sk_raw, Nid::BRAINPOOL_P384R1),
             KemType::X25519 => get_pk_from_sk_pkey_based(trad_sk_raw, Id::X25519),
             KemType::X448 => get_pk_from_sk_pkey_based(trad_sk_raw, Id::X448),
             KemType::RsaOAEP2048 | KemType::RsaOAEP3072 | KemType::RsaOAEP4096 => {
@@ -525,7 +521,9 @@ mod tests {
                 .unwrap();
 
         let kem = CompositeKemManager::new(KemType::MlKem768P256).unwrap();
-        let ss = kem.combiner(&mlkem_ss, &trad_ss, &trad_ct, &trad_pk).unwrap();
+        let ss = kem
+            .combiner(&mlkem_ss, &trad_ss, &trad_ct, &trad_pk)
+            .unwrap();
         assert_eq!(ss, expected_ss);
     }
 }

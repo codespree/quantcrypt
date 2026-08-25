@@ -65,10 +65,10 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::MlDsa65EcdsaP256 => None,
             PrehashDsaType::MlDsa65EcdsaP384 => None,
             PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,
-            PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64),     // 3373
+            PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64), // 3373
             PrehashDsaType::MlDsa87EcdsaP384 => None,
             PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,
-            PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114),      // 4741
+            PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114), // 4741
             PrehashDsaType::MlDsa87Rsa3072Pss => Some(4627 + 384), // 5011
             PrehashDsaType::MlDsa87Rsa4096Pss => Some(4627 + 512), // 5139
             PrehashDsaType::MlDsa87EcdsaP521 => None,
