@@ -31,6 +31,7 @@ impl Kem for EcKemManager {
         let (ec_based_nid, pk_based_id) = match kem_type {
             KemType::P256 => (Some(Nid::X9_62_PRIME256V1), None),
             KemType::P384 => (Some(Nid::SECP384R1), None),
+            KemType::P521 => (Some(Nid::SECP521R1), None),
             KemType::BrainpoolP256r1 => (Some(Nid::BRAINPOOL_P256R1), None),
             KemType::BrainpoolP384r1 => (Some(Nid::BRAINPOOL_P384R1), None),
             KemType::X25519 => (None, Some(Id::X25519)),
@@ -156,6 +157,12 @@ mod tests {
     #[test]
     fn test_ec_kem_p384() {
         let kem = EcKemManager::new(KemType::P384);
+        test_kem!(kem);
+    }
+
+    #[test]
+    fn test_ec_kem_p521() {
+        let kem = EcKemManager::new(KemType::P521);
         test_kem!(kem);
     }
 

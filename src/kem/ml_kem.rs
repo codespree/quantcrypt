@@ -85,6 +85,22 @@ pub struct MlKemManager {
 }
 
 impl MlKemManager {
+    /// Deterministically derive an ML-KEM key pair from a 64-byte seed
+    /// (`mlkemSeed = d(32) || z(32)`), per FIPS 203. Returns
+    /// `(encapsulation_key_bytes, decapsulation_key_bytes)`.
+    ///
+    /// Composite ML-KEM (draft-15) stores this 64-byte seed as the post-quantum
+    /// component of the private key; the decapsulation key is re-derived from it
+    /// on demand.
+    pub fn key_gen_from_seed(&self, seed: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        if seed.len() != 64 {
+            return Err(QuantCryptError::InvalidPrivateKey);
+        }
+        let d = B32::try_from(&seed[..32]).map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        let z = B32::try_from(&seed[32..]).map_err(|_| QuantCryptError::InvalidPrivateKey)?;
+        self.key_gen_deterministic(&d, &z)
+    }
+
     pub fn key_gen_deterministic(&self, d: &B32, z: &B32) -> Result<(Vec<u8>, Vec<u8>)> {
         match self.kem_info.kem_type {
             KemType::MlKem512 => {

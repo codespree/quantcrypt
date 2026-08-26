@@ -32,44 +32,35 @@ const RSA_DSA_TYPES: [DsaType; 6] = [
     DsaType::Rsa4096PssSha384,
 ];
 
-const EC_DSA_TYPES: [DsaType; 6] = [
+const EC_DSA_TYPES: [DsaType; 7] = [
     DsaType::EcdsaP256SHA256,
     DsaType::EcdsaBrainpoolP256r1SHA256,
     DsaType::EcdsaBrainpoolP384r1SHA384,
     DsaType::EcdsaP384SHA384,
+    DsaType::EcdsaP521SHA512,
     DsaType::Ed25519,
     DsaType::Ed448,
 ];
 
-const COMPOSITE_DSA_TYPES: [PrehashDsaType; 28] = [
+const COMPOSITE_DSA_TYPES: [PrehashDsaType; 18] = [
     PrehashDsaType::MlDsa44Rsa2048Pss,
     PrehashDsaType::MlDsa44Rsa2048Pkcs15,
     PrehashDsaType::MlDsa44Ed25519,
     PrehashDsaType::MlDsa44EcdsaP256,
     PrehashDsaType::MlDsa65Rsa3072Pss,
     PrehashDsaType::MlDsa65Rsa3072Pkcs15,
+    PrehashDsaType::MlDsa65Rsa4096Pss,
+    PrehashDsaType::MlDsa65Rsa4096Pkcs15,
+    PrehashDsaType::MlDsa65EcdsaP256,
     PrehashDsaType::MlDsa65EcdsaP384,
     PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1,
     PrehashDsaType::MlDsa65Ed25519,
     PrehashDsaType::MlDsa87EcdsaP384,
     PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1,
     PrehashDsaType::MlDsa87Ed448,
-    PrehashDsaType::MlDsa65Rsa4096Pss,
-    PrehashDsaType::MlDsa65Rsa4096Pkcs15,
-    PrehashDsaType::HashMlDsa44Rsa2048PssSha256,
-    PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256,
-    PrehashDsaType::HashMlDsa44Ed25519Sha512,
-    PrehashDsaType::HashMlDsa44EcdsaP256Sha256,
-    PrehashDsaType::HashMlDsa65Rsa3072PssSha512,
-    PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512,
-    PrehashDsaType::HashMlDsa65EcdsaP384Sha512,
-    PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512,
-    PrehashDsaType::HashMlDsa65Ed25519Sha512,
-    PrehashDsaType::HashMlDsa87EcdsaP384Sha512,
-    PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512,
-    PrehashDsaType::HashMlDsa87Ed448Sha512,
-    PrehashDsaType::HashMlDsa65Rsa4096PssSha512,
-    PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512,
+    PrehashDsaType::MlDsa87Rsa3072Pss,
+    PrehashDsaType::MlDsa87Rsa4096Pss,
+    PrehashDsaType::MlDsa87EcdsaP521,
 ];
 
 const SLH_DSA_TYPES: [PrehashDsaType; 24] = [
@@ -254,6 +245,18 @@ impl PrehashDsa for PrehashDsaManager {
             PrehashDsaManager::Ml(ml) => ml.get_public_key(sk),
             PrehashDsaManager::Composite(composite) => composite.get_public_key(sk),
             PrehashDsaManager::Slh(slh) => slh.get_public_key(sk),
+        }
+    }
+}
+
+impl PrehashDsaManager {
+    /// Deterministically derive an ML-DSA key pair from a seed. Only ML-DSA
+    /// managers support this (used by composite signatures to store the 32-byte
+    /// ML-DSA seed); other variants return `NotImplemented`.
+    pub fn key_gen_from_seed(&self, seed: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        match self {
+            PrehashDsaManager::Ml(ml) => ml.key_gen_from_seed(seed),
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 }

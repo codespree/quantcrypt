@@ -10,7 +10,7 @@ use rand_core::SeedableRng;
 use fips204::ml_dsa_44;
 use fips204::ml_dsa_65;
 use fips204::ml_dsa_87;
-use fips204::traits::{SerDes, Signer, Verifier};
+use fips204::traits::{KeyGen, SerDes, Signer, Verifier};
 use fips204::Ph;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
@@ -99,6 +99,38 @@ macro_rules! get_public_key {
 #[derive(Clone)]
 pub struct MlDsaManager {
     pub dsa_info: PrehashDsaInfo,
+}
+
+impl MlDsaManager {
+    /// Deterministically derive an ML-DSA key pair from a 32-byte seed (xi),
+    /// per FIPS 204. Returns `(public_key_bytes, expanded_secret_key_bytes)`.
+    ///
+    /// Composite ML-DSA (draft-19) stores this 32-byte seed as the post-quantum
+    /// component of the private key; the expanded signing key is re-derived from
+    /// it on demand.
+    pub fn key_gen_from_seed(&self, seed: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        if seed.len() != 32 {
+            return Err(QuantCryptError::InvalidPrivateKey);
+        }
+        let mut xi = [0u8; 32];
+        xi.copy_from_slice(seed);
+        let (pk, sk) = match self.dsa_info.dsa_type {
+            PrehashDsaType::MlDsa44 | PrehashDsaType::HashMlDsa44 => {
+                let (pk, sk) = ml_dsa_44::KG::keygen_from_seed(&xi);
+                (pk.into_bytes().to_vec(), sk.into_bytes().to_vec())
+            }
+            PrehashDsaType::MlDsa65 | PrehashDsaType::HashMlDsa65 => {
+                let (pk, sk) = ml_dsa_65::KG::keygen_from_seed(&xi);
+                (pk.into_bytes().to_vec(), sk.into_bytes().to_vec())
+            }
+            PrehashDsaType::MlDsa87 | PrehashDsaType::HashMlDsa87 => {
+                let (pk, sk) = ml_dsa_87::KG::keygen_from_seed(&xi);
+                (pk.into_bytes().to_vec(), sk.into_bytes().to_vec())
+            }
+            _ => return Err(QuantCryptError::NotImplemented),
+        };
+        Ok((pk, sk))
+    }
 }
 
 impl PrehashDsa for MlDsaManager {

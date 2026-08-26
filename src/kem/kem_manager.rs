@@ -19,25 +19,29 @@ const RSA_KEM_TYPES: [KemType; 3] = [
     KemType::RsaOAEP4096,
 ];
 
-const EC_KEM_TYPES: [KemType; 6] = [
+const EC_KEM_TYPES: [KemType; 7] = [
     KemType::P256,
     KemType::P384,
+    KemType::P521,
     KemType::X25519,
     KemType::BrainpoolP256r1,
     KemType::BrainpoolP384r1,
     KemType::X448,
 ];
 
-const COMPOSITE_KEM_TYPES: [KemType; 9] = [
+const COMPOSITE_KEM_TYPES: [KemType; 12] = [
     KemType::MlKem768Rsa2048,
     KemType::MlKem768Rsa3072,
     KemType::MlKem768Rsa4096,
     KemType::MlKem768X25519,
+    KemType::MlKem768P256,
     KemType::MlKem768P384,
     KemType::MlKem768BrainpoolP256r1,
+    KemType::MlKem1024Rsa3072,
     KemType::MlKem1024P384,
     KemType::MlKem1024BrainpoolP384r1,
     KemType::MlKem1024X448,
+    KemType::MlKem1024P521,
 ];
 
 /// Enum to representthe different types of KEM managers
@@ -163,6 +167,18 @@ impl Kem for KemManager {
             KemManager::Rsa(kem) => kem.decap(ct, sk),
             KemManager::Ec(kem) => kem.decap(ct, sk),
             KemManager::Composite(kem) => kem.decap(ct, sk),
+        }
+    }
+}
+
+impl KemManager {
+    /// Deterministically derive an ML-KEM key pair from a 64-byte seed. Only
+    /// ML-KEM managers support this (used by composite KEMs to store the seed);
+    /// other variants return `NotImplemented`.
+    pub fn key_gen_from_seed(&self, seed: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        match self {
+            KemManager::Ml(kem) => kem.key_gen_from_seed(seed),
+            _ => Err(QuantCryptError::NotImplemented),
         }
     }
 }

@@ -704,9 +704,9 @@ mod tests {
 
     #[test]
     fn gen_cms_artifacts() {
-        let ta_types = vec![DsaAlgorithm::MlDsa65, DsaAlgorithm::MlDsa87];
+        let ta_types = [DsaAlgorithm::MlDsa65, DsaAlgorithm::MlDsa87];
 
-        let kem_types = vec![
+        let kem_types = [
             vec![
                 KemAlgorithm::MlKem768,
                 KemAlgorithm::MlKem768Rsa2048,
@@ -893,8 +893,7 @@ mod tests {
             ta_cert.to_der_file(&ta_cert_path).unwrap();
 
             let kem_types = &kem_types[i];
-            for j in 0..kem_types.len() {
-                let kem_type = kem_types[j];
+            for kem_type in kem_types.iter().copied() {
                 let kem_oid = kem_type.get_oid();
                 let kem_friendly_name = kem_type.to_string();
 
@@ -1003,8 +1002,8 @@ mod tests {
 
     #[test]
     fn test_cw_cms_artifacts() {
-        let security_levels = vec!["512", "768", "1024"];
-        let oids = vec!["1", "2", "3"]; // Last digit of OID
+        let security_levels = ["512", "768", "1024"];
+        let oids = ["1", "2", "3"]; // Last digit of OID
 
         // Materials shared across all test combinations
         let expected_plaintext =
@@ -1041,7 +1040,7 @@ mod tests {
             );
 
             // Update base_filenames to contain the corresponding security level and oid
-            let base_filenames = vec![
+            let base_filenames = [
                 format!(
                     "2.16.840.1.101.3.4.4.{}_ML-KEM-{}_kemri_id-alg-hkdf-with-sha256.der",
                     oid, security_level
@@ -1088,18 +1087,15 @@ mod tests {
                 let kemri_auth_ukm_path = &paths[3];
 
                 // Enveloped data
-                let enveloped_data = EnvelopedDataContent::from_file_for_kem_recipient(
-                    &kemri_path,
-                    &ee_cert,
-                    &ee_sk,
-                )
-                .unwrap();
+                let enveloped_data =
+                    EnvelopedDataContent::from_file_for_kem_recipient(kemri_path, &ee_cert, &ee_sk)
+                        .unwrap();
                 let pt = enveloped_data.get_content();
                 assert_eq!(pt, expected_plaintext);
 
                 // With ukm
                 let enveloped_data_with_ukm = EnvelopedDataContent::from_file_for_kem_recipient(
-                    &kemri_ukm_path,
+                    kemri_ukm_path,
                     &ee_cert,
                     &ee_sk,
                 )
@@ -1109,7 +1105,7 @@ mod tests {
 
                 // Auth
                 let auth_enveloped_data = AuthEnvelopedDataContent::from_file_for_kem_recipient(
-                    &kemri_auth_path,
+                    kemri_auth_path,
                     &ee_cert,
                     &ee_sk,
                 )
@@ -1120,7 +1116,7 @@ mod tests {
                 // Auth with ukm
                 let auth_enveloped_data_with_ukm =
                     AuthEnvelopedDataContent::from_file_for_kem_recipient(
-                        &kemri_auth_ukm_path,
+                        kemri_auth_ukm_path,
                         &ee_cert,
                         &ee_sk,
                     )

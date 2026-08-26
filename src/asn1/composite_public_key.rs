@@ -1,18 +1,13 @@
-use der::{asn1::BitString, Decode, Encode};
-use der_derive::Sequence;
-
 use crate::QuantCryptError;
 
 type Result<T> = std::result::Result<T, QuantCryptError>;
 
-/// CompositeSignaturePublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
-/// CompositeKEMPublicKey ::= SEQUENCE SIZE (2) OF BIT STRING
-#[derive(Debug, Clone, Sequence)]
-struct CompositeSigKemPublicKey {
-    pq_pk: BitString,
-    trad_pk: BitString,
-}
-
+/// The composite public key serialization for both Composite ML-DSA
+/// (draft-ietf-lamps-pq-composite-sigs-19 Section 4.1) and Composite ML-KEM
+/// (draft-ietf-lamps-pq-composite-kem-15 Section 4.1) is the simple
+/// concatenation of the post-quantum public key with the traditional public
+/// key: `pqPK || tradPK`. On deserialization the fixed-length post-quantum
+/// component is split off the front and the remainder is the traditional key.
 #[derive(Debug, Clone)]
 /// A public key for a composite DSA / KEM
 pub struct CompositePublicKey {
@@ -80,43 +75,29 @@ impl CompositePublicKey {
     /// # Returns
     ///
     /// A new composite public key
-    pub fn from_der(oid: &str, der: &[u8]) -> Result<Self> {
-        // Parse as compressed public key
-        let comp_pk = CompositeSigKemPublicKey::from_der(der)
-            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
-
-        let pq_pk = if let Some(pq_pk) = comp_pk.pq_pk.as_bytes() {
-            pq_pk
-        } else {
+    /// # Arguments
+    ///
+    /// * `oid` - The OID for the composite DSA / KEM
+    /// * `der` - The serialized composite public key (`pqPK || tradPK`)
+    /// * `pq_len` - The fixed byte length of the post-quantum (ML-DSA / ML-KEM)
+    ///   public key, used as the split point.
+    pub fn from_der(oid: &str, der: &[u8], pq_len: usize) -> Result<Self> {
+        if der.len() < pq_len {
             return Err(QuantCryptError::InvalidPublicKey);
-        };
-
-        let trad_pk = if let Some(trad_pk) = comp_pk.trad_pk.as_bytes() {
-            trad_pk
-        } else {
-            return Err(QuantCryptError::InvalidPublicKey);
-        };
-
+        }
+        let (pq_pk, trad_pk) = der.split_at(pq_len);
         Ok(CompositePublicKey::new(oid, pq_pk, trad_pk))
     }
 
-    /// Encode the composite public key as a DER-encoded public key
+    /// Encode the composite public key as `pqPK || tradPK`.
     ///
     /// # Returns
     ///
-    /// The DER-encoded public key
+    /// The serialized composite public key
     pub fn to_der(&self) -> Result<Vec<u8>> {
-        let comp_sig_pk = CompositeSigKemPublicKey {
-            pq_pk: BitString::new(0, self.pq_pk.as_slice())
-                .map_err(|_| QuantCryptError::InvalidPublicKey)?,
-            trad_pk: BitString::new(0, self.trad_pk.as_slice())
-                .map_err(|_| QuantCryptError::InvalidPublicKey)?,
-        };
-
-        let comp_sig_pk = comp_sig_pk
-            .to_der()
-            .map_err(|_| QuantCryptError::InvalidPublicKey)?;
-
-        Ok(comp_sig_pk.as_slice().to_vec())
+        let mut out = Vec::with_capacity(self.pq_pk.len() + self.trad_pk.len());
+        out.extend_from_slice(&self.pq_pk);
+        out.extend_from_slice(&self.trad_pk);
+        Ok(out)
     }
 }

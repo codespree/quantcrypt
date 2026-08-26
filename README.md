@@ -6,7 +6,7 @@
 The goal of this library is to provide a simple and easy-to-use 
 interface for generating key pairs, certificates, signing and verifying messages, and encrypting and decrypting messages using post-quantum cryptographic algorithms.
 
-A secondary goal is to provide a set of cryptographic algorithms that are compatible with existing X.509, PKIX, and CMS data structures and protocols and to support the efforts of the [LAMPS Working Group](https://datatracker.ietf.org/wg/lamps/about/) in the IETF especially the [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) and [draft-ietf-lamps-pq-composite-kem](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/) drafts.
+A secondary goal is to provide a set of cryptographic algorithms that are compatible with existing X.509, PKIX, and CMS data structures and protocols and to support the efforts of the [LAMPS Working Group](https://datatracker.ietf.org/wg/lamps/about/) in the IETF especially the [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/) (composite signatures, tracking **draft-19**) and [draft-ietf-lamps-pq-composite-kem](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/) (composite KEM, tracking **draft-15**) drafts. Composite algorithms use the production OID arc `1.3.6.1.5.5.7.6.37`–`.66`.
 
 ## Warning
 

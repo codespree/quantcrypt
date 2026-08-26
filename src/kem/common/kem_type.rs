@@ -15,6 +15,8 @@ pub enum KemType {
     BrainpoolP256r1,
     /// BrainpoolP384r1 key encapsulation mechanism
     BrainpoolP384r1,
+    /// NIST P-521 key encapsulation mechanism
+    P521,
     /// X448 key encapsulation mechanism
     X448,
     /// RSA 2048 key encapsulation mechanism
@@ -30,7 +32,7 @@ pub enum KemType {
     /// MlKem1024 key encapsulation mechanism
     MlKem1024,
 
-    // The compsite algorithm list is from the latest editor's draft:
+    // Composite ML-KEM (draft-ietf-lamps-pq-composite-kem-15):
     /// id-MLKEM768-RSA2048
     MlKem768Rsa2048,
     /// id-MLKEM768-RSA3072
@@ -39,16 +41,22 @@ pub enum KemType {
     MlKem768Rsa4096,
     /// id-MLKEM768-X25519
     MlKem768X25519,
+    /// id-MLKEM768-ECDH-P256
+    MlKem768P256,
     /// id-MLKEM768-ECDH-P384
     MlKem768P384,
     /// id-MLKEM768-ECDH-brainpoolP256r1
     MlKem768BrainpoolP256r1,
+    /// id-MLKEM1024-RSA3072
+    MlKem1024Rsa3072,
     /// id-MLKEM1024-ECDH-P384
     MlKem1024P384,
     /// id-MLKEM1024-ECDH-brainpoolP384r1
     MlKem1024BrainpoolP384r1,
     /// id-MLKEM1024-X448
     MlKem1024X448,
+    /// id-MLKEM1024-ECDH-P521
+    MlKem1024P521,
 
     /// XWing
     XWing,

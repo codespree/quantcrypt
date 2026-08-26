@@ -26,6 +26,7 @@ impl SSLen for KemType {
             KemType::X25519 => 32,
             KemType::BrainpoolP256r1 => 32,
             KemType::BrainpoolP384r1 => 48,
+            KemType::P521 => 66,
             KemType::X448 => 56,
             // RSA is always 32 bytes
             KemType::RsaOAEP2048 => 32,
@@ -46,6 +47,9 @@ impl SSLen for KemType {
             KemType::MlKem768Rsa3072 => 32,
             KemType::MlKem768Rsa4096 => 32,
             KemType::MlKem768P384 => 32,
+            KemType::MlKem768P256 => 32,
+            KemType::MlKem1024Rsa3072 => 32,
+            KemType::MlKem1024P521 => 32,
             KemType::XWing => 32,
         }
     }

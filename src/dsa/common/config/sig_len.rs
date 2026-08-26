@@ -26,6 +26,7 @@ impl SigLen for DsaType {
             DsaType::EcdsaBrainpoolP256r1SHA256 => None,
             DsaType::EcdsaP384SHA384 => None,
             DsaType::EcdsaBrainpoolP384r1SHA384 => None,
+            DsaType::EcdsaP521SHA512 => None,
 
             DsaType::Ed25519 => Some(64),
             DsaType::Ed448 => Some(114),
@@ -49,36 +50,28 @@ impl SigLen for PrehashDsaType {
             PrehashDsaType::HashMlDsa65 => Some(3309),
             PrehashDsaType::HashMlDsa87 => Some(4627),
 
-            // pq_pk + trad_pk + overhead
-            PrehashDsaType::MlDsa44Rsa2048Pss => Some(2420 + 256 + 14), // 2690
-            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => Some(2420 + 256 + 14), // 2690
-            PrehashDsaType::MlDsa44Ed25519 => Some(2420 + 64 + 12),     // 2496
-            PrehashDsaType::MlDsa44EcdsaP256 => None,                   // None
-            PrehashDsaType::MlDsa65Rsa3072Pss => Some(3309 + 384 + 14), // 3707
-            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Some(3309 + 384 + 14), // 3707
-            PrehashDsaType::MlDsa65Rsa4096Pss => Some(3309 + 512 + 14), // 3835
-            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => Some(3309 + 512 + 14), // 3835
-            PrehashDsaType::MlDsa65EcdsaP384 => None,                   // None
-            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,        // None
-            PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64 + 12),     // 3385
-            PrehashDsaType::MlDsa87EcdsaP384 => None,                   // None
-            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,        // None
-            PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114 + 12),      // 4753
-
-            PrehashDsaType::HashMlDsa44Rsa2048PssSha256 => Some(2420 + 256 + 14), // 2690
-            PrehashDsaType::HashMlDsa44Rsa2048Pkcs15Sha256 => Some(2420 + 256 + 14), // 2690
-            PrehashDsaType::HashMlDsa44Ed25519Sha512 => Some(2420 + 64 + 12),     // 2496
-            PrehashDsaType::HashMlDsa44EcdsaP256Sha256 => None,                   // None
-            PrehashDsaType::HashMlDsa65Rsa3072PssSha512 => Some(3309 + 384 + 14), // 3707
-            PrehashDsaType::HashMlDsa65Rsa3072Pkcs15Sha512 => Some(3309 + 384 + 14), // 3707
-            PrehashDsaType::HashMlDsa65Rsa4096PssSha512 => Some(3309 + 512 + 14), // 3835
-            PrehashDsaType::HashMlDsa65Rsa4096Pkcs15Sha512 => Some(3309 + 512 + 14), // 3835
-            PrehashDsaType::HashMlDsa65EcdsaP384Sha512 => None,                   // None
-            PrehashDsaType::HashMlDsa65EcdsaBrainpoolP256r1Sha512 => None,        // None
-            PrehashDsaType::HashMlDsa65Ed25519Sha512 => Some(3309 + 64 + 12),     // 3385
-            PrehashDsaType::HashMlDsa87EcdsaP384Sha512 => None,                   // None
-            PrehashDsaType::HashMlDsa87EcdsaBrainpoolP384r1Sha512 => None,        // None
-            PrehashDsaType::HashMlDsa87Ed448Sha512 => Some(4627 + 114 + 12),      // 4753
+            // draft-19 composite signature = mldsaSig || tradSig (raw
+            // concatenation, no ASN.1 wrapper). RSA (fixed modulus size) and
+            // EdDSA (fixed) totals are exact; ECDSA signatures are DER-encoded
+            // and variable length, so those composites are `None`.
+            PrehashDsaType::MlDsa44Rsa2048Pss => Some(2420 + 256), // 2676
+            PrehashDsaType::MlDsa44Rsa2048Pkcs15 => Some(2420 + 256), // 2676
+            PrehashDsaType::MlDsa44Ed25519 => Some(2420 + 64),     // 2484
+            PrehashDsaType::MlDsa44EcdsaP256 => None,
+            PrehashDsaType::MlDsa65Rsa3072Pss => Some(3309 + 384), // 3693
+            PrehashDsaType::MlDsa65Rsa3072Pkcs15 => Some(3309 + 384), // 3693
+            PrehashDsaType::MlDsa65Rsa4096Pss => Some(3309 + 512), // 3821
+            PrehashDsaType::MlDsa65Rsa4096Pkcs15 => Some(3309 + 512), // 3821
+            PrehashDsaType::MlDsa65EcdsaP256 => None,
+            PrehashDsaType::MlDsa65EcdsaP384 => None,
+            PrehashDsaType::MlDsa65EcdsaBrainpoolP256r1 => None,
+            PrehashDsaType::MlDsa65Ed25519 => Some(3309 + 64), // 3373
+            PrehashDsaType::MlDsa87EcdsaP384 => None,
+            PrehashDsaType::MlDsa87EcdsaBrainpoolP384r1 => None,
+            PrehashDsaType::MlDsa87Ed448 => Some(4627 + 114), // 4741
+            PrehashDsaType::MlDsa87Rsa3072Pss => Some(4627 + 384), // 5011
+            PrehashDsaType::MlDsa87Rsa4096Pss => Some(4627 + 512), // 5139
+            PrehashDsaType::MlDsa87EcdsaP521 => None,
 
             // Pure SLH-DSA, aligned with fips205 implementation
             PrehashDsaType::SlhDsaSha2_128s => Some(7856),

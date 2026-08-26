@@ -22,6 +22,8 @@ impl Oid for HashType {
             HashType::Sha512 => "2.16.840.1.101.3.4.2.3",
             HashType::Shake128 => "2.16.840.1.101.3.4.2.11",
             HashType::Shake256 => "2.16.840.1.101.3.4.2.12",
+            // SHAKE256/64 shares the id-shake256 OID (2.16.840.1.101.3.4.2.12)
+            HashType::Shake256_64 => "2.16.840.1.101.3.4.2.12",
         }
         .to_string()
     }
